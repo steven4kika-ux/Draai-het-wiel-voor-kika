@@ -38,90 +38,41 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     }
 
-    h1 {
-      margin: 0 0 8px 0;
-      text-align: center;
-    }
-
-    p.lead {
-      text-align: center;
-      color: var(--muted);
-      margin-top: 0;
-    }
+    h1 { margin: 0 0 8px 0; text-align: center; }
+    p.lead { text-align: center; color: var(--muted); margin-top: 0; }
 
     .buttons {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
       margin: 20px 0 8px 0;
     }
 
     .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px 22px;
-      background-color: var(--accent);
-      color: #ffffff !important;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.2;
-      border-radius: 14px;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-      text-decoration: none;
-      min-width: 180px;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 14px 22px; background-color: var(--accent); color: #fff;
+      font-size: 16px; font-weight: 700; line-height: 1.2; border-radius: 14px;
+      border: none; outline: none; cursor: pointer; text-decoration: none;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12); min-width: 180px;
     }
 
     .note {
-      margin: 14px auto 0;
-      font-size: 14px;
-      color: #444;
-      background: #ffecec;
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 10px;
+      margin: 14px auto 0; font-size: 14px; color: #444; background: #ffecec;
+      display: inline-block; padding: 10px 14px; border-radius: 10px;
     }
 
-    /* Layout: tekst links – wiel rechts (op desktop) */
     .grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 28px;
-      align-items: center;
-      margin-top: 18px;
+      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px;
+      align-items: center; margin-top: 18px;
     }
 
     .wheel-card {
-      text-align: center;
-      background: #fffafa;
-      border-radius: 16px;
-      padding: 16px 12px 24px;
-      box-shadow: inset 0 0 0 1px #ffe0e0;
+      text-align: center; background: #fffafa; border-radius: 16px;
+      padding: 16px 12px 24px; box-shadow: inset 0 0 0 1px #ffe0e0;
     }
 
-    canvas {
-      width: 100%;
-      max-width: 320px;
-      height: auto;
-    }
+    canvas { width: 100%; max-width: 320px; height: auto; }
+    .spin-btn { margin-top: 12px; width: 100%; max-width: 320px; }
+    .result { margin-top: 10px; font-size: 16px; min-height: 24px; }
 
-    .spin-btn {
-      margin-top: 12px;
-      width: 100%;
-      max-width: 320px;
-    }
-
-    .result {
-      margin-top: 10px;
-      font-size: 16px;
-      min-height: 24px;
-    }
-
-    /* Mobiel */
     @media (max-width: 720px){
       .wrapper { margin: 28px auto; }
       .card { padding: 20px; }
@@ -141,7 +92,6 @@
       </p>
 
       <div class="buttons">
-        <!-- VERVANG de URL hieronder door jouw echte doneerlink -->
         <button
           class="button"
           onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon', '_blank')"
@@ -149,7 +99,6 @@
           Doneer nu
         </button>
 
-        <!-- Naar een aparte pagina hoeft niet meer, maar laten we 'm voor later staan -->
         <button
           class="button"
           onclick="document.getElementById('spin-btn').scrollIntoView({behavior:'smooth'})"
@@ -160,7 +109,6 @@
 
       <div class="note">Prijzen hebben geen geldwaarde. Bedankt voor je steun!</div>
 
-      <!-- Tekst + wiel samen in één grid -->
       <div class="grid">
         <div>
           <h3>Hoe werkt het?</h3>
@@ -169,119 +117,166 @@
             <li>Kom terug hier en klik op <strong>Draai!</strong></li>
             <li>Ontvang je beloning: een mop, feit, quote of challenge</li>
           </ol>
-         
-<p style="color:#666">
-  Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.
-</p>
-
+          <p style="color:#666">
+            Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.
+          </p>
         </div>
 
         <!-- WIEL -->
         <div class="wheel-card">
-          <canvas id="wheel" width="320" height="320"></canvas>
+          <canvas id="wheel" width="320" height="320" aria-label="Rad van fortuin"></canvas>
           <button id="spin-btn" class="button spin-btn">Draai!</button>
-          <div id="result" class="result"></div>
+          <div id="result" class="result" role="status" aria-live="polite"></div>
         </div>
       </div>
     </div>
   </div>
 
-<script>
-  
-const spinSound = new Audio("wheel-spin.mp3");
-spinSound.volume = 0.7; // 0 = stil, 1 = maximaal
+  <!-- Confetti library (1x, juist geplaatst) -->
+  <script/cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
-  const canvas = document.getElementById("wheel");
-  const ctx = canvas.getContext("2d");
+  <script>
+    // --- Confetti functie (KiKa-kleuren) ---
+    function launchConfetti() {
+      const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
+      if (typeof confetti !== 'function') return; // fail-safe
 
-  const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
-  const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
-  const prizes = {
-    "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
-    "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
-    "💛 Quote": "Kleine daden maken groot verschil.",
-    "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
-  };
+      // één burst
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        ticks: 250,
+        colors: kikaColors
+      });
 
-  const size = canvas.width;
-  const center = size / 2;
-  const radius = center - 10;
-  const slice = 2 * Math.PI / labels.length;
-
-  let rotation = 0;
-  let spinning = false;
-
-  function drawWheel(rot = 0) {
-    ctx.clearRect(0,0,size,size);
-    ctx.save();
-    ctx.translate(center, center);
-    ctx.rotate(rot);
-
-    labels.forEach((label, i) => {
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0,0,radius, i*slice, (i+1)*slice);
-      ctx.closePath();
-      ctx.fillStyle = colors[i];
-      ctx.fill();
-
-      ctx.save();
-      ctx.rotate(i*slice + slice/2);
-      ctx.translate(radius * 0.65, 0);
-      ctx.rotate(Math.PI/2);
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 16px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(label, 0, 0);
-      ctx.restore();
-    });
-
-    ctx.beginPath();
-    ctx.arc(0,0,28,0,2*Math.PI);
-    ctx.fillStyle = "#fff";
-    ctx.fill();
-    ctx.strokeStyle = "#ff6b6b";
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  function spin() {
-
-spinSound.currentTime = 0; // reset geluid
-spinSound.play();
-
-    if (spinning) return;
-    spinning = true;
-    document.getElementById("result").textContent = "";
-
-    const extra = 4 + Math.random()*2;
-    const target = rotation + extra * 2*Math.PI;
-    const start = performance.now();
-    const duration = 3200;
-
-    function animate(t) {
-      const p = Math.min(1, (t - start) / duration);
-      rotation = p*p*(3-2*p) * target; // ease
-      drawWheel(rotation);
-      if (p < 1) requestAnimationFrame(animate);
-      else {
-        const index = Math.floor(
-          ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
-        );
-        const label = labels[index];
-        document.getElementById("result").textContent =
-          "🎉 " + prizes[label];
-        spinning = false;
-      }
+      // korte stream links/rechts (~1s)
+      const duration = 1000;
+      const end = Date.now() + duration;
+      (function frame() {
+        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
+        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
     }
-    requestAnimationFrame(animate);
-  }
 
-  document.getElementById("spin-btn").addEventListener("click", spin);
-  drawWheel();
-</script>
+    // --- Geluid
+    const spinSound = new Audio("wheel-spin.mp3"); // upload dit bestand in je repo
+    spinSound.volume = 0.7;
 
+    // --- Canvas/Wiel setup
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+
+    const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
+    const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
+    const prizes = {
+      "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+      "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
+      "💛 Quote": "Kleine daden maken groot verschil.",
+      "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
+    };
+
+    const size = canvas.width;
+    const center = size / 2;
+    const radius = center - 10;
+    const slice = (2 * Math.PI) / labels.length;
+
+    let rotation = 0;
+    let spinning = false;
+
+    function drawWheel(rot = 0) {
+      ctx.clearRect(0,0,size,size);
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(rot);
+
+      labels.forEach((label, i) => {
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.arc(0,0,radius, i*slice, (i+1)*slice);
+        ctx.closePath();
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+
+        ctx.save();
+        ctx.rotate(i*slice + slice/2);
+        ctx.translate(radius * 0.65, 0);
+        ctx.rotate(Math.PI/2);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, 0, 0);
+        ctx.restore();
+      });
+
+      // center-circle
+      ctx.beginPath();
+      ctx.arc(0,0,28,0,2*Math.PI);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.strokeStyle = "#ff6b6b";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // pointer
+      ctx.beginPath();
+      ctx.fillStyle = "#ff6b6b";
+      const px = center, py = center - radius - 6;
+      ctx.moveTo(px, py);
+      ctx.lineTo(px - 12, py - 18);
+      ctx.lineTo(px + 12, py - 18);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function spin() {
+      if (spinning) return;
+      spinning = true;
+      document.getElementById("result").textContent = "";
+
+      // geluid starten
+      try { spinSound.currentTime = 0; spinSound.play(); } catch(e){}
+
+      const extraTurns = 4 + Math.floor(Math.random()*2); // 4–5 rondjes
+      const targetSector = Math.floor(Math.random() * labels.length);
+      const targetAngle = targetSector * slice + slice/2;
+
+      const startRotation = rotation % (2*Math.PI);
+      const delta = (2*Math.PI)*extraTurns + targetAngle + startRotation;
+      const duration = 3200 + Math.random()*600;
+      const start = performance.now();
+
+      function animate(t) {
+        const p = Math.min(1, (t - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        rotation = startRotation + eased * delta;
+        drawWheel(rotation);
+
+        if (p < 1) requestAnimationFrame(animate);
+        else {
+          const idx = Math.floor(
+            ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
+          ) % labels.length;
+
+          const label = labels[idx];
+          document.getElementById("result").textContent = "🎉 " + prizes[label];
+
+          // confetti bij winst
+          launchConfetti();
+
+          spinning = false;
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById("spin-btn").addEventListener("click", spin);
+    drawWheel();
+  </script>
 </body>
 </html>
+``
