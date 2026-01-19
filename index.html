@@ -132,40 +132,47 @@
     </div>
   </div>
 
-  <!-- Confetti library (1x, juist geplaatst) -->
-  <script/cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
-  <script>
-    // --- Confetti functie (KiKa-kleuren) ---
-    function launchConfetti() {
-      const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
-      if (typeof confetti !== 'function') return; // fail-safe
+<script>
+  // --- Confetti functie (KiKa-kleuren) ---
+  function launchConfetti() {
+    const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
+    if (typeof confetti !== 'function') return; // fail-safe als CDN niet laadt
 
-      // één burst
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 },
-        ticks: 250,
-        colors: kikaColors
-      });
+    // één burst
+    confetti({
+      particleCount: 120,
+      spread: 70,
+      origin: { y: 0.6 },
+      ticks: 250,
+      colors: kikaColors
+    });
 
-      // korte stream links/rechts (~1s)
-      const duration = 1000;
-      const end = Date.now() + duration;
-      (function frame() {
-        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
-        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-    }
+    // korte stream links/rechts (~1s)
+    const duration = 1000;
+    const end = Date.now() + duration;
+    (function frame() {
+      confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
+      confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
 
-    // --- Geluid
-    const spinSound = new Audio("wheel-spin.mp3"); // upload dit bestand in je repo
-    spinSound.volume = 0.7;
+  // Wacht tot de DOM klaar is
+  window.addEventListener('DOMContentLoaded', () => {
+    // --- Geluid (optioneel): vang fouten af zodat het script nooit stopt
+    let spinSound;
+    try {
+      spinSound = new Audio("wheel-spin.mp3"); // upload dit bestand eventueel
+      spinSound.volume = 0.7;
+    } catch (e) { /* negeer als bestand ontbreekt */ }
 
     // --- Canvas/Wiel setup
     const canvas = document.getElementById("wheel");
+    if (!canvas) {
+      console.error("Canvas #wheel niet gevonden.");
+      return;
+    }
     const ctx = canvas.getContext("2d");
 
     const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
@@ -236,10 +243,10 @@
     function spin() {
       if (spinning) return;
       spinning = true;
-      document.getElementById("result").textContent = "";
+      const resultEl = document.getElementById("result");
+      if (resultEl) resultEl.textContent = "";
 
-      // geluid starten
-      try { spinSound.currentTime = 0; spinSound.play(); } catch(e){}
+      try { if (spinSound) { spinSound.currentTime = 0; spinSound.play(); } } catch(e){}
 
       const extraTurns = 4 + Math.floor(Math.random()*2); // 4–5 rondjes
       const targetSector = Math.floor(Math.random() * labels.length);
@@ -263,9 +270,9 @@
           ) % labels.length;
 
           const label = labels[idx];
-          document.getElementById("result").textContent = "🎉 " + prizes[label];
+          if (resultEl) resultEl.textContent = "🎉 " + prizes[label];
 
-          // confetti bij winst
+          // confetti
           launchConfetti();
 
           spinning = false;
@@ -274,9 +281,15 @@
       requestAnimationFrame(animate);
     }
 
-    document.getElementById("spin-btn").addEventListener("click", spin);
+    // Eerste render en click-koppeling
     drawWheel();
-  </script>
-</body>
-</html>
-``
+    const spinBtn = document.getElementById("spin-btn");
+    if (spinBtn) spinBtn.addEventListener("click", spin);
+  });
+</script>
+
+<!-- Confetti library (laat staan boven </body>) -->
+https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
+
+
+  
