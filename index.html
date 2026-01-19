@@ -70,6 +70,11 @@
     }
 
     canvas { width: 100%; max-width: 320px; height: auto; }
+    #wheel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px #f1d6d6;
+    }
     .spin-btn { margin-top: 12px; width: 100%; max-width: 320px; }
     .result { margin-top: 10px; font-size: 16px; min-height: 24px; }
 
@@ -88,7 +93,7 @@
     <div class="card">
       <h1>Doneer aan KiKa 💛</h1>
       <p class="lead">
-        Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🎡
+        Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🌼
       </p>
 
       <div class="buttons">
@@ -132,164 +137,187 @@
     </div>
   </div>
 
+  <!-- Confetti library (CDN) -->
+  https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
-<script>
-  // --- Confetti functie (KiKa-kleuren) ---
-  function launchConfetti() {
-    const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
-    if (typeof confetti !== 'function') return; // fail-safe als CDN niet laadt
+  <script>
+    /* ======================= CONFETTI ======================= */
+    function launchConfetti() {
+      const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
+      if (typeof confetti !== 'function') return;
 
-    // één burst
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 },
-      ticks: 250,
-      colors: kikaColors
-    });
-
-    // korte stream links/rechts (~1s)
-    const duration = 1000;
-    const end = Date.now() + duration;
-    (function frame() {
-      confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
-      confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    })();
-  }
-
-  // Wacht tot de DOM klaar is
-  window.addEventListener('DOMContentLoaded', () => {
-    // --- Geluid (optioneel): vang fouten af zodat het script nooit stopt
-    let spinSound;
-    try {
-      spinSound = new Audio("wheel-spin.mp3"); // upload dit bestand eventueel
-      spinSound.volume = 0.7;
-    } catch (e) { /* negeer als bestand ontbreekt */ }
-
-    // --- Canvas/Wiel setup
-    const canvas = document.getElementById("wheel");
-    if (!canvas) {
-      console.error("Canvas #wheel niet gevonden.");
-      return;
-    }
-    const ctx = canvas.getContext("2d");
-
-    const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
-    const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
-    const prizes = {
-      "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
-      "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
-      "💛 Quote": "Kleine daden maken groot verschil.",
-      "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
-    };
-
-    const size = canvas.width;
-    const center = size / 2;
-    const radius = center - 10;
-    const slice = (2 * Math.PI) / labels.length;
-
-    let rotation = 0;
-    let spinning = false;
-
-    function drawWheel(rot = 0) {
-      ctx.clearRect(0,0,size,size);
-      ctx.save();
-      ctx.translate(center, center);
-      ctx.rotate(rot);
-
-      labels.forEach((label, i) => {
-        ctx.beginPath();
-        ctx.moveTo(0,0);
-        ctx.arc(0,0,radius, i*slice, (i+1)*slice);
-        ctx.closePath();
-        ctx.fillStyle = colors[i];
-        ctx.fill();
-
-        ctx.save();
-        ctx.rotate(i*slice + slice/2);
-        ctx.translate(radius * 0.65, 0);
-        ctx.rotate(Math.PI/2);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 16px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(label, 0, 0);
-        ctx.restore();
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        ticks: 250,
+        colors: kikaColors
       });
 
-      // center-circle
-      ctx.beginPath();
-      ctx.arc(0,0,28,0,2*Math.PI);
-      ctx.fillStyle = "#fff";
-      ctx.fill();
-      ctx.strokeStyle = "#ff6b6b";
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      ctx.restore();
-
-      // pointer
-      ctx.beginPath();
-      ctx.fillStyle = "#ff6b6b";
-      const px = center, py = center - radius - 6;
-      ctx.moveTo(px, py);
-      ctx.lineTo(px - 12, py - 18);
-      ctx.lineTo(px + 12, py - 18);
-      ctx.closePath();
-      ctx.fill();
+      const duration = 1000;
+      const end = Date.now() + duration;
+      (function frame() {
+        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
+        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
     }
 
-    function spin() {
-      if (spinning) return;
-      spinning = true;
-      const resultEl = document.getElementById("result");
-      if (resultEl) resultEl.textContent = "";
-
-      try { if (spinSound) { spinSound.currentTime = 0; spinSound.play(); } } catch(e){}
-
-      const extraTurns = 4 + Math.floor(Math.random()*2); // 4–5 rondjes
-      const targetSector = Math.floor(Math.random() * labels.length);
-      const targetAngle = targetSector * slice + slice/2;
-
-      const startRotation = rotation % (2*Math.PI);
-      const delta = (2*Math.PI)*extraTurns + targetAngle + startRotation;
-      const duration = 3200 + Math.random()*600;
-      const start = performance.now();
-
-      function animate(t) {
-        const p = Math.min(1, (t - start) / duration);
-        const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
-        rotation = startRotation + eased * delta;
-        drawWheel(rotation);
-
-        if (p < 1) requestAnimationFrame(animate);
-        else {
-          const idx = Math.floor(
-            ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
-          ) % labels.length;
-
-          const label = labels[idx];
-          if (resultEl) resultEl.textContent = "🎉 " + prizes[label];
-
-          // confetti
-          launchConfetti();
-
-          spinning = false;
-        }
+    /* ======================= GELUID (robuust) ======================= */
+    let spinAudio = null;  // instantie van Audio
+    function canPlay(type) {
+      const a = document.createElement('audio');
+      return !!a.canPlayType && a.canPlayType(type) !== '';
+    }
+    function makeSpinAudio() {
+      // Gebruik jouw echte bestandsnaam (staat in de repo!)
+      if (canPlay('audio/mpeg')) {
+        return new Audio('wheel-spin-click-slow-down-101152.mp3');
+      } else if (canPlay('audio/ogg; codecs=vorbis')) {
+        return new Audio('wheel-spin.ogg'); // optioneel, als je een .ogg uploadt
       }
-      requestAnimationFrame(animate);
+      return null;
+    }
+    function beepFallback() {   // simpele piep als laatste redmiddel
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'triangle'; o.frequency.value = 600;
+        g.gain.setValueAtTime(0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.22);
+      } catch(e) {}
+    }
+    function playSpinSound() {
+      if (!spinAudio) { spinAudio = makeSpinAudio(); if (spinAudio) spinAudio.volume = 0.7; }
+      if (spinAudio) {
+        try {
+          spinAudio.currentTime = 0;
+          const p = spinAudio.play();
+          if (p && typeof p.then === 'function') p.catch(() => beepFallback());
+        } catch(e) { beepFallback(); }
+      } else {
+        beepFallback();
+      }
     }
 
-    // Eerste render en click-koppeling
-    drawWheel();
-    const spinBtn = document.getElementById("spin-btn");
-    if (spinBtn) spinBtn.addEventListener("click", spin);
-  });
-</script>
+    /* ======================= WIEL ======================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById("wheel");
+      const ctx = canvas.getContext("2d");
 
-<!-- Confetti library (laat staan boven </body>) -->
-https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
+      const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
+      const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
+      const prizes = {
+        "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+        "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
+        "💛 Quote": "Kleine daden maken groot verschil.",
+        "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
+      };
 
+      const size = canvas.width;
+      const center = size / 2;
+      const radius = center - 10;
+      const slice = (2 * Math.PI) / labels.length;
 
-  
+      let rotation = 0;
+      let spinning = false;
+
+      function drawWheel(rot = 0) {
+        ctx.clearRect(0,0,size,size);
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(rot);
+
+        labels.forEach((label, i) => {
+          ctx.beginPath();
+          ctx.moveTo(0,0);
+          ctx.arc(0,0,radius, i*slice, (i+1)*slice);
+          ctx.closePath();
+          ctx.fillStyle = colors[i];
+          ctx.fill();
+
+          ctx.save();
+          ctx.rotate(i*slice + slice/2);
+          ctx.translate(radius * 0.65, 0);
+          ctx.rotate(Math.PI/2);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 16px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(label, 0, 0);
+          ctx.restore();
+        });
+
+        // midden
+        ctx.beginPath();
+        ctx.arc(0,0,28,0,2*Math.PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.strokeStyle = "#ff6b6b";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.restore();
+
+        // pijl RECHTS (wijst naar links) -> eenvoudiger voor de index-berekening
+        ctx.beginPath();
+        ctx.fillStyle = "#ff6b6b";
+        const px = center + radius + 6, py = center;
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + 18, py - 12);
+        ctx.lineTo(px + 18, py + 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function spin() {
+        if (spinning) return;
+        spinning = true;
+        const resultEl = document.getElementById("result");
+        if (resultEl) resultEl.textContent = "";
+
+        // geluid starten (gebeurt in klik-context → toegestaan)
+        playSpinSound();
+
+        // 4–5 rondjes + gericht op een random sector
+        const extraTurns = 4 + Math.floor(Math.random()*2);
+        const targetSector = Math.floor(Math.random() * labels.length);
+        const targetAngle = targetSector * slice + slice/2;
+
+        const startRotation = rotation % (2*Math.PI);
+        const delta = (2*Math.PI)*extraTurns + targetAngle + startRotation;
+        const duration = 3200 + Math.random()*600;
+        const start = performance.now();
+
+        function animate(t) {
+          const p = Math.min(1, (t - start) / duration);
+          const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          rotation = startRotation + eased * delta;
+          drawWheel(rotation);
+
+          if (p < 1) requestAnimationFrame(animate);
+          else {
+            // pijl wijst naar rechts, dus deze index werkt correct
+            const idx = Math.floor(
+              ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
+            ) % labels.length;
+
+            const label = labels[idx];
+            if (resultEl) resultEl.textContent = "🎉 " + prizes[label];
+
+            launchConfetti();
+            spinning = false;
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+
+      // initial draw en knop-koppeling
+      drawWheel();
+      document.getElementById("spin-btn").addEventListener("click", spin);
+    });
+  </script>
+</body>
+</html>
