@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Draai aan het wiel 🎡</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff7f8;
+      text-align: center;
+      padding: 40px;
+    }
+    .wheel {
+      font-size: 26px;
+      margin: 30px 0;
+    }
+    button {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Draai aan het wiel 🎡</h1>
+
+  <div class="wheel">⬤ ⬤ ⬤</div>
+
+  <button onclick="spin()">Draai!</button>
+
+  <div class="result" id="result"></div>
+
+  <p>index.html← Terug</a></p>
+
+  <script>
+    const prijzen = [
+      "😂 Mop: Wat doet een skeeleraar bij de bakker? Rondjes draaien!",
+      "💡 Feit: Lachen verlaagt stress!",
+      "💛 Quote: Kleine daden maken groot verschil.",
+      "🔥 Challenge: Stuur vandaag iemand een lief bericht!"
+    ];
+
+    function spin() {
+      const resultaat = prijzen[Math.floor(Math.random() * prijzen.length)];
+      document.getElementById("result").innerText = resultaat;
+    }
+  </script>
+
+</body>
+</html>
