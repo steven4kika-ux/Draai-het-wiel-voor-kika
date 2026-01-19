@@ -62,7 +62,7 @@
       <p class="lead">Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🌼</p>
 
       <div class="buttons">
-        <!-- Vervang de URL hieronder door jouw echte doneerlink (indien nodig) -->
+        <!-- Pas de doneerlink aan indien nodig -->
         <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon', '_blank')">Doneer nu</button>
         <button class="button" onclick="document.getElementById('spin-btn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
       </div>
@@ -104,21 +104,13 @@
 
   <script>
     /* =================== CONFETTI-LOADER (on-demand) =================== */
-    // Laadt canvas-confetti alleen als het nog niet beschikbaar is.
     function ensureConfetti() {
       return new Promise((resolve) => {
         if (typeof window.confetti === 'function') return resolve(true);
-
-        // Wacht op bestaand laadverzoek
         if (document.getElementById('confetti-cdn')) {
-          const check = () => {
-            if (typeof window.confetti === 'function') resolve(true);
-            else setTimeout(check, 50);
-          };
+          const check = () => { if (typeof window.confetti === 'function') resolve(true); else setTimeout(check, 50); };
           return check();
         }
-
-        // Injecteer CDN-script
         const s = document.createElement('script');
         s.id = 'confetti-cdn';
         s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
@@ -128,24 +120,11 @@
         document.body.appendChild(s);
       });
     }
-
-    // Vuurt confetti af in KiKa-kleuren, verzekerd van geladen library
     async function launchConfetti() {
       const ok = await ensureConfetti();
       if (!ok || typeof window.confetti !== 'function') return;
-
       const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
-
-      // Burst
-      window.confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 },
-        ticks: 250,
-        colors: kikaColors
-      });
-
-      // 1 seconde stream links/rechts
+      window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, ticks: 250, colors: kikaColors });
       const end = Date.now() + 1000;
       (function frame() {
         window.confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
@@ -159,15 +138,10 @@
       const modal = document.getElementById('prizeModal');
       const txt = document.getElementById('prizeText');
       if (!modal || !txt) return;
-
       txt.textContent = text;
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
-
-      // 🎉 Confetti bij het openen van de pop-up
-      launchConfetti();
-
-      // Focus op OK voor toegankelijkheid
+      launchConfetti(); // 🎉 confetti bij opening pop-up
       setTimeout(() => document.getElementById('modalOkBtn')?.focus(), 0);
     }
     function closePrizeModal() {
@@ -184,17 +158,15 @@
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal?.classList.contains('show')) closePrizeModal(); });
     }
 
-    /* =================== GELUID (robuust) =================== */
-    let spinAudio = null;     // <audio>-instantie
+    /* =================== GELUID =================== */
+    let spinAudio = null;
     function canPlay(type){ const a=document.createElement('audio'); return !!a.canPlayType && a.canPlayType(type) !== ''; }
     function makeSpinAudio(){
-      // Gebruik exact de bestandsnaam zoals in je repo
       if (canPlay('audio/mpeg')) return new Audio('wheel-spin-click-slow-down-101152.mp3');
-      // Eventuele OGG fallback als je die uploadt:
-      // if (canPlay('audio/ogg; codecs=vorbis')) return new Audio('wheel-spin.ogg');
+      // if (canPlay('audio/ogg; codecs=vorbis')) return new Audio('wheel-spin.ogg'); // optioneel
       return null;
     }
-    function beepFallback(){  // simpele piep als laatste redmiddel
+    function beepFallback(){
       try{
         const ctx = new (window.AudioContext||window.webkitAudioContext)();
         const o=ctx.createOscillator(), g=ctx.createGain();
@@ -215,41 +187,143 @@
       } else { beepFallback(); }
     }
 
-    /* =================== WIEL =================== */
+    /* =================== WIEL MET MEER PRIJZEN =================== */
     window.addEventListener('DOMContentLoaded', () => {
       const canvas = document.getElementById("wheel");
       const ctx = canvas.getContext("2d");
 
-      const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
-      const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
-      const prizes = {
-        "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
-        "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
-        "💛 Quote": "Kleine daden maken groot verschil.",
-        "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
+      // 8 sectoren met korte labels (emojis houden het strak)
+      const SECTORS = [
+        { key:'mop',        label:'😂 Mop' },
+        { key:'feit',       label:'💡 Feit' },
+        { key:'quote',      label:'💛 Quote' },
+        { key:'challenge',  label:'🔥 Challenge' },
+        { key:'compliment', label:'👏 Compliment' },
+        { key:'raadsel',    label:'🧩 Raadsel' },
+        { key:'quiz',       label:'🎯 Mini-quiz' },
+        { key:'geluk',      label:'🍀 Gelukswens' }
+      ];
+      const COLORS = ['#ff6b6b','#ff9f43','#1dd1a1','#54a0ff','#7d5fff','#f368e0','#00d2d3','#ffb142'];
+
+      // 🔥 Grote pool met varianten per categorie
+      const POOLS = {
+        mop: [
+          "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+          "Wat krijg je als je een skeeler met een laptop kruist? Een snel bestand!",
+          "Waarom nam de appel een paraplu mee? Bang om geperst te worden!",
+          "Ik vroeg mijn klok om een grap. Hij zei: ‘Ik tik ’m later wel.’",
+          "Waarom is het wiel zo vrolijk? Het heeft altijd de draai erin!",
+          "Wat zegt een skeeler tegen de stoep? ‘Ga je mee een rondje doen?’",
+          "Waarom zijn posters zo rustig? Ze hangen chill rond.",
+          "Wat is groen en draait? Een spruit in de wasmachine!",
+          "Waarom oefent de slak elke dag? Om in zijn eigen tempo te winnen.",
+          "Ik gaf mijn plant water. Hij zei: ‘Dankje, daar groei ik van!’"
+        ],
+        feit: [
+          "Lachen verlaagt stress en kan je immuunsysteem boosten.",
+          "Kleine donaties tellen op tot groot verschil voor KiKa.",
+          "10 minuten wandelen kan je humeur merkbaar verbeteren.",
+          "Regelmatig water drinken helpt je energie en focus.",
+          "Vriendelijkheid werkt aanstekelijk — één gebaar zet een kettingreactie in gang.",
+          "Samen sporten motiveert meer dan alleen.",
+          "Een kort dankbaarheidsmoment kan je dag positiever maken.",
+          "Creativiteit helpt stress te verminderen.",
+          "Een goede nachtrust is cruciaal voor herstel en veerkracht.",
+          "Delen van een actie vergroot de impact zonder extra kosten."
+        ],
+        quote: [
+          "“Kleine daden, groot verschil.”",
+          "“De beste tijd om te helpen is: nu.”",
+          "“Samen maken we sterk wat alleen te zwaar is.”",
+          "“Wie goed doet, ontmoet het goede.”",
+          "“Elke stap vooruit is er één.”",
+          "“Je hoeft niet alles te kunnen, om toch te beginnen.”",
+          "“Deel wat je kunt; het telt.”",
+          "“Hoop is de vonk die verandering start.”",
+          "“Word vandaag iemands reden om te glimlachen.”",
+          "“Met elkaar kom je verder.”"
+        ],
+        challenge: [
+          "Deel de doneerlink met 2 vrienden en motiveer kort waarom KiKa belangrijk is.",
+          "Doe 10 jumping jacks en geef jezelf een glimlach in de spiegel 😄",
+          "Neem een glas water en maak een mini‑wandeling van 5 minuten.",
+          "Stuur één lief bericht naar iemand die het kan gebruiken.",
+          "Ruim een klein hoekje op waar je al te lang tegenaan kijkt.",
+          "Zet 3 dingen op papier waar je dankbaar voor bent.",
+          "Geef vandaag één compliment aan een collega of vriend.",
+          "Skip je telefoon gedurende 15 minuten en adem even uit.",
+          "Luister een nummer dat je een goed gevoel geeft.",
+          "Plan een moment beweging voor morgen (en zet ’t in je agenda)."
+        ],
+        compliment: [
+          "Je zorgt vandaag al voor impact — dankjewel! 💛",
+          "Wat fijn dat jij dit mogelijk maakt. Jij bent goud!",
+          "Jouw steun geeft hoop en energie — top!",
+          "Je maakt de wereld net een stukje warmer.",
+          "Wat een mooi gebaar — je inspireert anderen.",
+          "Dankzij jou komt onderzoek een stap dichterbij.",
+          "Je betrokkenheid is echt voelbaar. Dank!",
+          "Jij brengt mensen in beweging. Letterlijk!",
+          "Je bent iemand op wie je kunt bouwen.",
+          "Mooi mens, mooi werk — bedankt!"
+        ],
+        raadsel: [
+          "Raadsel: Wat wordt natter naarmate het droogt? Antwoord: Een handdoek!",
+          "Raadsel: Ik heb sleutels maar geen sloten. Wat ben ik? Antwoord: Een toetsenbord.",
+          "Raadsel: Hoe meer je ervan neemt, hoe meer je achterlaat. Antwoord: Stappen.",
+          "Raadsel: Wat breekt zodra je het noemt? Antwoord: Stilte.",
+          "Raadsel: Ik ga omhoog en omlaag maar beweeg niet. Antwoord: Een trap.",
+          "Raadsel: Welke maand heeft 28 dagen? Antwoord: Allemaal.",
+          "Raadsel: Wat heeft één oog maar kan niet zien? Antwoord: Een naald.",
+          "Raadsel: Wat kun je vangen maar niet gooien? Antwoord: Een verkoudheid."
+        ],
+        quiz: [
+          "Mini‑quiz: Hoeveel kilometer is een marathon? Antwoord: 42,195 km.",
+          "Mini‑quiz: Hoeveel seconden zitten er in 3 minuten? Antwoord: 180.",
+          "Mini‑quiz: Wat is het symbool voor goud? Antwoord: Au.",
+          "Mini‑quiz: Welke kleur krijg je van blauw + geel? Antwoord: Groen.",
+          "Mini‑quiz: Hoeveel dagen heeft een schrikkeljaar? Antwoord: 366.",
+          "Mini‑quiz: Wat is de hoofdstad van Nederland? Antwoord: Amsterdam.",
+          "Mini‑quiz: Hoeveel poten heeft een spin? Antwoord: 8.",
+          "Mini‑quiz: Hoeveel muzieksleutels zijn er in een standaard piano? Antwoord: 88."
+        ],
+        geluk: [
+          "Ik wens je een dag vol kleine overwinningen 🍀",
+          "Vandaag komt er iets moois op je pad — let goed op!",
+          "Moge je energie stromen en je glimlach blijven.",
+          "Je krijgt precies de kracht die je nodig hebt.",
+          "Laat het licht vandaag aan jouw kant vallen.",
+          "Een onverwachte meevaller is dichterbij dan je denkt.",
+          "Kies voor zacht en je dag wordt lichter.",
+          "Glimlach — het werkt aanstekelijk!",
+          "Vriendelijkheid komt drie keer terug.",
+          "Je bent op de juiste weg. Ga zo door!"
+        ]
       };
 
-      const size = canvas.width, center = size/2, radius = center - 10, slice = (2*Math.PI)/labels.length;
+      const size = canvas.width, center = size/2, radius = center - 10;
+      const slice = (2*Math.PI)/SECTORS.length;
       let rotation = 0, spinning = false;
 
       function drawWheel(rot=0){
         ctx.clearRect(0,0,size,size);
         ctx.save(); ctx.translate(center, center); ctx.rotate(rot);
 
-        labels.forEach((label,i)=>{
+        SECTORS.forEach((s,i)=>{
           ctx.beginPath(); ctx.moveTo(0,0);
           ctx.arc(0,0,radius, i*slice, (i+1)*slice);
-          ctx.closePath(); ctx.fillStyle = colors[i]; ctx.fill();
+          ctx.closePath();
+          ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
 
           ctx.save();
           ctx.rotate(i*slice + slice/2);
-          ctx.translate(radius * 0.65, 0);
+          ctx.translate(radius * 0.62, 0);
           ctx.rotate(Math.PI/2);
           ctx.fillStyle = "#fff";
-          ctx.font = "bold 16px Arial";
+          ctx.font = "bold 14px Arial";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(label, 0, 0);
+          ctx.fillText(s.label, 0, 0);
           ctx.restore();
         });
 
@@ -269,18 +343,23 @@
         ctx.closePath(); ctx.fill();
       }
 
+      function pickFromPool(key){
+        const pool = POOLS[key] || ["Gefeliciteerd!"];
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
       function spin(){
         if (spinning) return;
         spinning = true;
         const resultEl = document.getElementById("result");
         if (resultEl) resultEl.textContent = "";
 
-        // Geluid afspelen (in klik-context → toegestaan)
+        // Geluid (klikcontext)
         playSpinSound();
 
-        // 4–5 rondjes + doel op een willekeurige sector
+        // 4–5 rondjes + gericht op een random sector
         const extraTurns = 4 + Math.floor(Math.random()*2);
-        const targetSector = Math.floor(Math.random() * labels.length);
+        const targetSector = Math.floor(Math.random() * SECTORS.length);
         const targetAngle = targetSector * slice + slice/2;
 
         const startRotation = rotation % (2*Math.PI);
@@ -290,19 +369,19 @@
 
         function animate(t){
           const p = Math.min(1, (t - start) / duration);
-          const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          const eased = 1 - Math.pow(1 - p, 3);
           rotation = startRotation + eased * delta;
           drawWheel(rotation);
 
           if (p < 1) requestAnimationFrame(animate);
           else {
-            const idx = Math.floor( ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice ) % labels.length;
-            const label = labels[idx];
-            const message = "🎉 " + prizes[label];
+            const idx = Math.floor( ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice ) % SECTORS.length;
+            const sector = SECTORS[idx];
+            const message = pickFromPool(sector.key);
+            const finalText = `🎉 ${sector.label}: ${message}`;
 
-            // inline result (fallback) + pop-up (hoofdweergave)
-            if (resultEl) resultEl.textContent = message;
-            openPrizeModal(message);
+            if (resultEl) resultEl.textContent = finalText;
+            openPrizeModal(finalText);
 
             spinning = false;
           }
@@ -317,3 +396,4 @@
   </script>
 </body>
 </html>
+``
