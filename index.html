@@ -173,3 +173,107 @@
 <p style="color:#666">
   Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.
 </p>
+
+        </div>
+
+        <!-- WIEL -->
+        <div class="wheel-card">
+          <canvas id="wheel" width="320" height="320"></canvas>
+          <button id="spin-btn" class="button spin-btn">Draai!</button>
+          <div id="result" class="result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+
+  const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
+  const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
+  const prizes = {
+    "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+    "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
+    "💛 Quote": "Kleine daden maken groot verschil.",
+    "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
+  };
+
+  const size = canvas.width;
+  const center = size / 2;
+  const radius = center - 10;
+  const slice = 2 * Math.PI / labels.length;
+
+  let rotation = 0;
+  let spinning = false;
+
+  function drawWheel(rot = 0) {
+    ctx.clearRect(0,0,size,size);
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(rot);
+
+    labels.forEach((label, i) => {
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,radius, i*slice, (i+1)*slice);
+      ctx.closePath();
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+
+      ctx.save();
+      ctx.rotate(i*slice + slice/2);
+      ctx.translate(radius * 0.65, 0);
+      ctx.rotate(Math.PI/2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    });
+
+    ctx.beginPath();
+    ctx.arc(0,0,28,0,2*Math.PI);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.strokeStyle = "#ff6b6b";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    document.getElementById("result").textContent = "";
+
+    const extra = 4 + Math.random()*2;
+    const target = rotation + extra * 2*Math.PI;
+    const start = performance.now();
+    const duration = 3200;
+
+    function animate(t) {
+      const p = Math.min(1, (t - start) / duration);
+      rotation = p*p*(3-2*p) * target; // ease
+      drawWheel(rotation);
+      if (p < 1) requestAnimationFrame(animate);
+      else {
+        const index = Math.floor(
+          ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
+        );
+        const label = labels[index];
+        document.getElementById("result").textContent =
+          "🎉 " + prizes[label];
+        spinning = false;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  document.getElementById("spin-btn").addEventListener("click", spin);
+  drawWheel();
+</script>
+
+</body>
+</html>
