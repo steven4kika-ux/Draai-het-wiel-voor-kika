@@ -62,6 +62,7 @@
       <p class="lead">Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🌼</p>
 
       <div class="buttons">
+        <!-- Vervang de URL hieronder door jouw echte doneerlink (indien nodig) -->
         <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon', '_blank')">Doneer nu</button>
         <button class="button" onclick="document.getElementById('spin-btn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
       </div>
@@ -101,16 +102,42 @@
     </div>
   </div>
 
-  <!-- Confetti library (CDN) -->
-  https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
-
   <script>
-    /* ======================= CONFETTI ======================= */
-    function launchConfetti() {
-      const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
-      if (typeof confetti !== 'function') return; // fail-safe
+    /* =================== CONFETTI-LOADER (on-demand) =================== */
+    // Laadt canvas-confetti alleen als het nog niet beschikbaar is.
+    function ensureConfetti() {
+      return new Promise((resolve) => {
+        if (typeof window.confetti === 'function') return resolve(true);
 
-      confetti({
+        // Wacht op bestaand laadverzoek
+        if (document.getElementById('confetti-cdn')) {
+          const check = () => {
+            if (typeof window.confetti === 'function') resolve(true);
+            else setTimeout(check, 50);
+          };
+          return check();
+        }
+
+        // Injecteer CDN-script
+        const s = document.createElement('script');
+        s.id = 'confetti-cdn';
+        s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => { console.warn('Confetti CDN kon niet laden'); resolve(false); };
+        document.body.appendChild(s);
+      });
+    }
+
+    // Vuurt confetti af in KiKa-kleuren, verzekerd van geladen library
+    async function launchConfetti() {
+      const ok = await ensureConfetti();
+      if (!ok || typeof window.confetti !== 'function') return;
+
+      const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
+
+      // Burst
+      window.confetti({
         particleCount: 120,
         spread: 70,
         origin: { y: 0.6 },
@@ -118,29 +145,29 @@
         colors: kikaColors
       });
 
-      const duration = 1000;
-      const end = Date.now() + duration;
+      // 1 seconde stream links/rechts
+      const end = Date.now() + 1000;
       (function frame() {
-        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
-        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
+        window.confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
+        window.confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     }
 
-    /* ======================= MODAL HELPERS ======================= */
+    /* =================== MODAL HELPERS =================== */
     function openPrizeModal(text) {
       const modal = document.getElementById('prizeModal');
       const txt = document.getElementById('prizeText');
       if (!modal || !txt) return;
-      txt.textContent = text;
 
+      txt.textContent = text;
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
 
       // 🎉 Confetti bij het openen van de pop-up
       launchConfetti();
 
-      // focus op de OK-knop voor accessibility
+      // Focus op OK voor toegankelijkheid
       setTimeout(() => document.getElementById('modalOkBtn')?.focus(), 0);
     }
     function closePrizeModal() {
@@ -157,17 +184,17 @@
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal?.classList.contains('show')) closePrizeModal(); });
     }
 
-    /* ======================= GELUID ======================= */
-    let spinAudio = null;
+    /* =================== GELUID (robuust) =================== */
+    let spinAudio = null;     // <audio>-instantie
     function canPlay(type){ const a=document.createElement('audio'); return !!a.canPlayType && a.canPlayType(type) !== ''; }
     function makeSpinAudio(){
-      // Gebruik het bestand dat in je repo staat
+      // Gebruik exact de bestandsnaam zoals in je repo
       if (canPlay('audio/mpeg')) return new Audio('wheel-spin-click-slow-down-101152.mp3');
-      // Eventuele ogg fallback als je die uploadt:
+      // Eventuele OGG fallback als je die uploadt:
       // if (canPlay('audio/ogg; codecs=vorbis')) return new Audio('wheel-spin.ogg');
       return null;
     }
-    function beepFallback(){
+    function beepFallback(){  // simpele piep als laatste redmiddel
       try{
         const ctx = new (window.AudioContext||window.webkitAudioContext)();
         const o=ctx.createOscillator(), g=ctx.createGain();
@@ -180,12 +207,15 @@
     function playSpinSound(){
       if(!spinAudio){ spinAudio = makeSpinAudio(); if(spinAudio) spinAudio.volume=0.7; }
       if(spinAudio){
-        try{ const p=(spinAudio.currentTime=0, spinAudio.play()); if(p?.catch) p.catch(()=>beepFallback()); }
-        catch(e){ beepFallback(); }
+        try{
+          spinAudio.currentTime = 0;
+          const p = spinAudio.play();
+          if (p && typeof p.then === 'function') p.catch(()=>beepFallback());
+        }catch(e){ beepFallback(); }
       } else { beepFallback(); }
     }
 
-    /* ======================= WIEL ======================= */
+    /* =================== WIEL =================== */
     window.addEventListener('DOMContentLoaded', () => {
       const canvas = document.getElementById("wheel");
       const ctx = canvas.getContext("2d");
@@ -245,7 +275,7 @@
         const resultEl = document.getElementById("result");
         if (resultEl) resultEl.textContent = "";
 
-        // geluid afspelen (binnen klik-context → toegestaan)
+        // Geluid afspelen (in klik-context → toegestaan)
         playSpinSound();
 
         // 4–5 rondjes + doel op een willekeurige sector
