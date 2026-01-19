@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="nl">
 <head>
@@ -7,76 +6,37 @@
   <title>Doneer aan KiKa 💛</title>
   <style>
     :root{
-      --bg:#fff6f6;
-      --card:#ffffff;
-      --text:#222;
-      --muted:#666;
-      --accent:#ff6b6b;
-      --accent-2:#ff9f43;
-      --accent-3:#1dd1a1;
-      --accent-4:#54a0ff;
+      --bg:#fff6f6; --card:#ffffff; --text:#222; --muted:#666;
+      --accent:#ff6b6b; --accent-2:#ff9f43; --accent-3:#1dd1a1; --accent-4:#54a0ff;
     }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      margin: 0;
-      padding: 0;
-      color: var(--text);
-    }
-
-    .wrapper {
-      max-width: 960px;
-      margin: 64px auto;
-      padding: 0 16px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 32px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    }
-
-    h1 { margin: 0 0 8px 0; text-align: center; }
+    body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+    .wrapper { max-width: 960px; margin: 64px auto; padding: 0 16px; }
+    .card { background: var(--card); border-radius: 20px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+    h1 { margin: 0 0 8px; text-align: center; }
     p.lead { text-align: center; color: var(--muted); margin-top: 0; }
-
-    .buttons {
-      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-      margin: 20px 0 8px 0;
-    }
-
+    .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0 8px; }
     .button {
       display: inline-flex; align-items: center; justify-content: center;
-      padding: 14px 22px; background-color: var(--accent); color: #fff;
-      font-size: 16px; font-weight: 700; line-height: 1.2; border-radius: 14px;
-      border: none; outline: none; cursor: pointer; text-decoration: none;
-      box-shadow: 0 6px 14px rgba(0,0,0,0.12); min-width: 180px;
+      padding: 14px 22px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700;
+      border-radius: 14px; border: none; outline: none; cursor: pointer; text-decoration: none;
+      box-shadow: 0 6px 14px rgba(0,0,0,.12); min-width: 180px;
     }
-
-    .note {
-      margin: 14px auto 0; font-size: 14px; color: #444; background: #ffecec;
-      display: inline-block; padding: 10px 14px; border-radius: 10px;
-    }
-
-    .grid {
-      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px;
-      align-items: center; margin-top: 18px;
-    }
-
-    .wheel-card {
-      text-align: center; background: #fffafa; border-radius: 16px;
-      padding: 16px 12px 24px; box-shadow: inset 0 0 0 1px #ffe0e0;
-    }
-
+    .note { margin: 14px auto 0; font-size: 14px; color: #444; background: #ffecec; display: inline-block; padding: 10px 14px; border-radius: 10px; }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; align-items: center; margin-top: 18px; }
+    .wheel-card { text-align: center; background: #fffafa; border-radius: 16px; padding: 16px 12px 24px; box-shadow: inset 0 0 0 1px #ffe0e0; }
     canvas { width: 100%; max-width: 320px; height: auto; }
-    #wheel {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: inset 0 0 0 1px #f1d6d6;
-    }
+    #wheel { background: #fff; border-radius: 12px; box-shadow: inset 0 0 0 1px #f1d6d6; }
     .spin-btn { margin-top: 12px; width: 100%; max-width: 320px; }
     .result { margin-top: 10px; font-size: 16px; min-height: 24px; }
+
+    /* Modal */
+    .modal { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; padding: 24px; }
+    .modal.show { display: flex; }
+    .modal__dialog { background:#fff; border-radius:16px; width:100%; max-width:520px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.25); position:relative; text-align:center; }
+    .modal__title { margin:0 0 8px; }
+    .modal__text { font-size:18px; margin:8px 0 16px; }
+    .modal__actions { display:flex; justify-content:center; margin-top:8px; }
+    .modal__close { position:absolute; top:8px; right:10px; width:36px; height:36px; border-radius:50%; border:none; background:#ff6b6b; color:#fff; font-size:22px; cursor:pointer; line-height:1; }
 
     @media (max-width: 720px){
       .wrapper { margin: 28px auto; }
@@ -92,24 +52,11 @@
   <div class="wrapper">
     <div class="card">
       <h1>Doneer aan KiKa 💛</h1>
-      <p class="lead">
-        Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🌼
-      </p>
+      <p class="lead">Na je donatie mag je aan het wiel draaien en win je een mop, feit, quote of challenge 🌼</p>
 
       <div class="buttons">
-        <button
-          class="button"
-          onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon', '_blank')"
-        >
-          Doneer nu
-        </button>
-
-        <button
-          class="button"
-          onclick="document.getElementById('spin-btn').scrollIntoView({behavior:'smooth'})"
-        >
-          Ik heb gedoneerd → Draai!
-        </button>
+        <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon', '_blank')">Doneer nu</button>
+        <button class="button" onclick="document.getElementById('spin-btn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
       </div>
 
       <div class="note">Prijzen hebben geen geldwaarde. Bedankt voor je steun!</div>
@@ -122,12 +69,9 @@
             <li>Kom terug hier en klik op <strong>Draai!</strong></li>
             <li>Ontvang je beloning: een mop, feit, quote of challenge</li>
           </ol>
-          <p style="color:#666">
-            Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.
-          </p>
+          <p style="color:#666">Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.</p>
         </div>
 
-        <!-- WIEL -->
         <div class="wheel-card">
           <canvas id="wheel" width="320" height="320" aria-label="Rad van fortuin"></canvas>
           <button id="spin-btn" class="button spin-btn">Draai!</button>
@@ -137,187 +81,26 @@
     </div>
   </div>
 
-  <!-- Confetti library (CDN) -->
+  <!-- Modal -->
+  <div id="prizeModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="prizeTitle" aria-modal="true">
+    <div class="modal__dialog">
+      <button class="modal__close" id="modalCloseBtn" aria-label="Sluiten">×</button>
+      <h2 id="prizeTitle" class="modal__title">Gefeliciteerd!</h2>
+      <p id="prizeText" class="modal__text"></p>
+      <div class="modal__actions">
+        <button class="button" id="modalOkBtn">Top!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti library -->
   https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
   <script>
-    /* ======================= CONFETTI ======================= */
+    /* ===== Confetti ===== */
     function launchConfetti() {
       const kikaColors = ['#FF6B6B', '#FF9F43', '#54A0FF', '#1DD1A1', '#FFD166'];
       if (typeof confetti !== 'function') return;
-
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 },
-        ticks: 250,
-        colors: kikaColors
-      });
-
-      const duration = 1000;
-      const end = Date.now() + duration;
-      (function frame() {
-        confetti({ particleCount: 4, angle: 60,  spread: 55, origin: { x: 0 }, colors: kikaColors });
-        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors: kikaColors });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-    }
-
-    /* ======================= GELUID (robuust) ======================= */
-    let spinAudio = null;  // instantie van Audio
-    function canPlay(type) {
-      const a = document.createElement('audio');
-      return !!a.canPlayType && a.canPlayType(type) !== '';
-    }
-    function makeSpinAudio() {
-      // Gebruik jouw echte bestandsnaam (staat in de repo!)
-      if (canPlay('audio/mpeg')) {
-        return new Audio('wheel-spin-click-slow-down-101152.mp3');
-      } else if (canPlay('audio/ogg; codecs=vorbis')) {
-        return new Audio('wheel-spin.ogg'); // optioneel, als je een .ogg uploadt
-      }
-      return null;
-    }
-    function beepFallback() {   // simpele piep als laatste redmiddel
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'triangle'; o.frequency.value = 600;
-        g.gain.setValueAtTime(0.15, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
-        o.connect(g); g.connect(ctx.destination);
-        o.start(); o.stop(ctx.currentTime + 0.22);
-      } catch(e) {}
-    }
-    function playSpinSound() {
-      if (!spinAudio) { spinAudio = makeSpinAudio(); if (spinAudio) spinAudio.volume = 0.7; }
-      if (spinAudio) {
-        try {
-          spinAudio.currentTime = 0;
-          const p = spinAudio.play();
-          if (p && typeof p.then === 'function') p.catch(() => beepFallback());
-        } catch(e) { beepFallback(); }
-      } else {
-        beepFallback();
-      }
-    }
-
-    /* ======================= WIEL ======================= */
-    window.addEventListener('DOMContentLoaded', () => {
-      const canvas = document.getElementById("wheel");
-      const ctx = canvas.getContext("2d");
-
-      const labels = ["😂 Mop", "💡 Feit", "💛 Quote", "🔥 Challenge"];
-      const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff"];
-      const prizes = {
-        "😂 Mop": "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
-        "💡 Feit": "Elke donatie helpt onderzoek naar betere behandelingen voor kinderen.",
-        "💛 Quote": "Kleine daden maken groot verschil.",
-        "🔥 Challenge": "Stuur vandaag iemand een lief bericht."
-      };
-
-      const size = canvas.width;
-      const center = size / 2;
-      const radius = center - 10;
-      const slice = (2 * Math.PI) / labels.length;
-
-      let rotation = 0;
-      let spinning = false;
-
-      function drawWheel(rot = 0) {
-        ctx.clearRect(0,0,size,size);
-        ctx.save();
-        ctx.translate(center, center);
-        ctx.rotate(rot);
-
-        labels.forEach((label, i) => {
-          ctx.beginPath();
-          ctx.moveTo(0,0);
-          ctx.arc(0,0,radius, i*slice, (i+1)*slice);
-          ctx.closePath();
-          ctx.fillStyle = colors[i];
-          ctx.fill();
-
-          ctx.save();
-          ctx.rotate(i*slice + slice/2);
-          ctx.translate(radius * 0.65, 0);
-          ctx.rotate(Math.PI/2);
-          ctx.fillStyle = "#fff";
-          ctx.font = "bold 16px Arial";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(label, 0, 0);
-          ctx.restore();
-        });
-
-        // midden
-        ctx.beginPath();
-        ctx.arc(0,0,28,0,2*Math.PI);
-        ctx.fillStyle = "#fff";
-        ctx.fill();
-        ctx.strokeStyle = "#ff6b6b";
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        ctx.restore();
-
-        // pijl RECHTS (wijst naar links) -> eenvoudiger voor de index-berekening
-        ctx.beginPath();
-        ctx.fillStyle = "#ff6b6b";
-        const px = center + radius + 6, py = center;
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + 18, py - 12);
-        ctx.lineTo(px + 18, py + 12);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      function spin() {
-        if (spinning) return;
-        spinning = true;
-        const resultEl = document.getElementById("result");
-        if (resultEl) resultEl.textContent = "";
-
-        // geluid starten (gebeurt in klik-context → toegestaan)
-        playSpinSound();
-
-        // 4–5 rondjes + gericht op een random sector
-        const extraTurns = 4 + Math.floor(Math.random()*2);
-        const targetSector = Math.floor(Math.random() * labels.length);
-        const targetAngle = targetSector * slice + slice/2;
-
-        const startRotation = rotation % (2*Math.PI);
-        const delta = (2*Math.PI)*extraTurns + targetAngle + startRotation;
-        const duration = 3200 + Math.random()*600;
-        const start = performance.now();
-
-        function animate(t) {
-          const p = Math.min(1, (t - start) / duration);
-          const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
-          rotation = startRotation + eased * delta;
-          drawWheel(rotation);
-
-          if (p < 1) requestAnimationFrame(animate);
-          else {
-            // pijl wijst naar rechts, dus deze index werkt correct
-            const idx = Math.floor(
-              ((2*Math.PI - (rotation % (2*Math.PI))) % (2*Math.PI)) / slice
-            ) % labels.length;
-
-            const label = labels[idx];
-            if (resultEl) resultEl.textContent = "🎉 " + prizes[label];
-
-            launchConfetti();
-            spinning = false;
-          }
-        }
-        requestAnimationFrame(animate);
-      }
-
-      // initial draw en knop-koppeling
-      drawWheel();
-      document.getElementById("spin-btn").addEventListener("click", spin);
-    });
-  </script>
-</body>
-</html>
+      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, ticks: 250, colors: kikaColors });
+      const duration = 1000, end = Date.now() + duration;
+      (function frame(){
