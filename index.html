@@ -178,7 +178,6 @@ canvas{
         onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
         Doneer nu
       </button>
-
       <button class="button"
         onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
         Ik heb gedoneerd → Draai!
@@ -209,7 +208,7 @@ canvas{
 </div>
 
 <script>
-/* PRIJZEN */
+// ✅ PRIJZEN (afgesloten!)
 const prizes=[
   "😂 Mop: Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
   "💡 Feit: Elke donatie helpt KiKa écht.",
@@ -218,3 +217,84 @@ const prizes=[
   "👏 Compliment: Wat goed dat jij dit doet!",
   "🧩 Raadsel: Wat wordt natter terwijl het droogt? Een handdoek!",
   "🍀 Geluk: Vandaag heb jij extra geluk verdiend!"
+];
+
+// ✅ WIEL
+const canvas=document.getElementById("wheel");
+const ctx=canvas.getContext("2d");
+const angle=2*Math.PI/prizes.length;
+let rotation=0;
+let spinning=false;
+
+function draw(){
+  ctx.clearRect(0,0,300,300);
+  prizes.forEach((_,i)=>{
+    ctx.beginPath();
+    ctx.moveTo(150,150);
+    ctx.arc(150,150,140,i*angle+rotation,(i+1)*angle+rotation);
+    ctx.fillStyle=[
+      "#ff6b6b","#ff9f43","#1dd1a1",
+      "#54a0ff","#7d5fff","#ffd166","#00d2d3"
+    ][i];
+    ctx.fill();
+  });
+}
+draw();
+
+// ✅ SPIN + GELUID
+document.getElementById("spinBtn").onclick=()=>{
+  if(spinning) return;
+  spinning=true;
+
+  // iOS‑proof audio
+  const sound=new Audio("wheel-spin-click-slow-down-101152.mp3");
+  sound.volume=0.8;
+  sound.play().catch(()=>{});
+
+  const target=Math.random()*2*Math.PI;
+  const start=performance.now();
+
+  function anim(t){
+    const p=Math.min(1,(t-start)/2800);
+    rotation = target * p * p * (3 - 2*p);
+    draw();
+    if(p<1) requestAnimationFrame(anim);
+    else{
+      const index=Math.floor(((2*Math.PI-rotation)%(2*Math.PI))/angle);
+      showModal(prizes[index]);
+      spinning=false;
+    }
+  }
+  requestAnimationFrame(anim);
+};
+
+// ✅ MODAL
+const modal=document.getElementById("modal");
+function showModal(text){
+  document.getElementById("prizeText").textContent=text;
+  modal.classList.add("show");
+
+  const subject=encodeURIComponent("Mijn KiKa‑prijs 🎉");
+  const body=encodeURIComponent(
+`Ik heb deze prijs gewonnen via het KiKa‑draaiwiel:
+
+${text}
+
+Steun KiKa via:
+https://24kika.nl/doneren/?deelnemer=steven-arbon`
+  );
+
+  document.getElementById("mailBtn").onclick=()=>
+    location.href=`mailto:?subject=${subject}&body=${body}`;
+}
+
+document.getElementById("closeBtn").onclick=()=>{
+  modal.classList.remove("show");
+};
+modal.onclick=e=>{
+  if(e.target===modal) modal.classList.remove("show");
+};
+</script>
+
+</body>
+</html>
