@@ -17,6 +17,41 @@
   --soft:#fff0f0;
 }
 
+/* Modal tekst-hiërarchie */
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+.modal-subtitle {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Prijs highlight */
+.prize-box {
+  background: #fff5f5;
+  border-radius: 16px;
+  padding: 14px 12px;
+  margin: 12px 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+/* Knoppen rustiger maken */
+.button.primary {
+  background: linear-gradient(180deg, #ff6b6b, #ff5252);
+}
+
+.button.secondary {
+  background: #f1f1f1;
+  color: #555;
+  box-shadow: none;
+}
+
+  
 *{box-sizing:border-box}
 
 body{
@@ -223,13 +258,17 @@ canvas{
 <!-- MODAL -->
 <div id="modal" class="modal">
   <div class="modal-box">
-    <h2>🎉 Gefeliciteerd!</h2>
-    <p id="prizeText"></p>
+    <h2 class="modal-title">🎉 Gefeliciteerd!</h2>
+<p class="modal-subtitle">Dankjewel voor je steun aan KiKa 💛</p>
 
-    <div class="modal-actions">
-      <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
-      <button class="button" id="closeBtn">Sluiten</button>
-    </div>
+<div class="prize-box">
+  <span id="prizeText"></span>
+</div>
+
+<div class="modal-actions">
+  <button class="button primary" id="mailBtn">📧 Mail mijn prijs</button>
+  <button class="button secondary" id="closeBtn">Sluiten</button>
+</div>
   </div>
 </div>
 
@@ -332,13 +371,41 @@ document.getElementById("spinBtn").onclick=()=>{
 
 /* MODAL */
 const modal=document.getElementById("modal");
-function showModal(text){
-  document.getElementById("prizeText").textContent=text;
-  modal.classList.add("show");
 
-  const subject=encodeURIComponent("Mijn KiKa‑prijs 🎉");
-  const body=encodeURIComponent(
-`Ik heb deze prijs gewonnen via het KiKa‑draaiwiel:
+/* Modal tekst-hiërarchie */
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+.modal-subtitle {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Prijs highlight */
+.prize-box {
+  background: #fff5f5;
+  border-radius: 16px;
+  padding: 14px 12px;
+  margin: 12px 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+/* Knoppen rustiger maken */
+.button.primary {
+  background: linear-gradient(180deg, #ff6b6b, #ff5252);
+}
+
+.button.secondary {
+  background: #f1f1f1;
+  color: #555;
+  box-shadow: none;
+}
+
 
 ${text}
 
