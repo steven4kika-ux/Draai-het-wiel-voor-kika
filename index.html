@@ -99,9 +99,12 @@
       <h2 id="prizeTitle" class="modal__title">Gefeliciteerd!</h2>
       <p id="prizeText" class="modal__text"></p>
       <div class="modal__actions">
-        <button class="button" id="modalOkBtn">Top!</button>
-      </div>
-    </div>
+
+<div class="modal__actions" style="gap:12px; flex-wrap:wrap;">
+  <button class="button" id="modalMailBtn">📧 Mail mijn prijs</button>
+  <button class="button" id="modalOkBtn">Sluiten</button>
+</div>
+
   </div>
 
   <script>
@@ -136,15 +139,43 @@
     }
 
     /* =================== MODAL HELPERS =================== */
-    function openPrizeModal(text) {
-      const modal = document.getElementById('prizeModal');
-      const txt = document.getElementById('prizeText');
-      if (!modal || !txt) return;
-      txt.textContent = text;
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden', 'false');
-      launchConfetti(); // 🎉 confetti bij opening pop-up
-      setTimeout(() => document.getElementById('modalOkBtn')?.focus(), 0);
+  
+function openPrizeModal(text) {
+  const modal = document.getElementById('prizeModal');
+  const txt = document.getElementById('prizeText');
+  const mailBtn = document.getElementById('modalMailBtn');
+
+  if (!modal || !txt || !mailBtn) return;
+
+  txt.textContent = text;
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+
+  // 🎉 Confetti bij openen
+  launchConfetti();
+
+  // 📧 Mail inhoud voorbereiden
+  const subject = encodeURIComponent("Mijn prijs voor KiKa 🎉");
+  const body = encodeURIComponent(
+`Ik heb net een prijs gewonnen via de KiKa-draaiwiel-actie!
+
+🎁 Mijn prijs:
+${text}
+
+💛 Steun KiKa via deze actie:
+https://steven4kika-ux.github.io/Draai-het-wiel-voor-kika/
+
+Dankjewel KiKa & organisatie!`
+  );
+
+  mailBtn.onclick = () => {
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  // focus voor toegankelijkheid
+  setTimeout(() => document.getElementById('modalOkBtn')?.focus(), 0);
+}
+
     }
     function closePrizeModal() {
       const modal = document.getElementById('prizeModal');
