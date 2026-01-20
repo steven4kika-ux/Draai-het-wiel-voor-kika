@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="nl">
 <head>
@@ -7,58 +8,37 @@
 
 <style>
 :root{
-  --bg:#fff3f4;
-  --card:#ffffff;
-  --accent:#ff6b6b;
-  --accent-dark:#ff5252;
-  --muted:#666;
+  --bg:#fff3f4; --card:#ffffff; --accent:#ff6b6b; --accent-dark:#ff5252; --muted:#666;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--bg),#ffffff);
-}
+body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,var(--bg),#ffffff); }
+
+/* Layout */
 .wrapper{max-width:440px;margin:28px auto;padding:0 14px}
 .card{background:#fff;border-radius:28px;padding:24px 22px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.12)}
 h1{margin:0 0 6px;font-size:28px}
 .lead{font-size:15px;color:var(--muted);margin-bottom:18px}
+
+/* Buttons */
 .buttons{display:flex;gap:12px;flex-direction:column;margin-bottom:14px}
-.button{
-  padding:16px;font-size:18px;font-weight:800;border:none;border-radius:20px;
-  cursor:pointer;color:#fff;
-  background:linear-gradient(180deg,var(--accent),var(--accent-dark))
-}
+.button{padding:16px;font-size:18px;font-weight:800;border:none;border-radius:20px;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--accent),var(--accent-dark))}
 .button.secondary{background:#f1f1f1;color:#555}
 .note{background:#fff0f0;padding:10px;border-radius:14px;font-size:14px;margin-bottom:18px}
 
+/* Wheel */
 .wheel-card{background:#fff6f6;border-radius:30px;padding:22px 18px 26px}
-
 .wheel-wrap{position:relative;display:inline-block}
 canvas{width:92vw;max-width:320px;height:auto;background:#fff;border-radius:18px}
-.center-hub{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:64px;height:64px;border-radius:50%;
-  background:#fff;
-  box-shadow:0 6px 16px rgba(0,0,0,.25), inset 0 0 0 4px var(--accent)
-}
+.center-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25), inset 0 0 0 4px var(--accent)}
 .spin-btn{margin-top:18px}
 
-.modal{
-  position:fixed;inset:0;display:none;
-  align-items:center;justify-content:center;
-  background:rgba(0,0,0,.55);padding:18px
-}
+/* Modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:18px}
 .modal.show{display:flex}
-.modal-box{
-  background:#fff;border-radius:28px;padding:26px 24px 30px;
-  max-width:360px;width:100%;text-align:center
-}
-.prize-box{
-  background:#fff5f5;border-radius:16px;padding:14px;
-  font-size:18px;font-weight:700;color:#ff6b6b;
-  white-space:pre-line
-}
+.modal-box{background:#fff;border-radius:28px;padding:26px 24px 30px;max-width:360px;width:100%;text-align:center}
+.prize-box{background:#fff5f5;border-radius:16px;padding:14px;font-size:18px;font-weight:700;color:#ff6b6b;white-space:pre-line}
 .modal-actions{display:flex;flex-direction:column;gap:12px;margin-top:18px}
 </style>
 </head>
@@ -92,16 +72,18 @@ canvas{width:92vw;max-width:320px;height:auto;background:#fff;border-radius:18px
     <h2>🎉 Gefeliciteerd!</h2>
     <div class="prize-box"><span id="prizeText"></span></div>
     <div class="modal-actions">
+      <button class="button" id="againBtn">🔄 Nog een keer draaien</button>
       <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
       <button class="button secondary" id="closeBtn">Sluiten</button>
     </div>
   </div>
 </div>
 
-<!-- ✅ JUISTE CONFETTI -->
-https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js
+<!-- Confetti -->
+<script/cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
 <script>
+/* Data */
 const prizeData={
   "😂 Mop":["Waarom kan een skeeleraar nooit liegen?\nHij glijdt er altijd mee weg!"],
   "💡 Feit":["Elke donatie helpt KiKa onderzoek te versnellen."],
@@ -111,37 +93,47 @@ const prizeData={
   "🧩 Raadsel":["Wat wordt natter terwijl het droogt?\nEen handdoek!"],
   "🍀 Geluk":["Vandaag is een goede dag voor iets moois."]
 };
+const categories = Object.keys(prizeData);
 
-const categories=Object.keys(prizeData);
+/* Canvas wiel */
 const canvas=document.getElementById("wheel");
 const ctx=canvas.getContext("2d");
 const angle=2*Math.PI/categories.length;
-let rot=0,spinning=false;
+let rot=0, spinning=false;
 
 function draw(){
   ctx.clearRect(0,0,300,300);
   categories.forEach((label,i)=>{
-    ctx.beginPath();
-    ctx.moveTo(150,150);
+    ctx.beginPath(); ctx.moveTo(150,150);
     ctx.arc(150,150,140,i*angle+rot,(i+1)*angle+rot);
     ctx.fillStyle=["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff","#7d5fff","#ffd166","#00d2d3"][i];
     ctx.fill();
 
-    ctx.save();
-    ctx.translate(150,150);
-    ctx.rotate(i*angle+angle/2+rot);
-    ctx.fillStyle="#fff";
-    ctx.font="bold 13px Arial";
-    ctx.textAlign="center";
-    ctx.fillText(label,95,0);
-    ctx.restore();
+    ctx.save(); ctx.translate(150,150); ctx.rotate(i*angle+angle/2+rot);
+    ctx.fillStyle="#fff"; ctx.font="bold 13px Arial"; ctx.textAlign="center";
+    ctx.fillText(label,95,0); ctx.restore();
   });
 }
 draw();
 
-spinBtn.onclick=()=>{
-  if(spinning) return;
-  spinning=true;
+/* Spin + cooldown */
+let lastSpinAt = 0;
+const MIN_INTERVAL = 500; // ms
+
+const spinBtn = document.getElementById('spinBtn');
+const modal   = document.getElementById('modal');
+const prizeText = document.getElementById('prizeText');
+const mailBtn = document.getElementById('mailBtn');
+const closeBtn= document.getElementById('closeBtn');
+const againBtn= document.getElementById('againBtn');
+
+spinBtn.onclick = () => {
+  const now = Date.now();
+  if (now - lastSpinAt < MIN_INTERVAL) return;
+  lastSpinAt = now;
+
+  if (spinning) return;
+  spinning = true;
 
   new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
 
@@ -156,17 +148,32 @@ spinBtn.onclick=()=>{
     else{
       const i=Math.floor(((2*Math.PI-rot)%(2*Math.PI))/angle);
       const cat=categories[i];
-      const txt=prizeData[cat][0];
-      prizeText.textContent=cat+"\n\n"+txt;
-      modal.classList.add("show");
-      confetti({particleCount:120,spread:70,origin:{y:.6}});
-      mailBtn.onclick=()=>location.href=`mailto:?subject=Mijn KiKa-prijs 🎉&body=${encodeURIComponent(cat+"\n\n"+txt)}`;
-      spinning=false;
+      const txt=prizeData[cat][Math.floor(Math.random()*prizeData[cat].length)];
+      showModal(cat, txt);
+      spinning=false; // klaar met deze draai
     }
   }
   requestAnimationFrame(anim);
 };
-closeBtn.onclick=()=>modal.classList.remove("show");
+
+function showModal(cat, txt){
+  prizeText.textContent = `${cat}\n\n${txt}`;
+  modal.classList.add("show");
+  confetti({ particleCount: 120, spread: 70, origin: { y: .6 } });
+
+  // mail
+  const subject = "Mijn KiKa-prijs 🎉";
+  const body = encodeURIComponent(`${cat}\n\n${txt}\n\nSteun KiKa:\nhttps://24kika.nl/doneren/?deelnemer=steven-arbon`);
+  mailBtn.onclick = () => location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+
+  // 🔄 Nog een keer
+  againBtn.onclick = () => {
+    modal.classList.remove('show');
+    setTimeout(() => { spinBtn.click(); }, 800);
+  };
+}
+
+closeBtn.onclick = () => modal.classList.remove("show");
 </script>
 
 </body>
