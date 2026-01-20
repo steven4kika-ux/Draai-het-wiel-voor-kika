@@ -1,75 +1,108 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Draai het wiel voor KiKa 💛</title>
 
 <style>
-:root{
-  --bg:#fff3f3;
-  --card:#ffffff;
-  --accent:#ff6b6b;
-  --accent-dark:#ff5252;
-  --text:#222;
-  --muted:#777;
-  --soft:#fff0f0;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #fff2f2;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
 }
 
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--bg),#ffffff);
-  color:var(--text);
+.card {
+  background: white;
+  border-radius: 24px;
+  max-width: 420px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.12);
+  text-align: center;
 }
 
-/* LAYOUT */
-.wrapper{
-  max-width:860px;
-  margin:0 auto;
-  padding:20px 14px 32px;
+h1 {
+  margin-top: 0;
 }
 
-.card{
-  background:var(--card);
-  border-radius:24px;
-  padding:22px 20px 26px;
-  box-shadow:
-    0 10px 30px rgba(0,0,0,.08),
-    inset 0 0 0 1px rgba(255,107,107,.08);
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 16px;
+  border: none;
+  background: #ff6b6b;
+  color: white;
+  cursor: pointer;
 }
 
-/* TYPO */
-h1{
-  text-align:center;
-  margin:4px 0 6px;
-  font-size:28px;
-  letter-spacing:.2px;
+canvas {
+  width: 100%;
+  max-width: 260px;
+  margin: 20px auto 10px;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>Doneer aan KiKa 💛</h1>
+  <p>Ik ben Steven en skeeler 24 uur voor KiKa.<br>Dit wiel is mijn bedankje 🎡</p>
+
+  <canvas id="wheel" width="260" height="260"></canvas>
+
+  <button id="spinBtn">Draai!</button>
+</div>
+
+<script>
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const prizes = ["😂","💡","💛","🔥","👏","🧩"];
+const colors = ["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff","#7d5fff","#f368e0"];
+const slice = 2 * Math.PI / prizes.length;
+
+let angle = 0;
+let spinning = false;
+
+function draw() {
+  ctx.clearRect(0,0,260,260);
+  for (let i=0;i<prizes.length;i++) {
+    ctx.beginPath();
+    ctx.moveTo(130,130);
+    ctx.arc(130,130,120, i*slice+angle, (i+1)*slice+angle);
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+  }
 }
 
-.lead{
-  text-align:center;
-  color:var(--muted);
-  font-size:15px;
-  line-height:1.45;
-  margin:0 auto 18px;
-  max-width:620px;
-}
+draw();
 
-/* BUTTONS */
-.buttons{
-  display:flex;
-  gap:12px;
-  flex-direction:column;
-  margin-bottom:14px;
-}
+document.getElementById("spinBtn").onclick = () => {
+  if (spinning) return;
+  spinning = true;
 
-.button{
-  padding:16px 18px;
-  font-size:18px;
-  font-weight:800;
-  color:#fff;
-  background:linear-gradient(180deg,var(--accent),var(--accent-dark));
+  const target = Math.random() * 2 * Math.PI;
+  const start = performance.now();
+
+  function animate(t) {
+    const p = Math.min(1,(t-start)/2500);
+    angle = target * p * p * (3-2*p);
+    draw();
+    if (p < 1) requestAnimationFrame(animate);
+    else spinning = false;
+  }
+  requestAnimationFrame(animate);
+};
+</script>
+
+</body>
+</html>
