@@ -186,6 +186,12 @@ canvas{
 
 
 <script>
+  
+function resetSpin(){
+  spinning = false;
+}
+``
+
 /* ===== PRIJZEN ===== */
 const prizeData = {
   "😂 Mop": ["Waarom kan een skeeleraar nooit liegen?\nHij glijdt er altijd mee weg!"],
@@ -237,9 +243,17 @@ const mailBtn = document.getElementById("mailBtn");
 const closeBtn = document.getElementById("closeBtn");
 const againBtn = document.getElementById("againBtn");
 
+  
+let lastSpin = 0;
+const COOLDOWN = 500; // ms
 spinBtn.onclick = () => {
+  const now = Date.now();
+  if (now - lastSpin < COOLDOWN) return;
+  lastSpin = now;
+
   if (spinning) return;
   spinning = true;
+
 
   new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
 
@@ -276,12 +290,17 @@ function showModal(cat, txt){
     location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
 }
 
+
 againBtn.onclick = () => {
   modal.classList.remove("show");
-  setTimeout(()=>spinBtn.click(),800);
+  resetSpin();
+  setTimeout(() => {
+    spinBtn.click();
+  }, 600);
 };
 
-closeBtn.onclick = () => modal.classList.remove("show");
+
+close
 </script>
 
 </body>
