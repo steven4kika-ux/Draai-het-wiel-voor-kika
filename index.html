@@ -8,180 +8,422 @@
 
 <style>
 :root{
-  --bg:#fff6f6; --card:#ffffff; --accent:#ff6b6b; --text:#222;
+  --bg: #fff6f6;
+  --card: #ffffff;
+  --text: #222;
+  --muted: #555;
+  --accent: #ff6b6b;      /* primary */
+  --accent-2: #ff9f43;    /* orange */
+  --accent-3: #1dd1a1;    /* green */
+  --accent-4: #54a0ff;    /* blue */
 }
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
-.wrapper{max-width:960px;margin:40px auto;padding:0 16px;}
-.card{background:#fff;border-radius:20px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,.1);}
-h1{text-align:center;margin:0;}
-p.lead{text-align:center;color:#555;}
-.buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:20px 0;}
-.button{padding:14px 22px;background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:14px;cursor:pointer;min-width:180px}
-.note{background:#ffecec;padding:10px;border-radius:10px;font-size:14px;text-align:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
-@media(max-width:720px){.grid{grid-template-columns:1fr}}
-.wheel-card{text-align:center;background:#fffafa;padding:16px;border-radius:16px}
-canvas{width:100%;max-width:320px}
-.spin-btn{margin-top:12px;width:100%}
+
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(180deg, var(--bg), #fff);
+  color: var(--text);
+}
+
+.wrapper{max-width: 980px; margin: 40px auto; padding: 0 16px;}
+.card{
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.10);
+}
+
+h1{margin:0 0 6px; text-align:center; letter-spacing:.2px;}
+p.lead{margin: 0 auto 12px; text-align:center; color: var(--muted); max-width: 720px;}
+
+.buttons{
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin: 18px 0 8px;
+}
+.button{
+  appearance:none; border:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding: 14px 22px; min-width: 180px; border-radius: 14px;
+  background: var(--accent); color:#fff; font-weight:800; letter-spacing:.2px;
+  cursor:pointer; text-decoration:none; box-shadow: 0 8px 18px rgba(255,107,107,.35);
+  transition: transform .05s ease, box-shadow .2s ease, background .2s ease;
+}
+.button:hover{ transform: translateY(-1px); box-shadow: 0 12px 22px rgba(255,107,107,.35);}
+.button:active{ transform: translateY(0); box-shadow: 0 6px 12px rgba(0,0,0,.15); }
+.button:focus-visible{ outline: 3px solid #000; outline-offset: 2px; }
+.button.secondary{ background: #444; box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+
+.note{
+  background: #ffecec; color:#444; padding:10px 14px; border-radius: 10px;
+  font-size: 14px; text-align:center; margin: 12px auto 0; display:inline-block;
+}
+
+.grid{
+  display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; align-items: center; margin-top: 18px;
+}
+@media (max-width: 820px){ .grid{grid-template-columns: 1fr;} }
+
+.info h3{margin: 0 0 8px;}
+.info p, .info li{line-height:1.5; color:#444;}
+
+.wheel-card{
+  position: relative;
+  text-align:center;
+  background: #fffafa;
+  border-radius: 16px;
+  padding: 16px 12px 24px;
+  box-shadow: inset 0 0 0 1px #ffdede, 0 10px 26px rgba(0,0,0,.06);
+}
+
+/* Wheel wrapper + pointer */
+.wheel-wrap{ position: relative; display:inline-block; }
+canvas{ width: 100%; max-width: 340px; height: auto; border-radius: 12px; background:#fff; box-shadow: inset 0 0 0 1px #f2d7d7; }
+.pointer{
+  position:absolute; right: -6px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 16px solid transparent; border-bottom: 16px solid transparent;
+  border-left: 22px solid var(--accent);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
+}
+
+.spin-btn{ margin-top: 12px; width: 100%; max-width: 340px; }
+
+.result{ margin-top:10px; min-height:24px; color:#2d5a27; font-weight:600; }
 
 /* Modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:999;}
-.modal.show{display:flex}
-.modal-box{background:#fff;border-radius:16px;padding:24px;max-width:500px;width:100%;text-align:center;position:relative}
-.modal-close{position:absolute;right:10px;top:10px;background:#ff6b6b;color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer}
-.modal-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.modal{ position:fixed; inset:0; background: rgba(0,0,0,.42); display:none; align-items:center; justify-content:center; z-index:9999; padding:24px; }
+.modal.show{ display:flex; }
+.modal-box{
+  background:#fff; border-radius: 18px; padding: 22px; width: 100%; max-width: 540px; text-align:center; position:relative;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+}
+.modal-close{
+  position:absolute; right:10px; top:10px; width:36px; height:36px; border-radius:50%;
+  border:none; background: var(--accent); color:#fff; font-size: 20px; cursor:pointer;
+}
+.modal-title{ margin: 6px 0 4px; }
+.modal-text{ font-size: 18px; margin: 8px 0 16px; color:#222; }
+.modal-actions{ display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+
+@media (max-width: 720px){
+  .wrapper{ margin: 24px auto; }
+  .card{ padding: 20px; }
+  canvas{ max-width: 300px; }
+  .spin-btn{ max-width: 300px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .button{ transition: none; }
+}
 </style>
 </head>
 
 <body>
+  <div class="wrapper">
+    <div class="card">
+      <h1>Doneer aan KiKa 💛</h1>
+      <p class="lead">
+        Ik ben Steven en in september skeeler ik 24 uur voor KiKa.
+        Dit draaiwiel is mijn bedankje voor jouw steun! 🎡
+      </p>
 
-<div class="wrapper">
-  <div class="card">
-    <h1>Doneer aan KiKa 💛</h1>
-    <p class="lead">
-      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.
-      Dit draaiwiel is mijn bedankje voor jouw steun! 🎡
-    </p>
-
-    <div class="buttons">
-      <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
-        Doneer nu
-      </button>
-      <button class="button" onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
-        Ik heb gedoneerd → Draai!
-      </button>
-    </div>
-
-    <div class="note">Prijzen hebben geen geldwaarde. Bedankt voor je steun!</div>
-
-    <div class="grid">
-      <div>
-        <h3>Hoe werkt het?</h3>
-        <ol>
-          <li>Doneer aan KiKa</li>
-          <li>Draai aan het wiel</li>
-          <li>Mail jezelf je prijs 📧</li>
-        </ol>
+      <div class="buttons">
+        <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
+          Doneer nu
+        </button>
+        <button class="button" onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
+          Ik heb gedoneerd → Draai!
+        </button>
       </div>
 
-      <div class="wheel-card">
-        <canvas id="wheel" width="320" height="320"></canvas>
-        <button id="spinBtn" class="button spin-btn">Draai!</button>
+      <div class="note">Prijzen hebben geen geldwaarde. Bedankt voor je steun!</div>
+
+      <div class="grid">
+        <div class="info">
+          <h3>Hoe werkt het?</h3>
+          <ol>
+            <li>Doneer aan KiKa</li>
+            <li>Draai aan het wiel</li>
+            <li>Mail jezelf je prijs 📧</li>
+          </ol>
+          <p>Tip: deel de doneerlink met vrienden en familie – elke euro helpt onderzoek.</p>
+        </div>
+
+        <div class="wheel-card">
+          <div class="wheel-wrap">
+            <canvas id="wheel" width="340" height="340" aria-label="Rad van fortuin"></canvas>
+            <div class="pointer" aria-hidden="true"></div>
+          </div>
+          <button id="spinBtn" class="button spin-btn" aria-label="Draai aan het wiel (Enter/Spatie werkt ook)">Draai!</button>
+          <div id="result" class="result" role="status" aria-live="polite"></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- POP‑UP -->
-<div id="modal" class="modal">
-  <div class="modal-box">
-    <button class="modal-close" id="modalClose">×</button>
-    <h2>🎉 Gefeliciteerd!</h2>
-    <p id="prizeText"></p>
-    <div class="modal-actions">
-      <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
-      <button class="button" id="closeBtn">Sluiten</button>
+  <!-- Pop-up / modal -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose" aria-label="Sluiten">×</button>
+      <h2 id="modalTitle" class="modal-title">🎉 Gefeliciteerd!</h2>
+      <p id="prizeText" class="modal-text"></p>
+      <div class="modal-actions">
+        <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
+        <button class="button secondary" id="closeBtn">Sluiten</button>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
-/* ===== confetti loader ===== */
-function loadConfetti(){
-  return new Promise(r=>{
-    if(window.confetti)return r()
-    const s=document.createElement("script")
-    s.src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"
-    s.onload=r;document.body.appendChild(s)
-  })
-}
-function confettiBurst(){
-  loadConfetti().then(()=>{
-    confetti({particleCount:150,spread:70,origin:{y:0.6}})
-  })
-}
-
-/* ===== prijzen ===== */
-const sectors=[
-  {label:"😂 Mop",items:["Waarom lachen skeeleraars zo veel? Ze rollen overal in!","Ik vroeg mijn wiel om rust. Hij bleef maar doorgaan."]},
-  {label:"💡 Feit",items:["Lachen verlaagt stress.","Elke donatie helpt KiKa écht."]},
-  {label:"💛 Quote",items:["Kleine daden maken groot verschil.","Samen kom je verder."]},
-  {label:"🔥 Challenge",items:["Stuur vandaag iemand een lief bericht.","Deel de KiKa‑link met 2 vrienden."]},
-  {label:"👏 Compliment",items:["Wat ben jij goed bezig!","Dankjewel voor jouw inzet!"]},
-  {label:"🧩 Raadsel",items:["Wat wordt natter terwijl het droogt? Een handdoek!"]},
-]
-
-const canvas=document.getElementById("wheel")
-const ctx=canvas.getContext("2d")
-const radius=160,center=160,angle=2*Math.PI/sectors.length
-let rot=0,busy=false
-
-function draw(){
-  ctx.clearRect(0,0,320,320)
-  sectors.forEach((s,i)=>{
-    ctx.beginPath()
-    ctx.moveTo(center,center)
-    ctx.arc(center,center,radius,i*angle+rot,(i+1)*angle+rot)
-    ctx.fillStyle=["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff","#7d5fff","#f368e0"][i]
-    ctx.fill()
-    ctx.save()
-    ctx.translate(center,center)
-    ctx.rotate(i*angle+angle/2+rot)
-    ctx.textAlign="right"
-    ctx.fillStyle="#fff"
-    ctx.font="bold 14px Arial"
-    ctx.fillText(s.label,140,5)
-    ctx.restore()
-  })
-}
-
-draw()
-
-document.getElementById("spinBtn").onclick=()=>{
-  if(busy)return;busy=true
-  const spins=5+Math.random()*3
-  const target=(Math.random()*2*Math.PI)
-  const start=performance.now()
-
-  function anim(t){
-    const p=Math.min(1,(t-start)/3000)
-    rot=(spins*2*Math.PI+target)*p*p*(3-2*p)
-    draw()
-    if(p<1)requestAnimationFrame(anim)
-    else{
-      const index=((Math.ceil((2*Math.PI-rot)%(2*Math.PI)/angle)))%sectors.length
-      const prize=sectors[index]
-      const text=prize.items[Math.floor(Math.random()*prize.items.length)]
-      showModal(`🎁 ${prize.label}: ${text}`)
-      busy=false
+/* ================== Confetti loader (on-demand) ================== */
+function ensureConfetti(){
+  return new Promise(res=>{
+    if(typeof window.confetti==='function') return res(true);
+    const existing = document.getElementById('confetti-cdn');
+    if(existing){
+      const check=()=>{ if(typeof window.confetti==='function') res(true); else setTimeout(check,50); };
+      return check();
     }
-  }
-  requestAnimationFrame(anim)
+    const s=document.createElement('script');
+    s.id='confetti-cdn';
+    s.src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+    s.async=true;
+    s.onload=()=>res(true);
+    s.onerror=()=>{ console.warn('Confetti CDN kon niet laden'); res(false); };
+    document.body.appendChild(s);
+  });
+}
+async function launchConfetti(){
+  const ok = await ensureConfetti();
+  if(!ok || typeof window.confetti!=='function') return;
+  const kika = ['#FF6B6B','#FF9F43','#54A0FF','#1DD1A1','#FFD166'];
+  window.confetti({ particleCount:140, spread:70, origin:{y:0.6}, colors:kika, ticks:240 });
+  const end = Date.now()+1000;
+  (function frame(){
+    window.confetti({ particleCount:4, angle:60, spread:55, origin:{x:0}, colors:kika });
+    window.confetti({ particleCount:4, angle:120, spread:55, origin:{x:1}, colors:kika });
+    if(Date.now()<end) requestAnimationFrame(frame);
+  })();
 }
 
-/* ===== modal + mail ===== */
-const modal=document.getElementById("modal")
-function showModal(text){
-  document.getElementById("prizeText").textContent=text
-  modal.classList.add("show")
-  confettiBurst()
+/* ================== Prijzen (grote pools) ================== */
+const sectors = [
+  { label: "😂 Mop", items: [
+    "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+    "Wat krijg je als je skeelers en een laptop kruist? Een snel bestand!",
+    "Waarom nam de appel een paraplu mee? Bang om geperst te worden!",
+    "Ik vroeg mijn klok om een grap: ‘Ik tik ’m later wel.’",
+    "Waarom is het wiel zo vrolijk? Het heeft altijd de draai erin!",
+    "Wat zegt een skeeler tegen de stoep? ‘Ga je mee een rondje doen?’",
+    "Waarom zijn posters zo ontspannen? Ze hangen lekker rond.",
+    "Wat is groen en draait? Een spruit in de wasmachine!",
+    "Waarom oefent de slak dagelijks? Om in zijn eigen tempo te winnen.",
+    "Ik gaf mijn plant water. Hij zei: ‘Dankje, daar groei ik van!’",
+    "Wat doet een skeeleraar bij de bakker? Rondjes draaien!"
+  ]},
+  { label: "💡 Feit", items: [
+    "Lachen verlaagt stress en kan je immuunsysteem boosten.",
+    "Kleine donaties tellen op tot groot verschil voor KiKa.",
+    "10 minuten wandelen kan je humeur merkbaar verbeteren.",
+    "Regelmatig water drinken helpt je energie en focus.",
+    "Vriendelijkheid werkt aanstekelijk — één gebaar zet een kettingreactie in gang.",
+    "Samen sporten motiveert meer dan alleen.",
+    "Een kort dankbaarheidsmoment kan je dag positiever maken.",
+    "Creativiteit helpt stress te verminderen.",
+    "Goede nachtrust is cruciaal voor herstel en veerkracht.",
+    "Delen van een actie vergroot de impact zonder extra kosten."
+  ]},
+  { label: "💛 Quote", items: [
+    "“Kleine daden, groot verschil.”",
+    "“De beste tijd om te helpen is: nu.”",
+    "“Samen maken we sterk wat alleen te zwaar is.”",
+    "“Wie goed doet, ontmoet het goede.”",
+    "“Elke stap vooruit is er één.”",
+    "“Je hoeft niet alles te kunnen, om toch te beginnen.”",
+    "“Deel wat je kunt; het telt.”",
+    "“Hoop is de vonk die verandering start.”",
+    "“Word vandaag iemands reden om te glimlachen.”",
+    "“Met elkaar kom je verder.”"
+  ]},
+  { label: "🔥 Challenge", items: [
+    "Deel de doneerlink met 2 vrienden en motiveer kort waarom KiKa belangrijk is.",
+    "Doe 10 jumping jacks en glimlach naar jezelf 😄",
+    "Neem een glas water en maak een mini‑wandeling van 5 minuten.",
+    "Stuur één lief bericht naar iemand die het kan gebruiken.",
+    "Ruim een klein hoekje op waar je al te lang tegenaan kijkt.",
+    "Noteer 3 dingen waar je vandaag dankbaar voor bent.",
+    "Geef vandaag één compliment aan een collega of vriend.",
+    "Leg je telefoon 15 minuten weg en adem even uit.",
+    "Luister een nummer dat je een goed gevoel geeft.",
+    "Plan beweging voor morgen (en zet ’t in je agenda)."
+  ]},
+  { label: "👏 Compliment", items: [
+    "Je zorgt vandaag al voor impact — dankjewel! 💛",
+    "Wat fijn dat jij dit mogelijk maakt. Jij bent goud!",
+    "Jouw steun geeft hoop en energie — top!",
+    "Je maakt de wereld net een stukje warmer.",
+    "Mooi mens, mooi werk — bedankt!",
+    "Dankzij jou komt onderzoek een stap dichterbij.",
+    "Je betrokkenheid is echt voelbaar. Dank!",
+    "Jij brengt mensen in beweging. Letterlijk!",
+    "Je bent iemand op wie je kunt bouwen.",
+    "Samen met jou komen we verder."
+  ]},
+  { label: "🧩 Raadsel", items: [
+    "Wat wordt natter naarmate het droogt? Een handdoek!",
+    "Ik heb sleutels maar geen sloten. Wat ben ik? Een toetsenbord.",
+    "Hoe meer je ervan neemt, hoe meer je achterlaat. Stappen.",
+    "Wat breekt zodra je het noemt? Stilte.",
+    "Ik ga omhoog en omlaag maar beweeg niet. Een trap.",
+    "Welke maand heeft 28 dagen? Allemaal.",
+    "Wat heeft één oog maar kan niet zien? Een naald.",
+    "Wat kun je vangen maar niet gooien? Een verkoudheid."
+  ]}
+];
 
-  const subject=encodeURIComponent("Mijn KiKa‑prijs 🎉")
-  const body=encodeURIComponent(
+/* ================== Canvas wiel ================== */
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W/2, cy = H/2;
+const r = Math.min(W,H)/2 - 10;
+const slice = (2*Math.PI)/sectors.length;
+let rotation = 0;
+let spinning = false;
+
+const colors = ['#ff6b6b','#ff9f43','#1dd1a1','#54a0ff','#7d5fff','#f368e0'];
+
+function drawWheel(rot=0){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(rot);
+
+  sectors.forEach((s,i)=>{
+    // sector
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,r, i*slice, (i+1)*slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+
+    // label
+    ctx.save();
+    ctx.rotate(i*slice + slice/2);
+    ctx.translate(r*0.68, 0);
+    ctx.rotate(Math.PI/2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.label, 0, 0);
+    ctx.restore();
+  });
+
+  // center circle
+  ctx.beginPath();
+  ctx.arc(0,0,28,0,2*Math.PI);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#ff6b6b';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+drawWheel(rotation);
+
+/* ================== Modal + mail ================== */
+const modal = document.getElementById('modal');
+const prizeTextEl = document.getElementById('prizeText');
+const mailBtn = document.getElementById('mailBtn');
+const closeBtn = document.getElementById('closeBtn');
+const modalClose = document.getElementById('modalClose');
+
+function openModal(text){
+  prizeTextEl.textContent = text;
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+
+  // Confetti bij openen
+  launchConfetti();
+
+  // Mailvoorstel (mailto)
+  const subject = encodeURIComponent("Mijn KiKa‑prijs 🎉");
+  const body = encodeURIComponent(
 `Ik heb deze prijs gewonnen via het KiKa‑draaiwiel:
 
 ${text}
 
 Steun KiKa:
-https://steven4kika-ux.github.io/Draai-het-wiel-voor-kika/`
-)
-  document.getElementById("mailBtn").onclick=()=>location.href=`mailto:?subject=${subject}&body=${body}`
+${location.origin + location.pathname}`
+  );
+  mailBtn.onclick = ()=>{ location.href = `mailto:?subject=${subject}&body=${body}`; };
+
+  // Focus op 'Sluiten' voor toegankelijkheid
+  setTimeout(()=> closeBtn.focus(), 0);
 }
 
-document.getElementById("modalClose").onclick=()=>modal.classList.remove("show")
-document.getElementById("closeBtn").onclick=()=>modal.classList.remove("show")
-modal.onclick=e=>{if(e.target===modal)modal.classList.remove("show")}
-</script>
+function closeModal(){
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden','true');
+}
+modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+closeBtn.addEventListener('click', closeModal);
+modalClose.addEventListener('click', closeModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modal.classList.contains('show')) closeModal(); });
 
+/* ================== Spin logica ================== */
+const resultEl = document.getElementById('result');
+const spinBtn = document.getElementById('spinBtn');
+
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+function currentIndex(rot){
+  // Pointer staat RECHTS → bereken index daarop
+  const norm = (2*Math.PI - (rot % (2*Math.PI))) % (2*Math.PI);
+  return Math.floor(norm / slice) % sectors.length;
+}
+
+function spin(){
+  if (spinning) return;
+  spinning = true;
+  if (resultEl) resultEl.textContent = '';
+
+  const extraTurns = 4 + Math.floor(Math.random()*2); // 4–5 rondjes
+  const targetSector = Math.floor(Math.random()*sectors.length);
+  const targetAngle = targetSector * slice + slice/2;
+
+  const startRotation = rotation % (2*Math.PI);
+  const delta = (2*Math.PI)*extraTurns + targetAngle + startRotation;
+  const duration = 3200 + Math.random()*600;
+  const start = performance.now();
+
+  function animate(t){
+    const p = Math.min(1, (t - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+    rotation = startRotation + eased * delta;
+    drawWheel(rotation);
+
+    if (p < 1) requestAnimationFrame(animate);
+    else {
+      const idx = currentIndex(rotation);
+      const sector = sectors[idx];
+      const text = `🎁 ${sector.label}: ${pickRandom(sector.items)}`;
+      if (resultEl) resultEl.textContent = text;
+      openModal(text);
+      spinning = false;
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+spinBtn.addEventListener('click', spin);
+// Toetsenbord (Enter/Spatie)
+spinBtn.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' || e.key===' '){ e.preventDefault(); spin(); }
+});
+</script>
 </body>
 </html>
