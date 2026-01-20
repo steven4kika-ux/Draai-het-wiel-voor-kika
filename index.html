@@ -180,17 +180,29 @@ canvas{
   </div>
 </div>
 
-
-<!-- Confetti -->
-<script/cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js
-
+<!-- ✅ JUISTE CONFETTI -->
+https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
 
 <script>
-  
-function resetSpin(){
-  spinning = false;
+/* ===== HELPERTJES ===== */
+function ensureConfetti(){
+  return new Promise(resolve=>{
+    if (typeof window.confetti === 'function') return resolve(true);
+    // (Fallback: inject nogmaals — komt zelden voor, maar is onschuldig)
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+    s.onload=()=>resolve(true);
+    s.onerror=()=>resolve(false);
+    document.body.appendChild(s);
+  });
 }
-``
+function launchConfetti(){
+  ensureConfetti().then(ok=>{
+    if(!ok || typeof window.confetti!=='function') return;
+    window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+  });
+}
+function resetSpin(){ spinning=false; }
 
 /* ===== PRIJZEN ===== */
 const prizeData = {
@@ -243,9 +255,9 @@ const mailBtn = document.getElementById("mailBtn");
 const closeBtn = document.getElementById("closeBtn");
 const againBtn = document.getElementById("againBtn");
 
-  
 let lastSpin = 0;
-const COOLDOWN = 500; // ms
+const COOLDOWN = 500; // ms – anti dubbelklik
+
 spinBtn.onclick = () => {
   const now = Date.now();
   if (now - lastSpin < COOLDOWN) return;
@@ -253,7 +265,6 @@ spinBtn.onclick = () => {
 
   if (spinning) return;
   spinning = true;
-
 
   new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
 
@@ -269,9 +280,10 @@ spinBtn.onclick = () => {
     else{
       const index = Math.floor(((2*Math.PI-rot)%(2*Math.PI))/angle);
       const cat = categories[index];
-      const txt = prizeData[cat][0];
+      const variants = prizeData[cat];
+      const txt = variants[Math.floor(Math.random()*variants.length)];
       showModal(cat, txt);
-      spinning = false;
+      spinning = false; // klaar met deze draai
     }
   }
   requestAnimationFrame(animate);
@@ -281,8 +293,7 @@ spinBtn.onclick = () => {
 function showModal(cat, txt){
   prizeText.textContent = `${cat}\n\n${txt}`;
   modal.classList.add("show");
-
-  confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+  launchConfetti();
 
   const subject = "Mijn KiKa-prijs 🎉";
   const body = encodeURIComponent(`${cat}\n\n${txt}\n\nSteun KiKa:\nhttps://24kika.nl/doneren/?deelnemer=steven-arbon`);
@@ -290,18 +301,17 @@ function showModal(cat, txt){
     location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
 }
 
-
 againBtn.onclick = () => {
   modal.classList.remove("show");
   resetSpin();
-  setTimeout(() => {
-    spinBtn.click();
-  }, 600);
+  setTimeout(()=>spinBtn.click(),800);
 };
-
-
-close
+closeBtn.onclick = () => {
+  modal.classList.remove("show");
+  resetSpin();
+};
 </script>
 
 </body>
 </html>
+``
