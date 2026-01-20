@@ -7,7 +7,6 @@
 <title>Draai het wiel voor KiKa 💛</title>
 
 <style>
-/* ===== VARIABLES ===== */
 :root{
   --bg:#fff3f4;
   --card:#ffffff;
@@ -17,65 +16,46 @@
   --muted:#666;
   --soft:#fff0f0;
 }
-
 *{box-sizing:border-box}
-
-/* ===== BASE ===== */
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   background:
     radial-gradient(120% 60% at 50% -10%, #ffe9ec 0%, transparent 60%),
     linear-gradient(180deg,var(--bg),#ffffff);
-  color:var(--text);
 }
 
-/* ===== LAYOUT ===== */
-.wrapper{
-  max-width:440px;
-  margin:28px auto 36px;
-  padding:0 14px;
-}
+/* Layout */
+.wrapper{max-width:440px;margin:28px auto 36px;padding:0 14px}
 .card{
   background:var(--card);
   border-radius:28px;
   padding:24px 22px 28px;
   text-align:center;
-  box-shadow:0 24px 60px rgba(0,0,0,.12),
-             inset 0 0 0 1px rgba(255,107,107,.10);
+  box-shadow:0 24px 60px rgba(0,0,0,.12);
 }
+h1{margin:0 0 6px;font-size:28px}
+.lead{font-size:15px;color:var(--muted);line-height:1.45;margin-bottom:18px}
 
-/* ===== TEXT ===== */
-h1{margin:0 0 6px;font-size:28px;}
-.lead{font-size:15px;color:var(--muted);line-height:1.45;margin:0 auto 18px;}
-
-/* ===== BUTTONS ===== */
-.buttons{display:flex;gap:12px;flex-direction:column;margin-bottom:14px;}
+/* Buttons */
+.buttons{display:flex;gap:12px;flex-direction:column;margin-bottom:14px}
 .button{
-  padding:16px;
-  font-size:18px;
-  font-weight:800;
-  border:none;
-  border-radius:20px;
-  cursor:pointer;
-  color:#fff;
+  padding:16px;font-size:18px;font-weight:800;border:none;border-radius:20px;
+  cursor:pointer;color:#fff;
   background:linear-gradient(180deg,var(--accent),var(--accent-dark));
-  box-shadow:0 12px 24px rgba(255,107,107,.35);
-  transition:transform .12s ease, box-shadow .15s ease;
+  box-shadow:0 12px 24px rgba(255,107,107,.35)
 }
-.button:active{transform:translateY(2px);box-shadow:0 6px 14px rgba(0,0,0,.25);}
-.button.secondary{background:#f1f1f1;color:#555;box-shadow:none;}
+.button.secondary{
+  background:#f1f1f1;color:#555;box-shadow:none
+}
 
-/* ===== INFO ===== */
-.note{background:var(--soft);padding:10px 12px;border-radius:14px;font-size:14px;color:#5a5a5a;margin-bottom:18px;}
+.note{background:var(--soft);padding:10px;border-radius:14px;font-size:14px;margin-bottom:18px}
 
-/* ===== WHEEL ===== */
+/* Wheel */
 .wheel-card{
-  background:linear-gradient(180deg,#ffffff,#fff6f6);
+  background:linear-gradient(180deg,#fff,#fff6f6);
   border-radius:30px;
   padding:22px 18px 26px;
-  box-shadow:inset 0 0 0 1px rgba(255,107,107,.15),
-             0 14px 34px rgba(0,0,0,.08);
 }
 .pointer{
   width:0;height:0;
@@ -84,7 +64,7 @@ h1{margin:0 0 6px;font-size:28px;}
   border-bottom:34px solid var(--accent);
   margin:0 auto -14px;
 }
-.wheel-wrap{position:relative;display:inline-block;}
+.wheel-wrap{position:relative;display:inline-block}
 canvas{
   width:92vw;max-width:320px;height:auto;
   background:#fff;border-radius:18px;
@@ -96,15 +76,27 @@ canvas{
   box-shadow:0 6px 16px rgba(0,0,0,.25),
              inset 0 0 0 4px var(--accent);
 }
+.spin-btn{margin-top:18px}
 
-/* ===== MODAL ===== */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:999;}
+/* Modal */
+.modal{
+  position:fixed;inset:0;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(0,0,0,.55);padding:18px;z-index:999;
+}
 .modal.show{display:flex}
-.modal-box{background:#fff;border-radius:28px;padding:26px 24px 30px;max-width:360px;width:100%;text-align:center;}
-.modal-title{margin:0 0 4px;font-size:24px;}
-.modal-subtitle{font-size:14px;color:#777;margin-bottom:14px;}
-.prize-box{background:#fff5f5;border-radius:16px;padding:14px 12px;font-size:18px;font-weight:700;color:#ff6b6b;}
-.modal-actions{display:flex;flex-direction:column;gap:12px;margin-top:18px;}
+.modal-box{
+  background:#fff;border-radius:28px;padding:26px 24px 30px;
+  max-width:360px;width:100%;text-align:center
+}
+.modal-title{margin:0 0 4px;font-size:24px}
+.modal-sub{font-size:14px;color:#777;margin-bottom:14px}
+.prize-box{
+  background:#fff5f5;border-radius:16px;padding:14px 12px;
+  font-size:18px;font-weight:700;color:#ff6b6b;
+  white-space:pre-line;
+}
+.modal-actions{display:flex;flex-direction:column;gap:12px;margin-top:18px}
 </style>
 </head>
 
@@ -113,11 +105,20 @@ canvas{
 <div class="wrapper">
   <div class="card">
     <h1>Doneer aan KiKa 💛</h1>
-    <p class="lead">Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>Als dank voor jouw steun mag je draaien 🎡</p>
+    <p class="lead">
+      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.
+      Als dank voor jouw steun mag je aan dit wiel draaien 🎡
+    </p>
 
     <div class="buttons">
-      <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">Doneer nu</button>
-      <button class="button" onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
+      <button class="button"
+        onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
+        Doneer nu
+      </button>
+      <button class="button"
+        onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
+        Ik heb gedoneerd → Draai!
+      </button>
     </div>
 
     <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -128,15 +129,16 @@ canvas{
         <canvas id="wheel" width="300" height="300"></canvas>
         <div class="center-hub"></div>
       </div>
-      <button id="spinBtn" class="button">Draai!</button>
+      <button id="spinBtn" class="button spin-btn">Draai!</button>
     </div>
   </div>
 </div>
 
+<!-- Modal -->
 <div id="modal" class="modal">
   <div class="modal-box">
     <h2 class="modal-title">🎉 Gefeliciteerd!</h2>
-    <p class="modal-subtitle">Dankjewel voor je steun aan KiKa 💛</p>
+    <p class="modal-sub">Dankjewel voor je steun aan KiKa 💛</p>
     <div class="prize-box"><span id="prizeText"></span></div>
     <div class="modal-actions">
       <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
@@ -145,85 +147,128 @@ canvas{
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confettijs</script>
+
 <script>
-const prizes = {
+// ✅ PRIJZEN MET INHOUD
+const prizeData = {
   "😂 Mop": [
-    "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
-    "Wat zegt een wiel na z’n werkdag? Ik ben helemaal rond.",
-    "Waarom rijdt een skeeleraar nooit te laat? Hij rolt altijd op tijd binnen."
+    "Waarom kan een skeeleraar nooit liegen?\nHij glijdt er altijd mee weg!"
   ],
   "💡 Feit": [
-    "Elke donatie helpt KiKa om onderzoek naar kinderkanker te versnellen.",
-    "Samen maken kleine bedragen een grote impact.",
-    "Steunacties zoals deze vergroten bewustwording én onderzoek."
+    "Elke donatie helpt KiKa onderzoek naar kinderkanker te versnellen."
   ],
   "💛 Quote": [
-    "Kleine daden maken groot verschil.",
-    "Samen sta je sterker dan alleen.",
-    "Elke stap vooruit telt."
+    "Kleine daden maken groot verschil."
   ],
   "🔥 Challenge": [
-    "Stuur vandaag een lief berichtje naar iemand.",
-    "Deel deze actie met één vriend of collega.",
-    "Neem vandaag 5 minuten om iets goeds te doen voor jezelf."
+    "Stuur vandaag een lief berichtje naar iemand."
   ],
   "👏 Compliment": [
-    "Wat mooi dat jij je inzet voor KiKa!",
-    "Dankzij mensen zoals jij komt er hoop.",
-    "Jij draagt vandaag bij aan iets groots."
+    "Wat mooi dat jij je inzet voor KiKa 💛"
   ],
   "🧩 Raadsel": [
-    "Wat wordt natter terwijl het droogt? Een handdoek!",
-    "Wat heeft sleutels maar geen sloten? Een piano."
+    "Wat wordt natter terwijl het droogt?\nEen handdoek!"
   ],
   "🍀 Geluk": [
-    "Vandaag is een goede dag om iets moois te laten gebeuren.",
-    "Je maakt vandaag meer verschil dan je denkt."
+    "Vandaag is een goede dag om iets moois te laten gebeuren."
   ]
 };
 
-const canvas=document.getElementById("wheel");
-const ctx=canvas.getContext("2d");
-const angle=2*Math.PI/prizes.length;
-let rotation=0,spinning=false;
+const categories = Object.keys(prizeData);
+
+// WIEL
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const angle = 2 * Math.PI / categories.length;
+let rotation = 0, spinning = false;
 
 function draw(){
-  const cx=150,cy=150,r=140;
+  const cx=150, cy=150, r=140;
   ctx.clearRect(0,0,300,300);
-  prizes.forEach((label,i)=>{
+
+  categories.forEach((label,i)=>{
     ctx.beginPath();
     ctx.moveTo(cx,cy);
     ctx.arc(cx,cy,r,i*angle+rotation,(i+1)*angle+rotation);
-    ctx.fillStyle=["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff","#7d5fff","#ffd166","#00d2d3"][i];
+    ctx.fillStyle=[
+      "#ff6b6b","#ff9f43","#1dd1a1",
+      "#54a0ff","#7d5fff","#ffd166","#00d2d3"
+    ][i];
     ctx.fill();
+
     const mid=i*angle+angle/2+rotation;
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(mid);ctx.fillStyle="#fff";
-    ctx.font="bold 13px system-ui";ctx.textAlign="center";ctx.fillText(label,r*0.7,0);ctx.restore();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(mid);
+    ctx.fillStyle="#fff";
+    ctx.font="bold 13px system-ui";
+    ctx.textAlign="center";
+    ctx.fillText(label,r*0.7,0);
+    ctx.restore();
   });
 }
 draw();
 
-function showModal(text){
-  document.getElementById("prizeText").textContent=text;
-  document.getElementById("modal").classList.add("show");
-  const subject=encodeURIComponent("Mijn KiKa-prijs 🎉");
-  const body=encodeURIComponent(`Ik won deze prijs:\n${text}\n\nSteun KiKa:\nhttps://24kika.nl/doneren/?deelnemer=steven-arbon`);
-  document.getElementById("mailBtn").onclick=()=>location.href=`mailto:?subject=${subject}&body=${body}`;
-}
-
+// SPIN
 document.getElementById("spinBtn").onclick=()=>{
-  if(spinning) return; spinning=true;
-  new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
-  const target=Math.random()*2*Math.PI,start=performance.now();
+  if(spinning) return;
+  spinning = true;
+
+  const sound = new Audio("wheel-spin-click-slow-down-101152.mp3");
+  sound.play().catch(()=>{});
+
+  const target = Math.random() * 2 * Math.PI;
+  const start = performance.now();
+
   function anim(t){
-    const p=Math.min(1,(t-start)/2600),e=1-Math.pow(1-p,3);
-    rotation=target*e; draw();
-    if(p<1) requestAnimationFrame(anim);
-    else{showModal(prizes[Math.floor(((2*Math.PI-rotation)%(2*Math.PI))/angle)]);spinning=false;}
+    const p = Math.min(1,(t-start)/2600);
+    const eased = 1 - Math.pow(1-p,3);
+    rotation = target * eased;
+    draw();
+    if(p < 1) requestAnimationFrame(anim);
+    else {
+      const index = Math.floor(((2*Math.PI-rotation)%(2*Math.PI))/angle);
+      const category = categories[index];
+      const texts = prizeData[category];
+      const text = texts[Math.floor(Math.random()*texts.length)];
+
+      showModal(category, text);
+      spinning = false;
+    }
   }
   requestAnimationFrame(anim);
 };
-document.getElementById("closeBtn").onclick=()=>document.getElementById("modal").classList.remove("show");
+
+// MODAL + CONFETTI 🎉
+function showModal(category, text){
+  document.getElementById("prizeText").textContent =
+    `${category}\n\n${text}`;
+
+  document.getElementById("modal").classList.add("show");
+
+  // 🎉 CONFETTI
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+
+  const subject = encodeURIComponent("Mijn KiKa-prijs 🎉");
+  const body = encodeURIComponent(
+`Ik heb deze prijs gewonnen via het KiKa-draaiwiel:
+
+${category}
+${text}
+
+Steun KiKa:
+https://24kika.nl/doneren/?deelnemer=steven-arbon`
+  );
+
+  document.getElementById("mailBtn").onclick = () =>
+    location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+document.getElementById("closeBtn").onclick = () =>
+  document.getElementById("modal").classList.remove("show");
 </script>
 
 </body>
