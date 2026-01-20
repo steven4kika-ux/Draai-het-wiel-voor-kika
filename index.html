@@ -7,44 +7,144 @@
 <title>Draai het wiel voor KiKa 💛</title>
 
 <style>
-/* === styling ongewijzigd, compact gehouden === */
 :root{
-  --bg:#fff6f6; --card:#ffffff; --accent:#ff6b6b; --text:#222; --muted:#666;
+  --bg:#fff6f6;
+  --card:#ffffff;
+  --accent:#ff6b6b;
+  --text:#222;
+  --muted:#666;
 }
+
 *{box-sizing:border-box}
 body{
-  margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--bg),#fff); color:var(--text);
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,var(--bg),#fff);
+  color:var(--text);
 }
-.wrapper{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:20px;padding:20px;box-shadow:0 12px 32px rgba(0,0,0,.12)}
-h1{text-align:center;margin:4px 0}
-p.lead{text-align:center;color:var(--muted);line-height:1.5}
-.buttons{display:flex;flex-direction:column;gap:12px;margin:16px 0}
-.button{padding:16px;font-size:18px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:16px;cursor:pointer;width:100%}
-.button.secondary{background:#555}
-.note{background:#ffecec;padding:10px;border-radius:10px;text-align:center;font-size:14px}
-.wheel-card{margin-top:18px;background:#fffafa;border-radius:16px;padding:16px;text-align:center}
-.pointer{width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:24px solid var(--accent);margin:0 auto -6px}
-canvas{width:100%;max-width:300px;height:auto;background:#fff;border-radius:12px}
-.spin-btn{margin-top:14px}
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:20px;z-index:1000}
+
+/* Layout */
+.wrapper{
+  max-width:900px;
+  margin:0 auto;
+  padding:12px;
+}
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 10px 28px rgba(0,0,0,.12);
+}
+
+h1{text-align:center;margin:6px 0}
+p.lead{text-align:center;color:var(--muted);line-height:1.4}
+
+/* Buttons */
+.buttons{
+  display:flex;
+  gap:10px;
+  flex-direction:column;
+  margin:14px 0;
+}
+.button{
+  padding:18px;
+  font-size:19px;
+  font-weight:800;
+  color:#fff;
+  background:var(--accent);
+  border:none;
+  border-radius:18px;
+  cursor:pointer;
+  width:100%;
+}
+
+/* Info */
+.note{
+  background:#ffecec;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  font-size:14px;
+}
+
+/* Wheel */
+.wheel-card{
+  margin-top:16px;
+  background:#fffafa;
+  border-radius:18px;
+  padding:14px;
+  text-align:center;
+}
+.pointer{
+  width:0;height:0;
+  border-left:16px solid transparent;
+  border-right:16px solid transparent;
+  border-bottom:26px solid var(--accent);
+  margin:0 auto -8px auto;
+}
+canvas{
+  width:90vw;
+  max-width:340px;
+  height:auto;
+  background:#fff;
+  border-radius:14px;
+}
+.spin-btn{margin-top:16px}
+
+/* Modal */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  padding:20px;
+  z-index:1000;
+}
 .modal.show{display:flex}
-.modal-box{background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center}
-.modal-actions{display:flex;flex-direction:column;gap:12px;margin-top:14px}
-@media(min-width:900px){.buttons{flex-direction:row}}
+.modal-box{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  max-width:420px;
+  width:100%;
+  text-align:center;
+}
+.modal-actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-top:14px;
+}
+
+/* Desktop */
+@media(min-width:900px){
+  .buttons{flex-direction:row}
+  canvas{width:100%;max-width:300px}
+}
 </style>
 </head>
 
 <body>
+
 <div class="wrapper">
   <div class="card">
     <h1>Doneer aan KiKa 💛</h1>
-    <p class="lead">Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>Dit draaiwiel is mijn bedankje 🎡</p>
+    <p class="lead">
+      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
+      Dit draaiwiel is mijn bedankje aan jou 🎡
+    </p>
 
     <div class="buttons">
-      <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">Doneer nu</button>
-      <button class="button" onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
+      <button class="button"
+        onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
+        Doneer nu
+      </button>
+      <button class="button"
+        onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
+        Ik heb gedoneerd → Draai!
+      </button>
     </div>
 
     <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -64,13 +164,13 @@ canvas{width:100%;max-width:300px;height:auto;background:#fff;border-radius:12px
     <p id="prizeText"></p>
     <div class="modal-actions">
       <button id="mailBtn" class="button">📧 Mail mijn prijs</button>
-      <button id="closeBtn" class="button secondary">Sluiten</button>
+      <button id="closeBtn" class="button">Sluiten</button>
     </div>
   </div>
 </div>
 
 <script>
-/* === PRIJZEN === */
+/* ===== PRIJZEN ===== */
 const prizes=[
   "😂 Mop: Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
   "😂 Mop: Ik vroeg het wiel om rust… hij bleef maar draaien.",
@@ -82,7 +182,7 @@ const prizes=[
   "🍀 Geluk: Vandaag heb jij extra geluk verdiend!",
 ];
 
-/* === WIEL === */
+/* ===== WIEL ===== */
 const canvas=document.getElementById("wheel");
 const ctx=canvas.getContext("2d");
 const angle=2*Math.PI/prizes.length;
@@ -100,15 +200,14 @@ function draw(){
 }
 draw();
 
-/* === SPIN + GELUID (mobiel-proof) === */
+/* ✅ MOBIEL-PROOF AUDIO: maak NIEUW object per klik */
 document.getElementById("spinBtn").addEventListener("click",()=>{
   if(spinning) return;
   spinning=true;
 
-  // ✅ Audio maken én afspelen in dezelfde klik
-  const spinSound = new Audio("wheel-spin-click-slow-down-101152.mp3");
-  spinSound.volume = 0.8;
-  spinSound.play().catch(()=>{});
+  const clickSound = new Audio("wheel-spin-click-slow-down-101152.mp3");
+  clickSound.volume = 0.8;
+  clickSound.play().catch(()=>{});
 
   const target=Math.random()*2*Math.PI;
   const start=performance.now();
@@ -127,7 +226,7 @@ document.getElementById("spinBtn").addEventListener("click",()=>{
   requestAnimationFrame(animate);
 });
 
-/* === MODAL === */
+/* ===== MODAL + MAIL ===== */
 const modal=document.getElementById("modal");
 function showModal(text){
   document.getElementById("prizeText").textContent=text;
@@ -147,7 +246,8 @@ https://24kika.nl/doneren/?deelnemer=steven-arbon`
     location.href=`mailto:?subject=${subject}&body=${body}`;
 }
 document.getElementById("closeBtn").onclick=()=>modal.classList.remove("show");
-modal.onclick=e=>{if(e.target===modal) modal.classList.remove("show");};
+modal.onclick=e=>{ if(e.target===modal) modal.classList.remove("show"); };
 </script>
+
 </body>
 </html>
