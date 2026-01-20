@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="nl">
+<html lang=
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,84 +17,40 @@
   --soft:#fff0f0;
 }
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  background:
-    radial-gradient(120% 60% at 50% -10%, #ffe9ec 0%, transparent 60%),
-    linear-gradient(180deg,var(--bg),#ffffff);
+  background:linear-gradient(180deg,var(--bg),#ffffff);
 }
 
 /* Layout */
 .wrapper{max-width:440px;margin:28px auto;padding:0 14px}
-.card{
-  background:var(--card);
-  border-radius:28px;
-  padding:24px 22px 28px;
-  text-align:center;
-  box-shadow:0 24px 60px rgba(0,0,0,.12);
-}
-
+.card{background:#fff;border-radius:28px;padding:24px 22px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.12)}
 h1{margin:0 0 6px;font-size:28px}
-.lead{font-size:15px;color:var(--muted);line-height:1.45;margin-bottom:18px}
+.lead{font-size:15px;color:var(--muted);margin-bottom:18px}
 
 /* Buttons */
 .buttons{display:flex;gap:12px;flex-direction:column;margin-bottom:14px}
-.button{
-  padding:16px;font-size:18px;font-weight:800;border:none;border-radius:20px;
-  cursor:pointer;color:#fff;
-  background:linear-gradient(180deg,var(--accent),var(--accent-dark));
-}
+.button{padding:16px;font-size:18px;font-weight:800;border:none;border-radius:20px;cursor:pointer;color:#fff;background:linear-gradient(180deg,var(--accent),var(--accent-dark))}
 .button.secondary{background:#f1f1f1;color:#555}
 
-.note{background:var(--soft);padding:10px;border-radius:14px;font-size:14px;margin-bottom:18px}
+.note{background:#fff0f0;padding:10px;border-radius:14px;font-size:14px;margin-bottom:18px}
 
 /* Wheel */
-.wheel-card{
-  background:linear-gradient(180deg,#fff,#fff6f6);
-  border-radius:30px;
-  padding:22px 18px 26px;
-}
-.pointer{
-  width:0;height:0;
-  border-left:20px solid transparent;
-  border-right:20px solid transparent;
-  border-bottom:34px solid var(--accent);
-  margin:0 auto -14px;
-}
+.wheel-card{background:#fff6f6;border-radius:30px;padding:22px 18px 26px}
+.pointer{width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:34px solid var(--accent);margin:0 auto -14px}
 .wheel-wrap{position:relative;display:inline-block}
-canvas{
-  width:92vw;max-width:320px;height:auto;
-  background:#fff;border-radius:18px;
-}
-.center-hub{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:64px;height:64px;border-radius:50%;
-  background:radial-gradient(circle at 30% 30%,#fff,#ffe5e5);
-  box-shadow:0 6px 16px rgba(0,0,0,.25),
-             inset 0 0 0 4px var(--accent);
-}
+canvas{width:92vw;max-width:320px;height:auto;background:#fff;border-radius:18px}
+.center-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25), inset 0 0 0 4px var(--accent)}
 .spin-btn{margin-top:18px}
 
 /* Modal */
-.modal{
-  position:fixed;inset:0;display:none;
-  align-items:center;justify-content:center;
-  background:rgba(0,0,0,.55);padding:18px;z-index:999;
-}
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:18px}
 .modal.show{display:flex}
-.modal-box{
-  background:#fff;border-radius:28px;padding:26px 24px 30px;
-  max-width:360px;width:100%;text-align:center;
-}
-.modal-title{margin:0 0 4px;font-size:24px}
-.modal-sub{font-size:14px;color:#777;margin-bottom:14px}
-.prize-box{
-  background:#fff5f5;border-radius:16px;padding:14px 12px;
-  font-size:18px;font-weight:700;color:#ff6b6b;
-  white-space:pre-line;
-}
+.modal-box{background:#fff;border-radius:28px;padding:26px 24px 30px;max-width:360px;width:100%;text-align:center}
+.modal-title{font-size:24px}
+.modal-sub{font-size:14px;color:#777}
+.prize-box{background:#fff5f5;border-radius:16px;padding:14px;font-size:18px;font-weight:700;color:#ff6b6b;white-space:pre-line}
 .modal-actions{display:flex;flex-direction:column;gap:12px;margin-top:18px}
 </style>
 </head>
@@ -104,20 +60,11 @@ canvas{
 <div class="wrapper">
   <div class="card">
     <h1>Doneer aan KiKa 💛</h1>
-    <p class="lead">
-      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.
-      Als dank voor jouw steun mag je aan dit wiel draaien 🎡
-    </p>
+    <p class="lead">Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>Als dank voor jouw steun mag je draaien 🎡</p>
 
     <div class="buttons">
-      <button class="button"
-        onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
-        Doneer nu
-      </button>
-      <button class="button"
-        onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">
-        Ik heb gedoneerd → Draai!
-      </button>
+      <button class="button" onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">Doneer nu</button>
+      <button class="button" onclick="document.getElementById('spinBtn').scrollIntoView({behavior:'smooth'})">Ik heb gedoneerd → Draai!</button>
     </div>
 
     <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -133,11 +80,10 @@ canvas{
   </div>
 </div>
 
-<!-- Modal -->
 <div id="modal" class="modal">
   <div class="modal-box">
     <h2 class="modal-title">🎉 Gefeliciteerd!</h2>
-    <p class="modal-sub">Dankjewel voor je steun aan KiKa 💛</p>
+    <p class="modal-sub">Dankjewel voor je steun 💛</p>
     <div class="prize-box"><span id="prizeText"></span></div>
     <div class="modal-actions">
       <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
@@ -146,83 +92,73 @@ canvas{
   </div>
 </div>
 
-<!-- ✅ CONFETTI CORRECT GELADEN -->
-<script/cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
+<!-- ✅ CORRECTE CONFETTI -->
+<script src="https://cdn.jsdelivr.net/npm/ci@1.6.0/dist/confetti.browser.min.js</script>
 
 <script>
-// PRIJZEN MET INHOUD
 const prizeData={
   "😂 Mop":["Waarom kan een skeeleraar nooit liegen?\nHij glijdt er altijd mee weg!"],
-  "💡 Feit":["Elke donatie helpt KiKa onderzoek naar kinderkanker te versnellen."],
+  "💡 Feit":["Elke donatie helpt KiKa onderzoek te versnellen."],
   "💛 Quote":["Kleine daden maken groot verschil."],
-  "🔥 Challenge":["Stuur vandaag een lief berichtje naar iemand."],
+  "🔥 Challenge":["Stuur vandaag iemand een lief berichtje."],
   "👏 Compliment":["Wat mooi dat jij je inzet voor KiKa 💛"],
   "🧩 Raadsel":["Wat wordt natter terwijl het droogt?\nEen handdoek!"],
-  "🍀 Geluk":["Vandaag is een goede dag om iets moois te laten gebeuren."]
+  "🍀 Geluk":["Vandaag is een goede dag voor iets moois."]
 };
-const categories=Object.keys(prizeData);
 
-// WIEL
+const categories=Object.keys(prizeData);
 const canvas=document.getElementById("wheel");
 const ctx=canvas.getContext("2d");
 const angle=2*Math.PI/categories.length;
-let rotation=0,spinning=false;
+let rot=0,spinning=false;
 
 function draw(){
-  const cx=150,cy=150,r=140;
   ctx.clearRect(0,0,300,300);
   categories.forEach((label,i)=>{
     ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,i*angle+rotation,(i+1)*angle+rotation);
+    ctx.moveTo(150,150);
+    ctx.arc(150,150,140,i*angle+rot,(i+1)*angle+rot);
     ctx.fillStyle=["#ff6b6b","#ff9f43","#1dd1a1","#54a0ff","#7d5fff","#ffd166","#00d2d3"][i];
     ctx.fill();
-    const mid=i*angle+angle/2+rotation;
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(mid);
-    ctx.fillStyle="#fff";ctx.font="bold 13px system-ui";
-    ctx.textAlign="center";ctx.fillText(label,r*0.7,0);ctx.restore();
+
+    const mid=i*angle+angle/2+rot;
+    ctx.save();ctx.translate(150,150);ctx.rotate(mid);
+    ctx.fillStyle="#fff";
+    ctx.font="bold 13px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(label,95,0);
+    ctx.restore();
   });
 }
 draw();
 
-// SPIN
-document.getElementById("spinBtn").onclick=()=>{
+spinBtn.onclick=()=>{
   if(spinning) return;
   spinning=true;
   new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
+
   const target=Math.random()*2*Math.PI;
   const start=performance.now();
 
   function anim(t){
     const p=Math.min(1,(t-start)/2600);
     const eased=1-Math.pow(1-p,3);
-    rotation=target*eased;draw();
+    rot=target*eased; draw();
     if(p<1) requestAnimationFrame(anim);
     else{
-      const index=Math.floor(((2*Math.PI-rotation)%(2*Math.PI))/angle);
-      const cat=categories[index];
+      const i=Math.floor(((2*Math.PI-rot)%(2*Math.PI))/angle);
+      const cat=categories[i];
       const txt=prizeData[cat][0];
-      showModal(cat,txt);
+      prizeText.textContent=cat+"\n\n"+txt;
+      modal.classList.add("show");
+      confetti({particleCount:120,spread:70,origin:{y:.6}});
+      mailBtn.onclick=()=>location.href=`mailto:?subject=Mijn KiKa-prijs 🎉&body=${encodeURIComponent(cat+"\n\n"+txt)}`;
       spinning=false;
     }
   }
   requestAnimationFrame(anim);
 };
-
-// MODAL + CONFETTI
-function showModal(cat,txt){
-  document.getElementById("prizeText").textContent=`${cat}\n\n${txt}`;
-  document.getElementById("modal").classList.add("show");
-
-  confetti({particleCount:120,spread:70,origin:{y:0.6}});
-
-  const subject=encodeURIComponent("Mijn KiKa-prijs 🎉");
-  const body=encodeURIComponent(`${cat}\n\n${txt}\n\nSteun KiKa:\nhttps://24kika.nl/doneren/?deelnemer=steven-arbon`);
-  document.getElementById("mailBtn").onclick=()=>
-    location.href=`mailto:?subject=${subject}&body=${body}`;
-}
-document.getElementById("closeBtn").onclick=()=>
-  document.getElementById("modal").classList.remove("show");
+closeBtn.onclick=()=>modal.classList.remove("show");
 </script>
 
 </body>
