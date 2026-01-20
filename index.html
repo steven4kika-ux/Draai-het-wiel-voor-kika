@@ -199,7 +199,23 @@ function ensureConfetti(){
 function launchConfetti(){
   ensureConfetti().then(ok=>{
     if(!ok || typeof window.confetti!=='function') return;
-    window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+    window.
+confetti({
+  particleCount: 160,
+  spread: 80,
+  startVelocity: 35,
+  gravity: 0.9,
+  origin: { x: 0.5, y: 0.55 }
+});
+
+setTimeout(() => {
+  confetti({
+    particleCount: 80,
+    spread: 100,
+    origin: { x: 0.5, y: 0.55 }
+  });
+}, 200);
+
   });
 }
 function resetSpin(){ spinning=false; }
