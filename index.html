@@ -146,7 +146,42 @@ canvas{
 </div>
 
 <script>
-const prizes=["😂 Mop","💡 Feit","💛 Quote","🔥 Challenge","👏 Compliment","🧩 Raadsel","🍀 Geluk"];
+const prizes = {
+  "😂 Mop": [
+    "Waarom kan een skeeleraar nooit liegen? Hij glijdt er altijd mee weg!",
+    "Wat zegt een wiel na z’n werkdag? Ik ben helemaal rond.",
+    "Waarom rijdt een skeeleraar nooit te laat? Hij rolt altijd op tijd binnen."
+  ],
+  "💡 Feit": [
+    "Elke donatie helpt KiKa om onderzoek naar kinderkanker te versnellen.",
+    "Samen maken kleine bedragen een grote impact.",
+    "Steunacties zoals deze vergroten bewustwording én onderzoek."
+  ],
+  "💛 Quote": [
+    "Kleine daden maken groot verschil.",
+    "Samen sta je sterker dan alleen.",
+    "Elke stap vooruit telt."
+  ],
+  "🔥 Challenge": [
+    "Stuur vandaag een lief berichtje naar iemand.",
+    "Deel deze actie met één vriend of collega.",
+    "Neem vandaag 5 minuten om iets goeds te doen voor jezelf."
+  ],
+  "👏 Compliment": [
+    "Wat mooi dat jij je inzet voor KiKa!",
+    "Dankzij mensen zoals jij komt er hoop.",
+    "Jij draagt vandaag bij aan iets groots."
+  ],
+  "🧩 Raadsel": [
+    "Wat wordt natter terwijl het droogt? Een handdoek!",
+    "Wat heeft sleutels maar geen sloten? Een piano."
+  ],
+  "🍀 Geluk": [
+    "Vandaag is een goede dag om iets moois te laten gebeuren.",
+    "Je maakt vandaag meer verschil dan je denkt."
+  ]
+};
+
 const canvas=document.getElementById("wheel");
 const ctx=canvas.getContext("2d");
 const angle=2*Math.PI/prizes.length;
