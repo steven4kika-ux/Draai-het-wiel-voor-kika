@@ -12,6 +12,7 @@
       --text: #222;
       --btn: #3f3f3f;
       --btn-text: #fff;
+      --brand: #ffb703;
     }
     * { box-sizing: border-box; }
     body {
@@ -70,7 +71,7 @@
       height: 0;
       border-left: 12px solid transparent;
       border-right: 12px solid transparent;
-      border-bottom: 18px solid #ffb703; /* goud/geel */
+      border-bottom: 18px solid var(--brand);
       filter: drop-shadow(0 1px 2px rgba(0,0,0,.25));
       z-index: 2;
     }
@@ -82,17 +83,79 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.08);
     }
 
-    .result { margin-top: 8px; min-height: 28px; font-weight: 700; }
+    .result { display:none; } /* oude tekst-uitslag verbergen */
+
+    /* ---------- Modal (popup) ---------- */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001; /* boven confetti */
+    }
+    .modal.open { display: flex; }
+    .modal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+    }
+    .modal__card {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      width: min(90vw, 420px);
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.25);
+      z-index: 1; /* boven backdrop */
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop {
+      from { transform: scale(.96); opacity: .6; }
+      to   { transform: scale(1);   opacity: 1;  }
+    }
+    .modal__title {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+    .modal__prize {
+      margin: 10px 0 18px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .modal__btn {
+      display: inline-block;
+      background: var(--brand);
+      color: #1a1a1a;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ---------- Confetti canvas ---------- */
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      display: none;
+      z-index: 1000; /* onder modal, boven pagina */
+    }
+    #confetti.show { display: block; }
   </style>
 </head>
 <body>
   <main>
-    <h1>draai het wiel voor KiKa 💛</h1>
+    <h1>Draai het wiel voor KiKa 💛</h1>
 
     <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-      hierbij vraag ik jouw hulp! <br>
-      met jouw donatie zal ik mijn wielen laten rollen...<br>
-      Als dank voor jouw steun draait dit wiel al voor jouw 🎉</p>
+      Hierbij vraag ik jouw hulp! Met jouw donatie laat ik mijn wielen rollen…<br>
+      Als dank voor jouw steun mag je aan dit wiel draaien 🎉</p>
 
     <div class="actions">
       <button id="donateBtn" type="button" onclick="window.open('https://www.actievoorkika.nl','_blank')">
@@ -110,8 +173,21 @@
       <canvas id="wheel" width="300" height="300" aria-label="Draaiwiel"></canvas>
     </div>
 
+    <!-- Uitslag-tekst niet meer nodig; houden voor screenreaders desnoods -->
     <div id="result" class="result" role="status" aria-live="polite"></div>
   </main>
+
+  <!-- Confetti overlay -->
+  <canvas id="confetti"></canvas>
+
+  <!-- Modal (popup) -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal__card" role="document">
+      <h2 class="modal__title">Gefeliciteerd! 🎉</h2>
+      <p id="modalPrize" class="modal__prize"></p>
+      <button id="againBtn" class="modal__btn" type="button">Nog een keer draaien</button>
+    </div>
+  </div>
 
   <script>
     // ---------- Canvas/Wheel ----------
@@ -196,18 +272,103 @@
       osc.stop(now + 0.06);
     }
 
-    // ---------- Spin + tick per segment ----------
+    // ---------- Confetti ----------
+    const confettiCanvas = document.getElementById('confetti');
+    const cfx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiRunning = false;
+
+    function resizeConfetti() {
+      confettiCanvas.width  = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', () => { if (confettiRunning) resizeConfetti(); });
+
+    function launchConfetti(duration = 2500, count = 180) {
+      resizeConfetti();
+      confettiCanvas.classList.add('show');
+      confettiRunning = true;
+
+      const W = confettiCanvas.width;
+      const H = confettiCanvas.height;
+
+      // init particles
+      const palette = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0","#ffd166","#ef476f"];
+      confettiParticles = Array.from({ length: count }, () => ({
+        x: Math.random() * W,
+        y: -20 - Math.random() * 80,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 10,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 3,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3
+      }));
+
+      const start = performance.now();
+
+      function frame(now) {
+        const elapsed = now - start;
+        cfx.clearRect(0, 0, W, H);
+
+        for (const p of confettiParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.05;      // zwaartekracht
+          p.rot += p.vr;
+
+          cfx.save();
+          cfx.translate(p.x, p.y);
+          cfx.rotate(p.rot);
+          cfx.fillStyle = p.color;
+          cfx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          cfx.restore();
+        }
+
+        if (elapsed < duration) {
+          requestAnimationFrame(frame);
+        } else {
+          // korte fade-out
+          confettiCanvas.classList.remove('show');
+          confettiRunning = false;
+          cfx.clearRect(0, 0, W, H);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- Spin + tick per segment + popup ----------
     let lastIndexForTick = null;
+
+    const modal = document.getElementById('modal');
+    const modalPrize = document.getElementById('modalPrize');
+    const againBtn = document.getElementById('againBtn');
+    const spinBtn = document.getElementById('spinBtn');
+
+    function openModal(prizeText) {
+      modalPrize.textContent = prizeText;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      againBtn.focus();
+      // start confetti
+      launchConfetti(2500, 200);
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      spinBtn.focus();
+    }
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    againBtn.addEventListener('click', closeModal);
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 
     function spinWheel() {
       if (spinning) return;
       spinning = true;
 
-      // initialiseer audio na eerste user‑actie (vereist door browsers)
-      initAudio();
-
-      const resultBox = document.getElementById("result");
-      resultBox.textContent = "";
+      initAudio(); // audio slechts na user‑actie
 
       const startRotation = rotation;
       const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 rondjes
@@ -216,7 +377,6 @@
       const duration = 2500;
       const startTime = performance.now();
 
-      // reset tick-index zodat de eerste overgang meteen tikt
       lastIndexForTick = null;
 
       function animate(now) {
@@ -230,7 +390,7 @@
         const pointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
         const idx = Math.floor(pointerAngle / slice) % labels.length;
 
-        // Speel 'tick' als we een nieuw segment passeren
+        // Speel 'tick' bij segment-overgang
         if (idx !== lastIndexForTick) {
           playTick();
           lastIndexForTick = idx;
@@ -242,9 +402,10 @@
           rotation = target % (Math.PI * 2);
           spinning = false;
 
+          // Eindresultaat → popup + confetti
           const finalPointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
           const finalIndex = Math.floor(finalPointerAngle / slice) % labels.length;
-          resultBox.textContent = `Gefeliciteerd! Je hebt gewonnen: ${labels[finalIndex]}`;
+          openModal(`Je hebt gewonnen: ${labels[finalIndex]}`);
         }
       }
 
@@ -256,4 +417,3 @@
   </script>
 </body>
 </html>
-``
