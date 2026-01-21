@@ -88,9 +88,11 @@
 <body>
   <main>
     <h1>draai het wiel voor KiKa 💛</h1>
-    
-    <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>hierbij vraag ik jouw hulp! <br>met jouw donatie zal ik mijn wielen laten rollen...
-      <br>Als dank voor jouw steun draait dit wiel al voor jouw 🎉</p>
+
+    <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
+      hierbij vraag ik jouw hulp! <br>
+      met jouw donatie zal ik mijn wielen laten rollen...<br>
+      Als dank voor jouw steun draait dit wiel al voor jouw 🎉</p>
 
     <div class="actions">
       <button id="donateBtn" type="button" onclick="window.open('https://www.actievoorkika.nl','_blank')">
@@ -170,7 +172,6 @@
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
     // ---------- Klikgeluid (Web Audio) ----------
-    // We gebruiken een piepkleine 'tick' via een oscillator + gain envelope
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
@@ -255,3 +256,4 @@
   </script>
 </body>
 </html>
+``
