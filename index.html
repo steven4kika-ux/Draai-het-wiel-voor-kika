@@ -2,347 +2,47 @@
 <!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Draai het wiel voor KiKa 💛</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Draai het wiel voor KiKa 💛</title>
 
-<style>
-:root{
-  --bg:#fff3f4;
-  --card:#ffffff;
-  --accent:#ff6b6b;
-  --accent-dark:#ff5252;
-  --muted:#666;
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--bg),#ffffff);
-}
-
-/* Layout */
-.wrapper{
-  max-width:440px;
-  margin:28px auto;
-  padding:0 14px;
-}
-.card{
-  background:#fff;
-  border-radius:28px;
-  padding:24px 22px 28px;
-  text-align:center;
-  box-shadow:0 24px 60px rgba(0,0,0,.12);
-}
-h1{margin:0 0 6px;font-size:28px}
-.lead{font-size:15px;color:var(--muted);margin-bottom:18px}
-
-/* Buttons */
-.buttons{
-  display:flex;
-  gap:12px;
-  flex-direction:column;
-  margin-bottom:14px;
-}
-.button{
-  padding:16px;
-  font-size:18px;
-  font-weight:800;
-  border:none;
-  border-radius:20px;
-  cursor:pointer;
-  color:#fff;
-  background:linear-gradient(180deg,var(--accent),var(--accent-dark));
-}
-.button.secondary{
-  background:#f1f1f1;
-  color:#555;
-}
-.note{
-  background:#fff0f0;
-  padding:10px;
-  border-radius:14px;
-  font-size:14px;
-  margin-bottom:18px;
-}
-
-/* Wheel */
-.wheel-card{
-  background:#fff6f6;
-  border-radius:30px;
-  padding:22px 18px 26px;
-}
-.wheel-wrap{
-  position:relative;
-  display:inline-block;
-}
-canvas{
-  width:92vw;
-  max-width:320px;
-  height:auto;
-  background:#fff;
-  border-radius:18px;
-}
-.center-hub{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 6px 16px rgba(0,0,0,.25), inset 0 0 0 4px var(--accent);
-}
-.spin-btn{margin-top:18px}
-
-/* Modal */
-.modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,.55);
-  padding:18px;
-}
-.modal.show{display:flex}
-.modal-box{
-  background:#fff;
-  border-radius:28px;
-  padding:26px 24px 30px;
-  max-width:360px;
-  width:100%;
-  text-align:center;
-}
-.prize-box{
-  background:#fff5f5;
-  border-radius:16px;
-  padding:14px;
-  font-size:18px;
-  font-weight:700;
-  color:#ff6b6b;
-  white-space:pre-line;
-}
-.modal-actions{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  margin-top:18px;
-}
-</style>
+  <!-- CSS -->
+  styles.css
 </head>
 
 <body>
 
-<div class="wrapper">
-  <div class="card">
-    <h1>Doneer aan KiKa 💛</h1>
-    <p class="lead">
-      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-      Als dank voor jouw steun mag je aan dit wiel draaien 🎡
-    </p>
+  <div class="wrapper">
+    <div class="card">
+      <h1>Doneer aan KiKa 💛</h1>
 
-    <div class="buttons">
-      <button class="button"
-        onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
-        Doneer nu
-      </button>
-      <button class="button" onclick="spinBtn.scrollIntoView({behavior:'smooth'})">
-        Ik heb gedoneerd → Draai!
-      </button>
-    </div>
+      <p class="lead">
+        Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
+        Als dank voor jouw steun mag je aan dit wiel draaien 🎡
+      </p>
 
-    <div class="note">Prijzen hebben geen geldwaarde</div>
+      <div class="buttons">
+        <button class="button">
+          Doneer nu
+        </button>
 
-    <div class="wheel-card">
-      <div class="wheel-wrap">
-        <canvas id="wheel" width="300" height="300"></canvas>
-        <div class="center-hub"></div>
+        <button class="button">
+          Ik heb gedoneerd → Draai!
+        </button>
       </div>
-      <button id="spinBtn" class="button spin-btn">Draai!</button>
+
+      <div class="note">
+        Prijzen hebben geen geldwaarde
+      </div>
+
+      <div class="wheel-card">
+        <canvas id="wheel" width="300" height="300"></canvas>
+      </div>
+
     </div>
   </div>
-</div>
 
-<!-- Modal -->
-<div id="modal" class="modal">
-  <div class="modal-box">
-    <h2>🎉 Gefeliciteerd!</h2>
-    <div class="prize-box"><span id="prizeText"></span></div>
-    <div class="modal-actions">
-      <button class="button" id="againBtn">🔄 Nog een keer draaien</button>
-      <button class="button" id="mailBtn">📧 Mail mijn prijs</button>
-      <button class="button secondary" id="closeBtn">Sluiten</button>
-    </div>
-  </div>
-</div>
-
-  https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js</script>
-
-<script>
-/* ===== HELPERTJES ===== */
-function ensureConfetti(){
-  return new Promise(resolve=>{
-    if (typeof window.confetti === 'function') return resolve(true);
-    // (Fallback: inject nogmaals — komt zelden voor, maar is onschuldig)
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
-    s.onload=()=>resolve(true);
-    s.onerror=()=>resolve(false);
-    document.body.appendChild(s);
-  });
-}
-function launchConfetti(){
-  ensureConfetti().then(ok=>{
-    if(!ok || typeof window.confetti!=='function') return;
-
-confetti({
-  particleCount: 220,
-  spread: 120,
-  startVelocity: 45,
-  gravity: 0.9,
-  ticks: 300,
-  origin: { x: 0.5, y: 0.6 }
-});
-    
-const end = Date.now() + 1200;
-
-(function frame() {
-  confetti({
-    particleCount: 8,
-    spread: 100,
-    startVelocity: 30,
-    origin: { x: Math.random(), y: -0.1 }
-  });
-  if (Date.now() < end) {
-    requestAnimationFrame(frame);
-  }
-})();
-
-setTimeout(() => {
-  confetti({
-    particleCount: 80,
-    spread: 100,
-    origin: { x: 0.5, y: 0.55 }
-  });
-}, 200);
-
-  });
-}
-function resetSpin(){ spinning=false; }
-
-/* ===== PRIJZEN ===== */
-const prizeData = {
-  "😂 Mop": ["Waarom kan een skeeleraar nooit liegen?\nHij glijdt er altijd mee weg!"],
-  "💡 Feit": ["Elke donatie helpt KiKa onderzoek te versnellen."],
-  "💛 Quote": ["Kleine daden maken groot verschil."],
-  "🔥 Challenge": ["Stuur vandaag iemand een lief berichtje."],
-  "👏 Compliment": ["Wat mooi dat jij je inzet voor KiKa 💛"],
-  "🧩 Raadsel": ["Wat wordt natter terwijl het droogt?\nEen handdoek!"],
-  "🍀 Geluk": ["Vandaag is een goede dag voor iets moois."]
-};
-const categories = Object.keys(prizeData);
-
-/* ===== CANVAS WIEL ===== */
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const angle = 2 * Math.PI / categories.length;
-let rot = 0;
-let spinning = false;
-
-
-function draw(){
-  ctx.clearRect(0,0,300,300);
-  categories.forEach((label,i)=>{
-    ctx.beginPath();
-    ctx.moveTo(150,150);
-    ctx.arc(150,150,140,i*angle+rot,(i+1)*angle+rot);
-    ctx.fillStyle=[
-      "#ff6b6b","#ff9f43","#1dd1a1",
-      "#54a0ff","#7d5fff","#ffd166","#00d2d3"
-    ][i];
-    ctx.fill();
-
-    ctx.save();
-    ctx.translate(150,150);
-    ctx.rotate(i*angle+angle/2+rot);
-    ctx.fillStyle="#fff";
-    ctx.font="bold 13px Arial";
-    ctx.textAlign="center";
-    ctx.fillText(label,95,0);
-    ctx.restore();
-  });
-}
-draw();
-
-/* ===== SPIN ===== */
-const spinBtn = document.getElementById("spinBtn");
-const modal = document.getElementById("modal");
-const prizeText = document.getElementById("prizeText");
-const mailBtn = document.getElementById("mailBtn");
-const closeBtn = document.getElementById("closeBtn");
-const againBtn = document.getElementById("againBtn");
-
-let lastSpin = 0;
-const COOLDOWN = 500; // ms – anti dubbelklik
-
-spinBtn.onclick = () => {
-  const now = Date.now();
-  if (now - lastSpin < COOLDOWN) return;
-  lastSpin = now;
-
-  if (spinning) return;
-  spinning = true;
-
-  new Audio("wheel-spin-click-slow-down-101152.mp3").play().catch(()=>{});
-
-  const target = Math.random()*2*Math.PI;
-  const start = performance.now();
-
-  function animate(t){
-    const p = Math.min(1,(t-start)/2600);
-    const eased = 1 - Math.pow(1-p,3);
-    rot = target * eased;
-    draw();
-    if(p < 1) requestAnimationFrame(animate);
-    else{
-      const index = Math.floor(((2*Math.PI-rot)%(2*Math.PI))/angle);
-      const cat = categories[index];
-      const variants = prizeData[cat];
-      const txt = variants[Math.floor(Math.random()*variants.length)];
-      showModal(cat, txt);
-      spinning = false; // klaar met deze draai
-    }
-  }
-  requestAnimationFrame(animate);
-};
-
-/* ===== MODAL + CONFETTI ===== */
-function showModal(cat, txt){
-  prizeText.textContent = `${cat}\n\n${txt}`;
-  modal.classList.add("show");
-  launchConfetti();
-
-  const subject = "Mijn KiKa-prijs 🎉";
-  const body = encodeURIComponent(`${cat}\n\n${txt}\n\nSteun KiKa:\nhttps://24kika.nl/doneren/?deelnemer=steven-arbon`);
-  mailBtn.onclick = () =>
-    location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
-}
-
-againBtn.onclick = () => {
-  modal.classList.remove("show");
-  resetSpin();
-  setTimeout(()=>spinBtn.click(),800);
-};
-closeBtn.onclick = () => {
-  modal.classList.remove("show");
-  resetSpin();
-};
-</script>
-
+  <!-- JavaScript -->
+  script.js</script>
 </body>
 </html>
-``
