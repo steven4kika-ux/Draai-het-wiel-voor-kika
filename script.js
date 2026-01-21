@@ -1,3 +1,5 @@
+alert("JS is geladen ✅");
+
 console.log("✅ script.js is geladen");
 // STAP 4 – zichtbaar test-wiel tekenen
 
