@@ -239,12 +239,11 @@
 
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-    // ---------- Audio setup ----------
+    // ---------- Tick-geluid (Web Audio) ----------
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
 
-    // Tick (bij segment-overgangen)
     function playTick() {
       if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
@@ -259,66 +258,110 @@
       osc.start(now); osc.stop(now + 0.06);
     }
 
-    // ---------- TADA! ----------
-    // Een korte C-majeur akkoordsweep + shimmer/noise burst
-    function playTada() {
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
+    // ---------- Base64 TA-DA ----------
+    // We genereren één keer een kleine WAV (0.8s) en plaatsen die in een <audio> element.
+    // 'Ta' = C5 (523.25 Hz) ~350ms, 'da' = E5+G5 (659.25 & 783.99 Hz) ~450ms.
+    const tadaAudio = new Audio();
+    tadaAudio.preload = 'auto';
+    tadaAudio.volume = 0.9;
 
-      // Master gain (volume)
-      const master = audioCtx.createGain();
-      master.gain.setValueAtTime(0.001, now);
-      master.gain.exponentialRampToValueAtTime(0.8, now + 0.02);
-      master.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-      master.connect(audioCtx.destination);
+    function buildTadaWavBase64() {
+      const sr = 44100;
+      const dur = 0.8; // seconden
+      const attack = 0.01, release = 0.08;
+      const n = Math.floor(sr * dur);
+      const f1 = 523.25, f2 = 659.25, f3 = 783.99;
 
-      // Akkoordfrequenties: C5–E5–G5
-      const freqs = [523.25, 659.25, 783.99];
+      // PCM 16-bit mono
+      const headerBytes = 44;
+      const bytesPerSample = 2;
+      const dataSize = n * bytesPerSample;
+      const buffer = new ArrayBuffer(headerBytes + dataSize);
+      const view = new DataView(buffer);
 
-      // Maak per stem een oscillator met lichte pitch-sweep voor feestelijk effect
-      freqs.forEach((f, i) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = i === 0 ? "triangle" : "sawtooth"; // beetje rijker geluid
-
-        // Pitch-sweep omhoog
-        o.frequency.setValueAtTime(f * 0.985, now);
-        o.frequency.linearRampToValueAtTime(f * 1.03, now + 0.25);
-
-        // Individuele envelope (sneller dan master)
-        g.gain.setValueAtTime(0.001, now);
-        g.gain.exponentialRampToValueAtTime(0.9, now + 0.02 + i*0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.9 + i*0.02);
-
-        o.connect(g); g.connect(master);
-        o.start(now);
-        o.stop(now + 1.0);
-      });
-
-      // Shimmer/noise burst (heel kort)
-      const dur = 0.25;
-      const buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) {
-        // white noise met snelle fade-out in de sample zelf
-        const t = i / data.length;
-        data[i] = (Math.random()*2 - 1) * (1 - t) * 0.9;
+      // helper: schrijf ASCII
+      function writeStr(off, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
       }
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = buffer;
 
-      const hp = audioCtx.createBiquadFilter();
-      hp.type = "highpass";
-      hp.frequency.setValueAtTime(1200, now);
+      // WAV header
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);      // subchunk1 size
+      view.setUint16(20, 1, true);       // audio format = PCM
+      view.setUint16(22, 1, true);       // channels = 1
+      view.setUint32(24, sr, true);      // sample rate
+      view.setUint32(28, sr * 2, true);  // byte rate = sr * channels * 2
+      view.setUint16(32, 2, true);       // block align
+      view.setUint16(34, 16, true);      // bits per sample
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
 
-      const ng = audioCtx.createGain();
-      ng.gain.setValueAtTime(0.001, now);
-      ng.gain.exponentialRampToValueAtTime(0.6, now + 0.01);
-      ng.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      // samples
+      let offset = 44;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
 
-      noise.connect(hp); hp.connect(ng); ng.connect(master);
-      noise.start(now);
-      noise.stop(now + dur);
+        // eenvoudige envelope
+        const envA = Math.min(1, t / attack);
+        const envR = Math.min(1, (dur - t) / release);
+        const env = Math.max(0, Math.min(1, envA * envR));
+
+        let sample;
+        if (t < 0.35) {
+          // 'ta' - enkele toon
+          sample = Math.sin(2 * Math.PI * f1 * t) * 0.65;
+        } else {
+          // 'da' - tweestemmig akkoord
+          const s2 = Math.sin(2 * Math.PI * f2 * t);
+          const s3 = Math.sin(2 * Math.PI * f3 * t);
+          sample = (s2 + s3) * 0.45; // mix, lager niveau om clipping te voorkomen
+        }
+
+        // heel klein beetje shimmer-noise
+        sample += (Math.random() * 2 - 1) * 0.02;
+
+        const val = Math.max(-1, Math.min(1, sample * env));
+        view.setInt16(offset, val * 0x7FFF, true);
+        offset += 2;
+      }
+
+      // base64 encoderen
+      const u8 = new Uint8Array(buffer);
+      const chunk = 0x8000;
+      let binary = '';
+      for (let i = 0; i < u8.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+      }
+      const b64 = btoa(binary);
+      return 'data:audio/wav;base64,' + b64;
+    }
+
+    // Bouw data URI één keer bij laden:
+    tadaAudio.src = buildTadaWavBase64();
+
+    // Sommige browsers eisen een "unlock" na eerste user-actie:
+    let tadaPrimed = false;
+    function primeTada() {
+      if (tadaPrimed) return;
+      const v = tadaAudio.volume;
+      tadaAudio.volume = 0;
+      const p = tadaAudio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(()=>{ tadaAudio.pause(); tadaAudio.currentTime = 0; tadaAudio.volume = v; tadaPrimed = true; })
+         .catch(()=>{ /* stilzwijgend: user zal later klikken, dan lukt het */ });
+      } else {
+        // oudere browsers
+        tadaPrimed = true;
+      }
+    }
+    function playTada() {
+      try {
+        tadaAudio.currentTime = 0;
+        tadaAudio.play();
+      } catch(e) { /* negeren als geblokkeerd */ }
     }
 
     // ---------- Confetti ----------
@@ -399,7 +442,7 @@
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       againBtn.focus();
-      // Confetti en TADA!
+      // Confetti + TA-DA!
       launchConfetti(2500, 200);
       playTada();
     }
@@ -416,7 +459,9 @@
       if (spinning) return;
       spinning = true;
 
-      initAudio(); // audio pas openen na user-actie
+      // Audio initialiseren/ontgrendelen bij user-actie
+      initAudio();   // voor ticks
+      primeTada();   // unlock HTMLAudio
 
       const startRotation = rotation;
       const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 rondjes
