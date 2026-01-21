@@ -1,4 +1,4 @@
-
+console.log("✅ script.js is geladen");
 // STAP 4 – zichtbaar test-wiel tekenen
 
 const canvas = document.getElementById("wheel");
