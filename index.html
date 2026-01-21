@@ -35,9 +35,38 @@
     h1 { margin: 0 0 8px; font-size: 30px; }
     p  { margin: 0 0 16px; }
 
-    .actions {
-      display: grid; gap: 10px; margin: 16px 0 8px; grid-template-columns: 1fr;
+    /* Donatie-chip bovenaan */
+    .donate-inline {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 6px 0 10px;
     }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      box-shadow: 0 3px 0 rgba(0,0,0,.06);
+      white-space: nowrap;
+    }
+    .chip-link {
+      background: #fff;
+      color: var(--blue);
+      border: 1px solid #dbeafe;
+      text-decoration: none;
+    }
+    .chip-btn {
+      background: var(--blue);
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .actions { display: grid; gap: 10px; margin: 16px 0 8px; grid-template-columns: 1fr; }
     @media (min-width: 540px) { .actions { grid-template-columns: 1fr 1fr; } }
 
     .btn {
@@ -55,10 +84,6 @@
     .btn-yellow { background: var(--yellow); color: #1a1a1a; }
     .btn-blue   { background: var(--blue);   color: #fff; }
     .btn:disabled { opacity: .6; cursor: not-allowed; }
-
-    .subnote {
-      font-size:12px; opacity:.8; margin-top:8px;
-    }
 
     .note {
       background: #fff6f8;
@@ -134,7 +159,7 @@
     .badge {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 6px 12px; border-radius: 999px; font-weight: 800;
-      background: #eff6ff; color: var(--blue); border: 2px solid var(--blue);
+      background: #eff6ff; color: #1d4ed8; border: 2px solid #1d4ed8;
       margin-bottom: 10px;
     }
     .modal__title { margin: 6px 0 8px; font-size: 24px; }
@@ -185,9 +210,21 @@
     <h1>Draai het wiel voor KiKa 💛</h1>
     <p>Elke draai levert een glimlach op: een mop, quote, feitje, challenge, compliment of verrassing — helemaal in KiKa‑vibe 🟡🔵</p>
 
+    <!-- Donatielink chip + kopieerknop -->
+    <div class="donate-inline" role="group" aria-label="Donatielink acties">
+      <a class="chip chip-link"
+         href="https://24kika.nl/doneren/?deelnemer=steven-arbon"
+              </a>
+      <button class="chip chip-btn" type="button" onclick="copyDonateLink()"
+              aria-label="Kopieer mijn donatielink">
+        Kopieer donatielink
+      </button>
+    </div>
+
     <div class="actions">
       <!-- Doneerknop via jouw persoonlijke link -->
-      https://24kika.nl/doneren/?deelnemer=steven-arbon
+      <a class="btn btn-yellow" id="donateBtn"
+        
         Doneer nu
       </a>
 
@@ -195,7 +232,6 @@
         Ik heb gedoneerd → Draai!
       </button>
     </div>
-    <p class="subnote">Donaties verlopen rechtstreeks via de officiële KiKa-pagina.</p>
 
     <div class="note">Prijzen hebben geen geldwaarde — het gaat om plezier, positiviteit en steun voor onderzoek 💛</div>
 
@@ -220,12 +256,8 @@
       <div class="modal__row">
         <button id="againBtn"  class="modal__btn modal__btn--again"  type="button">Nog een keer draaien</button>
         <button id="shareBtn"  class="modal__btn modal__btn--share"  type="button">Deel jouw prijs</button>
-        https://24kika.nl/doneren/?deelnemer=steven-arbonDoneer nu</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer met verantwoording & disclaimer -->
+        <a       id="donatePopupBtn" class="modal__btn modal__btn--donate"
+                 href="https://24kika.nlter met verantwoording & disclaimer -->
   <footer class="footer">
     <p>
       <strong>Verantwoording & disclaimer</strong><br><br>
@@ -233,8 +265,7 @@
       geld in te zamelen voor het goede doel KiKa (Stichting Kinderen Kankervrij).<br><br>
 
       Dit initiatief is <strong>niet officieel verbonden aan KiKa</strong>,
-      maar wordt uit eigen betrokkenheid en respect voor hun werk opgezet.
-      Alle donaties verlopen uitsluitend via de officiële KiKa-donatiepagina.<br><br>
+      maar wordt uit eigen betrokkenheid en respect voor hun werk opgezet.<br><br>
 
       De getoonde prijzen, teksten en acties hebben geen geldwaarde en zijn
       bedoeld als een ludieke en positieve manier om donateurs te bedanken.<br><br>
@@ -248,11 +279,10 @@
 
   <script>
     // ---------- Config ----------
-    // Centrale donatielink (voor delen gebruiken we deze URL)
+    // Centrale donatielink (wordt ook gebruikt bij 'delen' en 'kopiëren')
     const DONATE_URL = "https://24kika.nl/doneren/?deelnemer=steven-arbon";
 
     // ---------- Segmenten (6 categorieën) ----------
-    // Elke categorie heeft: key, titel, icoon, kleur (voor wiel) en een lijst met varianten.
     const segments = [
       {
         key: 'MOP', title: 'Mop', icon: '😂', color: '#fde047',
@@ -501,6 +531,25 @@
     let lastSharePayload = { cat:'', icon:'', text:'' };
     shareBtn.addEventListener('click', ()=> sharePrize(lastSharePayload.cat, lastSharePayload.icon, lastSharePayload.text));
 
+    // ---------- Kopieer donatielink (chip-knop) ----------
+    async function copyDonateLink() {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(DONATE_URL);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = DONATE_URL;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        showToast('Donatielink gekopieerd ✅');
+      } catch (e) {
+        showToast('Kopiëren mislukt, probeer handmatig 🙏');
+      }
+    }
+
     // ---------- Spin + ticks ----------
     let lastIndexForTick = null;
 
@@ -556,4 +605,3 @@
   </script>
 </body>
 </html>
-``
