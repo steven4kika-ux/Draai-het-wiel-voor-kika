@@ -2,42 +2,239 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Draai het wiel voor KiKa 💛</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="./styles.css">
-  <h1>Doneer aan KiKa 💛</h1>
+  <style>
+    /* --- Minimal styling --- */
+    :root {
+      --bg: #ffe0ef;
+      --text: #222;
+      --btn: #3f3f3f;
+      --btn-text: #fff;
+    }
 
-    <p>
-      Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-      Als dank voor jouw steun mag je aan dit wiel draaien 🎉
-    </p>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
 
-    <div>
-      <button onclick="window.open('https://www.actievoorkika.nl', '_blank')">
+    main {
+      max-width: 560px;
+      margin: 24px auto;
+      padding: 16px;
+      text-align: center;
+    }
+
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p  { margin: 0 0 16px; }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 8px;
+    }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: var(--btn);
+      color: var(--btn-text);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    .note {
+      background: #fff6f8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .wheel-wrap {
+      display: grid;
+      place-items: center;
+      margin: 8px auto 28px;
+      position: relative;
+      width: 320px;
+      height: 340px;
+    }
+
+    /* Pijltje/indicator bovenaan */
+    .pointer {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -6px);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 18px solid #ffb703; /* goud/geel */
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.25));
+      z-index: 2;
+    }
+
+    canvas {
+      display: block;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 10px 24px rgba(0,0,0,.08);
+    }
+
+    .result {
+      margin-top: 8px;
+      min-height: 28px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Doneer aan KiKa 💛</h1>
+    <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>Als dank voor jouw steun mag je aan dit wiel draaien 🎉</p>
+
+    <div class="actions">
+      <button id="donateBtn" type="button" onclick="window.open('https://www.actievoorkika.nl','_blank')">
         Doneer nu
       </button>
-
-      <button onclick="spinWheel()">
+      <button id="spinBtn" type="button" onclick="spinWheel()">
         Ik heb gedoneerd → Draai!
       </button>
     </div>
 
-    <p>Prijzen hebben geen geldwaarde</p>
+    <div class="note">Prijzen hebben geen geldwaarde</div>
 
-    <!-- CANVAS -->
-    <canvas id="wheel" width="300" height="300"
-      style="border:1px solid red; margin-top:20px;">
-    </canvas>
+    <div class="wheel-wrap">
+      <div class="pointer" aria-hidden="true"></div>
+      <canvas id="wheel" width="300" height="300" aria-label="Draaiwiel"></canvas>
+    </div>
+
+    <div id="result" class="result" role="status" aria-live="polite"></div>
   </main>
 
-  <!-- JS -->
-  
-<script.js</script.css>
+  <script>
+    // --- Minimal, self-contained spinning wheel ---
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
 
+    const size = canvas.width;      // 300
+    const cx   = size / 2;          // 150
+    const cy   = size / 2;          // 150
+    const r    = 140;               // radius
+
+    // Segment-teksten (kun je aanpassen)
+    const labels = [
+      "High five 🙌",
+      "Dankjewel 💛",
+      "Virtuele knuffel 🤗",
+      "Topper ⭐",
+      "Goed bezig 🎉",
+      "Respect 👏"
+    ];
+
+    // Kleuren per segment
+    const colors = [
+      "#ffbe0b", "#fb5607", "#ff006e",
+      "#8338ec", "#3a86ff", "#06d6a0"
+    ];
+
+    const slice = (Math.PI * 2) / labels.length;
+    let rotation = 0;      // huidige rotatie in radialen
+    let spinning = false;  // guard
+
+    function resetTransform() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    function drawWheel() {
+      resetTransform();
+      ctx.clearRect(0, 0, size, size);
+
+      // teken rond het midden
+      ctx.translate(cx, cy);
+      ctx.rotate(rotation);
+
+      // segmenten
+      for (let i = 0; i < labels.length; i++) {
+        const start = i * slice;
+        const end   = start + slice;
+
+        // sector
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        // label
+        ctx.save();
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#111";
+        ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText(labels[i], r - 10, 5);
+        ctx.restore();
+      }
+
+      resetTransform();
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+
+      const resultBox = document.getElementById("result");
+      resultBox.textContent = ""; // clear vorige uitslag
+
+      const startRotation = rotation;
+      const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 omwentelingen
+      const target = startRotation + extra;
+
+      const duration = 2500;
+      const startTime = performance.now();
+
+      function animate(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = easeOutCubic(t);
+        rotation = startRotation + (target - startRotation) * eased;
+
+        drawWheel();
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // normaliseer
+          rotation = target % (Math.PI * 2);
+          spinning = false;
+
+          // Bepaal winnend segment (pointer wijst naar "12 uur", dus -rotation)
+          const pointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2); // 270° = boven
+          const index = Math.floor(pointerAngle / slice) % labels.length;
+          const prize = labels[index];
+
+          resultBox.textContent = `Gefeliciteerd! Je hebt gewonnen: ${prize}`;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Eerste render
+    drawWheel();
+  </script>
 </body>
 </html>
-``
