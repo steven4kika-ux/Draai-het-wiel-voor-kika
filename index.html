@@ -8,7 +8,7 @@
 
   <style>
     :root {
-      /* KiKa-achtige vibe: zonnig geel + vriendelijk (konings)blauw */
+      /* KiKa-achtige vibe: zonnig geel + vriendelijk blauw */
       --bg: #fff2fb;            /* zacht, warm */
       --text: #1f2937;
       --yellow: #ffb703;        /* accent */
@@ -35,7 +35,9 @@
     h1 { margin: 0 0 8px; font-size: 30px; }
     p  { margin: 0 0 16px; }
 
-    .actions { display: grid; gap: 10px; margin: 16px 0 8px; grid-template-columns: 1fr; }
+    .actions {
+      display: grid; gap: 10px; margin: 16px 0 8px; grid-template-columns: 1fr;
+    }
     @media (min-width: 540px) { .actions { grid-template-columns: 1fr 1fr; } }
 
     .btn {
@@ -46,10 +48,17 @@
       font-weight: 700;
       cursor: pointer;
       box-shadow: 0 3px 0 rgba(0,0,0,.08);
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
     }
     .btn-yellow { background: var(--yellow); color: #1a1a1a; }
     .btn-blue   { background: var(--blue);   color: #fff; }
     .btn:disabled { opacity: .6; cursor: not-allowed; }
+
+    .subnote {
+      font-size:12px; opacity:.8; margin-top:8px;
+    }
 
     .note {
       background: #fff6f8;
@@ -136,8 +145,9 @@
       border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer;
       box-shadow: 0 3px 0 rgba(0,0,0,.08);
     }
-    .modal__btn--again { background: var(--yellow); color: #1a1a1a; }
-    .modal__btn--share { background: var(--blue);   color: #fff; }
+    .modal__btn--again  { background: var(--yellow); color: #1a1a1a; }
+    .modal__btn--share  { background: var(--blue);   color: #fff; }
+    .modal__btn--donate { background: var(--yellow); color: #1a1a1a; }
 
     /* ---------- Confetti canvas ---------- */
     #confetti {
@@ -154,6 +164,20 @@
       z-index: 2000;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+    /* ---------- Footer (verantwoording) ---------- */
+    .footer {
+      max-width: 700px;
+      margin: 40px auto 20px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #374151;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.06);
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -162,14 +186,16 @@
     <p>Elke draai levert een glimlach op: een mop, quote, feitje, challenge, compliment of verrassing — helemaal in KiKa‑vibe 🟡🔵</p>
 
     <div class="actions">
-      <button class="btn btn-yellow" id="donateBtn" type="button"
-              onclick="window.open('https://www.actievoorkika.nl','_blank')">
+      <!-- Doneerknop via jouw persoonlijke link -->
+      https://24kika.nl/doneren/?deelnemer=steven-arbon
         Doneer nu
-      </button>
+      </a>
+
       <button class="btn btn-blue" id="spinBtn" type="button" onclick="spinWheel()">
         Ik heb gedoneerd → Draai!
       </button>
     </div>
+    <p class="subnote">Donaties verlopen rechtstreeks via de officiële KiKa-pagina.</p>
 
     <div class="note">Prijzen hebben geen geldwaarde — het gaat om plezier, positiviteit en steun voor onderzoek 💛</div>
 
@@ -192,18 +218,44 @@
       <h2 class="modal__title">Gefeliciteerd! 🎉</h2>
       <p id="modalPrize" class="modal__prize"></p>
       <div class="modal__row">
-        <button id="againBtn" class="modal__btn modal__btn--again" type="button">Nog een keer draaien</button>
-        <button id="shareBtn" class="modal__btn modal__btn--share" type="button">Deel jouw prijs</button>
+        <button id="againBtn"  class="modal__btn modal__btn--again"  type="button">Nog een keer draaien</button>
+        <button id="shareBtn"  class="modal__btn modal__btn--share"  type="button">Deel jouw prijs</button>
+        https://24kika.nl/doneren/?deelnemer=steven-arbonDoneer nu</a>
       </div>
     </div>
   </div>
 
+  <!-- Footer met verantwoording & disclaimer -->
+  <footer class="footer">
+    <p>
+      <strong>Verantwoording & disclaimer</strong><br><br>
+      Deze website en het draaiwiel zijn door mij persoonlijk bedacht en gemaakt om
+      geld in te zamelen voor het goede doel KiKa (Stichting Kinderen Kankervrij).<br><br>
+
+      Dit initiatief is <strong>niet officieel verbonden aan KiKa</strong>,
+      maar wordt uit eigen betrokkenheid en respect voor hun werk opgezet.
+      Alle donaties verlopen uitsluitend via de officiële KiKa-donatiepagina.<br><br>
+
+      De getoonde prijzen, teksten en acties hebben geen geldwaarde en zijn
+      bedoeld als een ludieke en positieve manier om donateurs te bedanken.<br><br>
+
+      Er is geen intentie om personen, organisaties of auteursrechten te schaden.
+      Mocht er onverhoopt iets niet juist zijn, dan kan dit in overleg aangepast worden.<br><br>
+
+      💛 Dank je wel voor het steunen van KiKa
+    </p>
+  </footer>
+
   <script>
+    // ---------- Config ----------
+    // Centrale donatielink (voor delen gebruiken we deze URL)
+    const DONATE_URL = "https://24kika.nl/doneren/?deelnemer=steven-arbon";
+
     // ---------- Segmenten (6 categorieën) ----------
     // Elke categorie heeft: key, titel, icoon, kleur (voor wiel) en een lijst met varianten.
     const segments = [
       {
-        key: 'MOP', title: 'Mop', icon: '😂', color: '#fde047', // zonnig
+        key: 'MOP', title: 'Mop', icon: '😂', color: '#fde047',
         items: [
           "Waarom kan een skeeleraar niet liegen? Hij rolt zó door 😉",
           "Wat zegt een skeeler na 24 uur? Ik ben rond! 😄",
@@ -214,7 +266,7 @@
         ]
       },
       {
-        key: 'QUOTE', title: 'Quote', icon: '💬', color: '#60a5fa', // vriendelijk blauw
+        key: 'QUOTE', title: 'Quote', icon: '💬', color: '#60a5fa',
         items: [
           "Kleine stappen maken samen grote impact 🟡🔵",
           "Doe goed, voel goed — voor jezelf én een ander 💛",
@@ -225,7 +277,7 @@
         ]
       },
       {
-        key: 'FEIT', title: 'Feit', icon: '🧠', color: '#a78bfa', // zacht paars
+        key: 'FEIT', title: 'Feit', icon: '🧠', color: '#a78bfa',
         items: [
           "Wist je dat geven je brein een gelukskick geeft? 😊",
           "Kleine donaties bij elkaar financieren groot onderzoek 🔬",
@@ -236,7 +288,7 @@
         ]
       },
       {
-        key: 'CHALLENGE', title: 'Challenge', icon: '🔥', color: '#fb7185', // vriendelijk rood
+        key: 'CHALLENGE', title: 'Challenge', icon: '🔥', color: '#fb7185',
         items: [
           "Geef vandaag één iemand een compliment 💬",
           "Stuur dit wiel naar 1 vriend(in) en laat ze draaien 📲",
@@ -247,7 +299,7 @@
         ]
       },
       {
-        key: 'COMPLIMENT', title: 'Compliment', icon: '🌟', color: '#34d399', // groen
+        key: 'COMPLIMENT', title: 'Compliment', icon: '🌟', color: '#34d399',
         items: [
           "Jij bent een lichtpuntje voor KiKa 💛",
           "Wat tof dat jij helpt — echte topper!",
@@ -258,7 +310,7 @@
         ]
       },
       {
-        key: 'FUN', title: 'Verrassing', icon: '🎭', color: '#f59e0b', // oranje
+        key: 'FUN', title: 'Verrassing', icon: '🎭', color: '#f59e0b',
         items: [
           "Virtuele confetti‑regen speciaal voor jou 🎊",
           "Digitale high five — tik! 🙌",
@@ -278,7 +330,7 @@
     const canvas = document.getElementById("wheel");
     const ctx = canvas.getContext("2d");
 
-    const size = canvas.width;      // 320
+    const size = canvas.width; // 320
     const cx   = size / 2;
     const cy   = size / 2;
     const r    = 145;
@@ -342,7 +394,7 @@
       osc.start(now); osc.stop(now + 0.06);
     }
 
-    // ---------- Base64 TA-DA (instelbaar) ----------
+    // ---------- Base64 TA-DA (toonhoogte & duur instelbaar) ----------
     const tadaAudio = new Audio(); tadaAudio.preload = 'auto'; tadaAudio.volume = 0.9;
     function buildTadaWavBase64({ baseFreq = 261.63, taMs = 600, daMs = 1000, shimmer = 0.02, sampleRate = 44100 } = {}) {
       const sr = sampleRate, dur = (taMs + daMs)/1000, n = Math.floor(sr*dur);
@@ -365,10 +417,16 @@
       const u8=new Uint8Array(buf); let bin=''; const CH=0x8000; for(let i=0;i<u8.length;i+=CH){ bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CH)); }
       return 'data:audio/wav;base64,'+btoa(bin);
     }
+    // Lager & langer (C4, ~1.6s)
     tadaAudio.src = buildTadaWavBase64({ baseFreq: 261.63, taMs: 600, daMs: 1000 });
     let tadaPrimed=false;
-    function primeTada(){ if(tadaPrimed) return; const v=tadaAudio.volume; tadaAudio.volume=0; const p=tadaAudio.play();
-      if(p&&p.then){ p.then(()=>{tadaAudio.pause(); tadaAudio.currentTime=0; tadaAudio.volume=v; tadaPrimed=true;}).catch(()=>{}); } else { tadaPrimed=true; } }
+    function primeTada(){
+      if(tadaPrimed) return;
+      const v=tadaAudio.volume; tadaAudio.volume=0;
+      const p=tadaAudio.play();
+      if(p&&p.then){ p.then(()=>{tadaAudio.pause(); tadaAudio.currentTime=0; tadaAudio.volume=v; tadaPrimed=true;}).catch(()=>{}); }
+      else { tadaPrimed=true; }
+    }
     function playTada(){ try{ tadaAudio.currentTime=0; tadaAudio.play(); }catch(e){} }
 
     // ---------- Confetti ----------
@@ -379,7 +437,7 @@
     function resizeConfetti(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
     addEventListener('resize', ()=>{ if(confettiRunning) resizeConfetti(); });
 
-    function launchConfetti(duration=2500, count=220){
+    function launchConfetti(duration=2600, count=240){
       resizeConfetti(); confettiCanvas.classList.add('show'); confettiRunning=true;
       const W=confettiCanvas.width, H=confettiCanvas.height;
       const palette=["#ffb703","#1d4ed8","#34d399","#f59e0b","#60a5fa","#a78bfa","#fb7185","#fde047"];
@@ -423,25 +481,23 @@
       toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1600);
     }
     async function sharePrize(cat, icon, text){
-      const shareText = `${icon} ${cat} — ${text}\nDraai ook mee voor KiKa 💛`;
+      const shareText = `${icon} ${cat} — ${text}\nSteun KiKa met een donatie 💛`;
       try {
         if (navigator.share) {
-          await navigator.share({ title: 'Mijn KiKa-prijs', text: shareText, url: location.href });
+          await navigator.share({ title: 'Mijn KiKa-prijs', text: shareText, url: DONATE_URL });
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(`${shareText}\n${location.href}`);
-          showToast();
+          await navigator.clipboard.writeText(`${shareText}\n${DONATE_URL}`);
+          showToast('Donatielink gekopieerd ✅');
         } else {
-          // laatste fallback
-          const ta = document.createElement('textarea'); ta.value = `${shareText}\n${location.href}`;
+          const ta = document.createElement('textarea'); ta.value = `${shareText}\n${DONATE_URL}`;
           document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-          showToast();
+          showToast('Donatielink gekopieerd ✅');
         }
       } catch(e) {
-        // delen geannuleerd of geblokkeerd: stil houden
+        // delen geannuleerd of geblokkeerd
       }
     }
 
-    // Koppel share-knop dynamisch met huidige prijs
     let lastSharePayload = { cat:'', icon:'', text:'' };
     shareBtn.addEventListener('click', ()=> sharePrize(lastSharePayload.cat, lastSharePayload.icon, lastSharePayload.text));
 
@@ -500,3 +556,4 @@
   </script>
 </body>
 </html>
+``
