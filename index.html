@@ -200,13 +200,29 @@ function launchConfetti(){
   ensureConfetti().then(ok=>{
     if(!ok || typeof window.confetti!=='function') return;
     window.
+
 confetti({
-  particleCount: 160,
-  spread: 80,
-  startVelocity: 35,
+  particleCount: 220,
+  spread: 120,
+  startVelocity: 45,
   gravity: 0.9,
-  origin: { x: 0.5, y: 0.55 }
+  ticks: 300,
+  origin: { x: 0.5, y: 0.6 }
 });
+    
+const end = Date.now() + 1200;
+
+(function frame() {
+  confetti({
+    particleCount: 8,
+    spread: 100,
+    startVelocity: 30,
+    origin: { x: Math.random(), y: -0.1 }
+  });
+  if (Date.now() < end) {
+    requestAnimationFrame(frame);
+  }
+})();
 
 setTimeout(() => {
   confetti({
