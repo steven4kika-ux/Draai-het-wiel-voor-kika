@@ -1,33 +1,40 @@
 
 <!doctype html>
 <html lang="nl">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Draai het wiel voor KiKa 💛</title>
-  styles.css
+
+  <!-- CSS koppelen -->
+  <links.css
 </head>
+
+<body>
+  <main>
     <h1>Doneer aan KiKa 💛</h1>
 
     <p>
       Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-      Als dank voor jouw steun mag je aan dit wiel draaien 🎡
+      Als dank voor jouw steun mag je aan dit wiel draaien 🎉
     </p>
 
     <div>
-      <button>Doneer nu</button>
-      <button>Ik heb gedoneerd → Draai!</button>
+      <button onclick="window.open('https://www.actievoorkika.nl', '_blank')">
+        Doneer nu
+      </button>
+
+      <button onclick="spinWheel()">
+        Ik heb gedoneerd → Draai!
+      </button>
     </div>
 
     <p>Prijzen hebben geen geldwaarde</p>
 
-    <div>
-      <canvas id="wheel" width="300" height="300"></canvas>
-    </div>
+    <canvas id="wheel" width="300" height="300"></canvas>
   </main>
 
-  <!-- ✅ CORRECTE JS-KOPPELING -->
-</script>
+  <!-- JS koppelen -->
+  script.js</script>
 </body>
 </html>
