@@ -83,7 +83,7 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.08);
     }
 
-    .result { display:none; } /* oude tekst-uitslag verbergen */
+    .result { display:none; } /* uitslag-tekst verstoppen; we tonen modal */
 
     /* ---------- Modal (popup) ---------- */
     .modal {
@@ -109,22 +109,15 @@
       width: min(90vw, 420px);
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,.25);
-      z-index: 1; /* boven backdrop */
+      z-index: 1;
       animation: pop .18s ease-out;
     }
     @keyframes pop {
       from { transform: scale(.96); opacity: .6; }
       to   { transform: scale(1);   opacity: 1;  }
     }
-    .modal__title {
-      margin: 0 0 8px;
-      font-size: 24px;
-    }
-    .modal__prize {
-      margin: 10px 0 18px;
-      font-size: 18px;
-      font-weight: 700;
-    }
+    .modal__title { margin: 0 0 8px; font-size: 24px; }
+    .modal__prize { margin: 10px 0 18px; font-size: 18px; font-weight: 700; }
     .modal__btn {
       display: inline-block;
       background: var(--brand);
@@ -173,7 +166,6 @@
       <canvas id="wheel" width="300" height="300" aria-label="Draaiwiel"></canvas>
     </div>
 
-    <!-- Uitslag-tekst niet meer nodig; houden voor screenreaders desnoods -->
     <div id="result" class="result" role="status" aria-live="polite"></div>
   </main>
 
@@ -247,29 +239,86 @@
 
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-    // ---------- Klikgeluid (Web Audio) ----------
+    // ---------- Audio setup ----------
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
 
+    // Tick (bij segment-overgangen)
     function playTick() {
-      if (!audioCtx) return; // nog niet toegestaan (autoplay policies)
+      if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-
-      // kort, klikkend karakter
       osc.type = "square";
-      osc.frequency.value = 1400;        // hoge tik
+      osc.frequency.value = 1400;
       const now = audioCtx.currentTime;
-
       gain.gain.setValueAtTime(0.001, now);
       gain.gain.exponentialRampToValueAtTime(0.3, now + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.06);
+    }
 
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.06);
+    // ---------- TADA! ----------
+    // Een korte C-majeur akkoordsweep + shimmer/noise burst
+    function playTada() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      // Master gain (volume)
+      const master = audioCtx.createGain();
+      master.gain.setValueAtTime(0.001, now);
+      master.gain.exponentialRampToValueAtTime(0.8, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      master.connect(audioCtx.destination);
+
+      // Akkoordfrequenties: C5–E5–G5
+      const freqs = [523.25, 659.25, 783.99];
+
+      // Maak per stem een oscillator met lichte pitch-sweep voor feestelijk effect
+      freqs.forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = i === 0 ? "triangle" : "sawtooth"; // beetje rijker geluid
+
+        // Pitch-sweep omhoog
+        o.frequency.setValueAtTime(f * 0.985, now);
+        o.frequency.linearRampToValueAtTime(f * 1.03, now + 0.25);
+
+        // Individuele envelope (sneller dan master)
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.exponentialRampToValueAtTime(0.9, now + 0.02 + i*0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.9 + i*0.02);
+
+        o.connect(g); g.connect(master);
+        o.start(now);
+        o.stop(now + 1.0);
+      });
+
+      // Shimmer/noise burst (heel kort)
+      const dur = 0.25;
+      const buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        // white noise met snelle fade-out in de sample zelf
+        const t = i / data.length;
+        data[i] = (Math.random()*2 - 1) * (1 - t) * 0.9;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const hp = audioCtx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.setValueAtTime(1200, now);
+
+      const ng = audioCtx.createGain();
+      ng.gain.setValueAtTime(0.001, now);
+      ng.gain.exponentialRampToValueAtTime(0.6, now + 0.01);
+      ng.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+      noise.connect(hp); hp.connect(ng); ng.connect(master);
+      noise.start(now);
+      noise.stop(now + dur);
     }
 
     // ---------- Confetti ----------
@@ -292,7 +341,6 @@
       const W = confettiCanvas.width;
       const H = confettiCanvas.height;
 
-      // init particles
       const palette = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0","#ffd166","#ef476f"];
       confettiParticles = Array.from({ length: count }, () => ({
         x: Math.random() * W,
@@ -315,7 +363,7 @@
         for (const p of confettiParticles) {
           p.x += p.vx;
           p.y += p.vy;
-          p.vy += 0.05;      // zwaartekracht
+          p.vy += 0.05;
           p.rot += p.vr;
 
           cfx.save();
@@ -329,7 +377,6 @@
         if (elapsed < duration) {
           requestAnimationFrame(frame);
         } else {
-          // korte fade-out
           confettiCanvas.classList.remove('show');
           confettiRunning = false;
           cfx.clearRect(0, 0, W, H);
@@ -339,7 +386,7 @@
       requestAnimationFrame(frame);
     }
 
-    // ---------- Spin + tick per segment + popup ----------
+    // ---------- Spin + tick + popup ----------
     let lastIndexForTick = null;
 
     const modal = document.getElementById('modal');
@@ -352,8 +399,9 @@
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       againBtn.focus();
-      // start confetti
+      // Confetti en TADA!
       launchConfetti(2500, 200);
+      playTada();
     }
     function closeModal() {
       modal.classList.remove('open');
@@ -368,7 +416,7 @@
       if (spinning) return;
       spinning = true;
 
-      initAudio(); // audio slechts na user‑actie
+      initAudio(); // audio pas openen na user-actie
 
       const startRotation = rotation;
       const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 rondjes
@@ -386,12 +434,11 @@
 
         drawWheel();
 
-        // Bepaal huidig segment onder de pointer (12-uur positie = 270°)
+        // Huidig segment onder pointer (12-uur positie = 270°)
         const pointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
         const idx = Math.floor(pointerAngle / slice) % labels.length;
 
-        // Speel 'tick' bij segment-overgang
-        if (idx !== lastIndexForTick) {
+        if (idx !== lastIndexForTick) { // klik per segment
           playTick();
           lastIndexForTick = idx;
         }
@@ -402,7 +449,6 @@
           rotation = target % (Math.PI * 2);
           spinning = false;
 
-          // Eindresultaat → popup + confetti
           const finalPointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
           const finalIndex = Math.floor(finalPointerAngle / slice) % labels.length;
           openModal(`Je hebt gewonnen: ${labels[finalIndex]}`);
