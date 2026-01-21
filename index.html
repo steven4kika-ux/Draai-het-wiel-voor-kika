@@ -8,40 +8,48 @@
 
   <style>
     :root {
-      --bg: #ffe0ef;
-      --text: #222;
-      --btn: #3f3f3f;
-      --btn-text: #fff;
-      --brand: #ffb703;
+      /* KiKa-achtige vibe: zonnig geel + vriendelijk (konings)blauw */
+      --bg: #fff2fb;            /* zacht, warm */
+      --text: #1f2937;
+      --yellow: #ffb703;        /* accent */
+      --blue: #1d4ed8;          /* primair */
+      --card: #ffffff;
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
     }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--text);
-      background: var(--bg);
+      background: radial-gradient(1200px 600px at 20% -10%, #fff7c2, transparent),
+                  radial-gradient(1200px 600px at 90% -20%, #dbeafe, transparent),
+                  var(--bg);
     }
     main {
-      max-width: 560px;
-      margin: 24px auto;
+      max-width: 640px;
+      margin: 24px auto 48px;
       padding: 16px;
       text-align: center;
     }
-    h1 { margin: 0 0 8px; font-size: 28px; }
+    h1 { margin: 0 0 8px; font-size: 30px; }
     p  { margin: 0 0 16px; }
 
-    .actions { display: grid; gap: 10px; margin: 16px 0 8px; }
-    button {
+    .actions { display: grid; gap: 10px; margin: 16px 0 8px; grid-template-columns: 1fr; }
+    @media (min-width: 540px) { .actions { grid-template-columns: 1fr 1fr; } }
+
+    .btn {
       appearance: none;
       border: 0;
       border-radius: 999px;
       padding: 12px 18px;
-      background: var(--btn);
-      color: var(--btn-text);
       font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 3px 0 rgba(0,0,0,.08);
     }
-    button:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-yellow { background: var(--yellow); color: #1a1a1a; }
+    .btn-blue   { background: var(--blue);   color: #fff; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
 
     .note {
       background: #fff6f8;
@@ -50,6 +58,7 @@
       margin-bottom: 20px;
       font-size: 14px;
       text-align: left;
+      box-shadow: var(--shadow);
     }
 
     .wheel-wrap {
@@ -57,8 +66,8 @@
       place-items: center;
       margin: 8px auto 28px;
       position: relative;
-      width: 320px;
-      height: 340px;
+      width: 340px;
+      height: 360px;
     }
 
     /* Pijltje/indicator bovenaan */
@@ -67,23 +76,22 @@
       top: 0;
       left: 50%;
       transform: translate(-50%, -6px);
-      width: 0;
-      height: 0;
+      width: 0; height: 0;
       border-left: 12px solid transparent;
       border-right: 12px solid transparent;
-      border-bottom: 18px solid var(--brand);
+      border-bottom: 18px solid var(--yellow);
       filter: drop-shadow(0 1px 2px rgba(0,0,0,.25));
       z-index: 2;
     }
 
     canvas {
       display: block;
-      background: #fff;
+      background: var(--card);
       border-radius: 50%;
-      box-shadow: 0 10px 24px rgba(0,0,0,.08);
+      box-shadow: var(--shadow);
     }
 
-    .result { display:none; } /* uitslag-tekst verstoppen; we tonen modal */
+    .result { display:none; } /* we tonen de uitslag in de modal */
 
     /* ---------- Modal (popup) ---------- */
     .modal {
@@ -103,103 +111,177 @@
     }
     .modal__card {
       position: relative;
-      background: #fff;
+      background: #ffffff;
       border-radius: 16px;
-      padding: 24px;
-      width: min(90vw, 420px);
+      padding: 22px;
+      width: min(92vw, 520px);
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,.25);
       z-index: 1;
       animation: pop .18s ease-out;
     }
-    @keyframes pop {
-      from { transform: scale(.96); opacity: .6; }
-      to   { transform: scale(1);   opacity: 1;  }
+    @keyframes pop { from { transform: scale(.96); opacity:.6; } to { transform: scale(1); opacity:1; } }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px; font-weight: 800;
+      background: #eff6ff; color: var(--blue); border: 2px solid var(--blue);
+      margin-bottom: 10px;
     }
-    .modal__title { margin: 0 0 8px; font-size: 24px; }
-    .modal__prize { margin: 10px 0 18px; font-size: 18px; font-weight: 700; }
+    .modal__title { margin: 6px 0 8px; font-size: 24px; }
+    .modal__prize { margin: 8px 0 18px; font-size: 18px; font-weight: 700; }
+    .modal__row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     .modal__btn {
       display: inline-block;
-      background: var(--brand);
-      color: #1a1a1a;
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 16px;
-      font-weight: 700;
-      cursor: pointer;
+      border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 3px 0 rgba(0,0,0,.08);
     }
+    .modal__btn--again { background: var(--yellow); color: #1a1a1a; }
+    .modal__btn--share { background: var(--blue);   color: #fff; }
 
     /* ---------- Confetti canvas ---------- */
     #confetti {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      display: none;
-      z-index: 1000; /* onder modal, boven pagina */
+      position: fixed; inset: 0; width: 100vw; height: 100vh;
+      pointer-events: none; display: none; z-index: 1000;
     }
     #confetti.show { display: block; }
+
+    /* ---------- Toast (clipboard fallback) ---------- */
+    .toast {
+      position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+      background: #111; color: #fff; padding: 10px 14px; border-radius: 999px;
+      font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+      z-index: 2000;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
   </style>
 </head>
 <body>
   <main>
     <h1>Draai het wiel voor KiKa 💛</h1>
-
-    <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-      Hierbij vraag ik jouw hulp! Met jouw donatie laat ik mijn wielen rollen…<br>
-      Als dank voor jouw steun mag je aan dit wiel draaien 🎉</p>
+    <p>Elke draai levert een glimlach op: een mop, quote, feitje, challenge, compliment of verrassing — helemaal in KiKa‑vibe 🟡🔵</p>
 
     <div class="actions">
-      <button id="donateBtn" type="button" onclick="window.open('https://www.actievoorkika.nl','_blank')">
+      <button class="btn btn-yellow" id="donateBtn" type="button"
+              onclick="window.open('https://www.actievoorkika.nl','_blank')">
         Doneer nu
       </button>
-      <button id="spinBtn" type="button" onclick="spinWheel()">
+      <button class="btn btn-blue" id="spinBtn" type="button" onclick="spinWheel()">
         Ik heb gedoneerd → Draai!
       </button>
     </div>
 
-    <div class="note">Prijzen hebben geen geldwaarde</div>
+    <div class="note">Prijzen hebben geen geldwaarde — het gaat om plezier, positiviteit en steun voor onderzoek 💛</div>
 
     <div class="wheel-wrap">
       <div class="pointer" aria-hidden="true"></div>
-      <canvas id="wheel" width="300" height="300" aria-label="Draaiwiel"></canvas>
+      <canvas id="wheel" width="320" height="320" aria-label="Draaiwiel"></canvas>
     </div>
 
     <div id="result" class="result" role="status" aria-live="polite"></div>
   </main>
 
-  <!-- Confetti overlay -->
+  <!-- Confetti overlay & Toast -->
   <canvas id="confetti"></canvas>
+  <div id="toast" class="toast" role="status" aria-live="polite">Gekopieerd naar klembord ✅</div>
 
   <!-- Modal (popup) -->
   <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal__card" role="document">
+      <div id="badge" class="badge">🎁 Prijs</div>
       <h2 class="modal__title">Gefeliciteerd! 🎉</h2>
       <p id="modalPrize" class="modal__prize"></p>
-      <button id="againBtn" class="modal__btn" type="button">Nog een keer draaien</button>
+      <div class="modal__row">
+        <button id="againBtn" class="modal__btn modal__btn--again" type="button">Nog een keer draaien</button>
+        <button id="shareBtn" class="modal__btn modal__btn--share" type="button">Deel jouw prijs</button>
+      </div>
     </div>
   </div>
 
   <script>
+    // ---------- Segmenten (6 categorieën) ----------
+    // Elke categorie heeft: key, titel, icoon, kleur (voor wiel) en een lijst met varianten.
+    const segments = [
+      {
+        key: 'MOP', title: 'Mop', icon: '😂', color: '#fde047', // zonnig
+        items: [
+          "Waarom kan een skeeleraar niet liegen? Hij rolt zó door 😉",
+          "Wat zegt een skeeler na 24 uur? Ik ben rond! 😄",
+          "Mijn skeelers maken geen fouten… alleen kilometers.",
+          "Ik wilde stoppen, maar mijn wielen hadden andere plannen.",
+          "Skeelers en ik hebben een band — meerdere zelfs!",
+          "Heb je die nieuwe skeeler-mop al gehoord? Hij rolt lekker."
+        ]
+      },
+      {
+        key: 'QUOTE', title: 'Quote', icon: '💬', color: '#60a5fa', // vriendelijk blauw
+        items: [
+          "Kleine stappen maken samen grote impact 🟡🔵",
+          "Doe goed, voel goed — voor jezelf én een ander 💛",
+          "Niemand kan alles, maar iedereen kan iets.",
+          "Een glimlach is het kortste pad naar verbinding 😊",
+          "Vandaag is perfect om iets kleins groots te laten worden.",
+          "Goed doen staat iedereen goed."
+        ]
+      },
+      {
+        key: 'FEIT', title: 'Feit', icon: '🧠', color: '#a78bfa', // zacht paars
+        items: [
+          "Wist je dat geven je brein een gelukskick geeft? 😊",
+          "Kleine donaties bij elkaar financieren groot onderzoek 🔬",
+          "Lachen verlaagt stresshormonen — goed bezig dus!",
+          "Positieve acties werken aanstekelijk. Jij bent de vonk ✨",
+          "Elke euro brengt ons dichter bij betere behandelingen.",
+          "Samen maken we wetenschap mogelijk — echt waar."
+        ]
+      },
+      {
+        key: 'CHALLENGE', title: 'Challenge', icon: '🔥', color: '#fb7185', // vriendelijk rood
+        items: [
+          "Geef vandaag één iemand een compliment 💬",
+          "Stuur dit wiel naar 1 vriend(in) en laat ze draaien 📲",
+          "Lach 10 seconden zonder reden 😄",
+          "Maak een kleine omweg te voet — micro‑workout! 🚶",
+          "Schrijf 1 ding op waar je dankbaar voor bent 🙏",
+          "Drink een extra glas water — cheers! 💧"
+        ]
+      },
+      {
+        key: 'COMPLIMENT', title: 'Compliment', icon: '🌟', color: '#34d399', // groen
+        items: [
+          "Jij bent een lichtpuntje voor KiKa 💛",
+          "Wat tof dat jij helpt — echte topper!",
+          "De wereld is leuker met mensen zoals jij 🌍",
+          "Je steun rolt ver — dankjewel 🙌",
+          "Jij maakt verschil — vandaag, hier, nu.",
+          "Zó iemand wil iedereen in z’n team!"
+        ]
+      },
+      {
+        key: 'FUN', title: 'Verrassing', icon: '🎭', color: '#f59e0b', // oranje
+        items: [
+          "Virtuele confetti‑regen speciaal voor jou 🎊",
+          "Digitale high five — tik! 🙌",
+          "Een extra portie goede vibes is onderweg ✨",
+          "Gratis glimlach. Niet inwisselbaar 😉",
+          "Danspauze van 5 seconden — go! 🕺",
+          "Easter egg: je bent nu officiële ‘wheel‑legend’ 🏅"
+        ]
+      }
+    ];
+
+    // Labels & kleuren voor het wiel
+    const labels = segments.map(s => `${s.icon} ${s.title}`);
+    const colors = segments.map(s => s.color);
+
     // ---------- Canvas/Wheel ----------
     const canvas = document.getElementById("wheel");
     const ctx = canvas.getContext("2d");
 
-    const size = canvas.width;      // 300
-    const cx   = size / 2;          // 150
-    const cy   = size / 2;          // 150
-    const r    = 140;               // radius
-
-    const labels = [
-      "High five 🙌",
-      "Dankjewel 💛",
-      "Virtuele knuffel 🤗",
-      "Topper ⭐",
-      "Goed bezig 🎉",
-      "Respect 👏"
-    ];
-    const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+    const size = canvas.width;      // 320
+    const cx   = size / 2;
+    const cy   = size / 2;
+    const r    = 145;
 
     const slice = (Math.PI * 2) / labels.length;
     let rotation = 0;
@@ -218,6 +300,7 @@
         const start = i * slice;
         const end   = start + slice;
 
+        // sector
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, r, start, end);
@@ -225,12 +308,13 @@
         ctx.fillStyle = colors[i % colors.length];
         ctx.fill();
 
+        // label (categorie)
         ctx.save();
         ctx.rotate(start + slice / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#111";
-        ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-        ctx.fillText(labels[i], r - 10, 5);
+        ctx.font = "bold 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText(labels[i], r - 12, 6);
         ctx.restore();
       }
 
@@ -258,218 +342,125 @@
       osc.start(now); osc.stop(now + 0.06);
     }
 
-    // ---------- Base64 TA-DA ----------
-    // We genereren één keer een kleine WAV (0.8s) en plaatsen die in een <audio> element.
-    // 'Ta' = C5 (523.25 Hz) ~350ms, 'da' = E5+G5 (659.25 & 783.99 Hz) ~450ms.
-    const tadaAudio = new Audio();
-    tadaAudio.preload = 'auto';
-    tadaAudio.volume = 0.9;
-
-    function buildTadaWavBase64() {
-      const sr = 44100;
-      const dur = 0.8; // seconden
-      const attack = 0.01, release = 0.08;
-      const n = Math.floor(sr * dur);
-      const f1 = 523.25, f2 = 659.25, f3 = 783.99;
-
-      // PCM 16-bit mono
-      const headerBytes = 44;
-      const bytesPerSample = 2;
-      const dataSize = n * bytesPerSample;
-      const buffer = new ArrayBuffer(headerBytes + dataSize);
-      const view = new DataView(buffer);
-
-      // helper: schrijf ASCII
-      function writeStr(off, str) {
-        for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
+    // ---------- Base64 TA-DA (instelbaar) ----------
+    const tadaAudio = new Audio(); tadaAudio.preload = 'auto'; tadaAudio.volume = 0.9;
+    function buildTadaWavBase64({ baseFreq = 261.63, taMs = 600, daMs = 1000, shimmer = 0.02, sampleRate = 44100 } = {}) {
+      const sr = sampleRate, dur = (taMs + daMs)/1000, n = Math.floor(sr*dur);
+      const attack=0.015, release=0.12;
+      const f1=baseFreq, f2=baseFreq*Math.pow(2,4/12), f3=baseFreq*Math.pow(2,7/12);
+      const header=44, bps=2, dataSize=n*bps, buf=new ArrayBuffer(header+dataSize), v=new DataView(buf);
+      const ws=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+      ws(0,'RIFF'); v.setUint32(4,36+dataSize,true); ws(8,'WAVE'); ws(12,'fmt ');
+      v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+      v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+      ws(36,'data'); v.setUint32(40,dataSize,true);
+      const taEnd=taMs/1000; let off=44;
+      for(let i=0;i<n;i++){
+        const t=i/sr;
+        const envA=Math.min(1,t/attack), envR=Math.min(1,(dur-t)/release), env=Math.max(0,Math.min(1,envA*envR));
+        let s; if(t<taEnd){ s=Math.sin(2*Math.PI*f1*t)*0.70; } else { const s2=Math.sin(2*Math.PI*f2*t), s3=Math.sin(2*Math.PI*f3*t); s=(s2+s3)*0.45; }
+        s += (Math.random()*2-1)*shimmer;
+        const val=Math.max(-1,Math.min(1,s*env)); v.setInt16(off, val*0x7FFF, true); off+=2;
       }
-
-      // WAV header
-      writeStr(0, 'RIFF');
-      view.setUint32(4, 36 + dataSize, true);
-      writeStr(8, 'WAVE');
-      writeStr(12, 'fmt ');
-      view.setUint32(16, 16, true);      // subchunk1 size
-      view.setUint16(20, 1, true);       // audio format = PCM
-      view.setUint16(22, 1, true);       // channels = 1
-      view.setUint32(24, sr, true);      // sample rate
-      view.setUint32(28, sr * 2, true);  // byte rate = sr * channels * 2
-      view.setUint16(32, 2, true);       // block align
-      view.setUint16(34, 16, true);      // bits per sample
-      writeStr(36, 'data');
-      view.setUint32(40, dataSize, true);
-
-      // samples
-      let offset = 44;
-      for (let i = 0; i < n; i++) {
-        const t = i / sr;
-
-        // eenvoudige envelope
-        const envA = Math.min(1, t / attack);
-        const envR = Math.min(1, (dur - t) / release);
-        const env = Math.max(0, Math.min(1, envA * envR));
-
-        let sample;
-        if (t < 0.35) {
-          // 'ta' - enkele toon
-          sample = Math.sin(2 * Math.PI * f1 * t) * 0.65;
-        } else {
-          // 'da' - tweestemmig akkoord
-          const s2 = Math.sin(2 * Math.PI * f2 * t);
-          const s3 = Math.sin(2 * Math.PI * f3 * t);
-          sample = (s2 + s3) * 0.45; // mix, lager niveau om clipping te voorkomen
-        }
-
-        // heel klein beetje shimmer-noise
-        sample += (Math.random() * 2 - 1) * 0.02;
-
-        const val = Math.max(-1, Math.min(1, sample * env));
-        view.setInt16(offset, val * 0x7FFF, true);
-        offset += 2;
-      }
-
-      // base64 encoderen
-      const u8 = new Uint8Array(buffer);
-      const chunk = 0x8000;
-      let binary = '';
-      for (let i = 0; i < u8.length; i += chunk) {
-        binary += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
-      }
-      const b64 = btoa(binary);
-      return 'data:audio/wav;base64,' + b64;
+      const u8=new Uint8Array(buf); let bin=''; const CH=0x8000; for(let i=0;i<u8.length;i+=CH){ bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CH)); }
+      return 'data:audio/wav;base64,'+btoa(bin);
     }
-
-    // Bouw data URI één keer bij laden:
-    tadaAudio.src = buildTadaWavBase64();
-
-    // Sommige browsers eisen een "unlock" na eerste user-actie:
-    let tadaPrimed = false;
-    function primeTada() {
-      if (tadaPrimed) return;
-      const v = tadaAudio.volume;
-      tadaAudio.volume = 0;
-      const p = tadaAudio.play();
-      if (p && typeof p.then === 'function') {
-        p.then(()=>{ tadaAudio.pause(); tadaAudio.currentTime = 0; tadaAudio.volume = v; tadaPrimed = true; })
-         .catch(()=>{ /* stilzwijgend: user zal later klikken, dan lukt het */ });
-      } else {
-        // oudere browsers
-        tadaPrimed = true;
-      }
-    }
-    function playTada() {
-      try {
-        tadaAudio.currentTime = 0;
-        tadaAudio.play();
-      } catch(e) { /* negeren als geblokkeerd */ }
-    }
+    tadaAudio.src = buildTadaWavBase64({ baseFreq: 261.63, taMs: 600, daMs: 1000 });
+    let tadaPrimed=false;
+    function primeTada(){ if(tadaPrimed) return; const v=tadaAudio.volume; tadaAudio.volume=0; const p=tadaAudio.play();
+      if(p&&p.then){ p.then(()=>{tadaAudio.pause(); tadaAudio.currentTime=0; tadaAudio.volume=v; tadaPrimed=true;}).catch(()=>{}); } else { tadaPrimed=true; } }
+    function playTada(){ try{ tadaAudio.currentTime=0; tadaAudio.play(); }catch(e){} }
 
     // ---------- Confetti ----------
     const confettiCanvas = document.getElementById('confetti');
     const cfx = confettiCanvas.getContext('2d');
-    let confettiParticles = [];
-    let confettiRunning = false;
+    let confettiParticles = [], confettiRunning=false;
 
-    function resizeConfetti() {
-      confettiCanvas.width  = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', () => { if (confettiRunning) resizeConfetti(); });
+    function resizeConfetti(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
+    addEventListener('resize', ()=>{ if(confettiRunning) resizeConfetti(); });
 
-    function launchConfetti(duration = 2500, count = 180) {
-      resizeConfetti();
-      confettiCanvas.classList.add('show');
-      confettiRunning = true;
-
-      const W = confettiCanvas.width;
-      const H = confettiCanvas.height;
-
-      const palette = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0","#ffd166","#ef476f"];
-      confettiParticles = Array.from({ length: count }, () => ({
-        x: Math.random() * W,
-        y: -20 - Math.random() * 80,
-        w: 6 + Math.random() * 6,
-        h: 8 + Math.random() * 10,
-        color: palette[Math.floor(Math.random() * palette.length)],
-        vx: (Math.random() - 0.5) * 4,
-        vy: 2 + Math.random() * 3,
-        rot: Math.random() * Math.PI * 2,
-        vr: (Math.random() - 0.5) * 0.3
+    function launchConfetti(duration=2500, count=220){
+      resizeConfetti(); confettiCanvas.classList.add('show'); confettiRunning=true;
+      const W=confettiCanvas.width, H=confettiCanvas.height;
+      const palette=["#ffb703","#1d4ed8","#34d399","#f59e0b","#60a5fa","#a78bfa","#fb7185","#fde047"];
+      confettiParticles = Array.from({length:count}, () => ({
+        x: Math.random()*W, y: -20-Math.random()*80, w: 6+Math.random()*6, h: 8+Math.random()*10,
+        color: palette[Math.floor(Math.random()*palette.length)],
+        vx: (Math.random()-0.5)*4, vy: 2+Math.random()*3, rot: Math.random()*Math.PI*2, vr: (Math.random()-0.5)*0.3
       }));
-
-      const start = performance.now();
-
-      function frame(now) {
-        const elapsed = now - start;
-        cfx.clearRect(0, 0, W, H);
-
-        for (const p of confettiParticles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.05;
-          p.rot += p.vr;
-
-          cfx.save();
-          cfx.translate(p.x, p.y);
-          cfx.rotate(p.rot);
-          cfx.fillStyle = p.color;
-          cfx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-          cfx.restore();
+      const start=performance.now();
+      function frame(now){
+        const el=now-start; cfx.clearRect(0,0,W,H);
+        for(const p of confettiParticles){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.rot+=p.vr;
+          cfx.save(); cfx.translate(p.x,p.y); cfx.rotate(p.rot); cfx.fillStyle=p.color; cfx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cfx.restore();
         }
-
-        if (elapsed < duration) {
-          requestAnimationFrame(frame);
-        } else {
-          confettiCanvas.classList.remove('show');
-          confettiRunning = false;
-          cfx.clearRect(0, 0, W, H);
-        }
+        if(el<duration){ requestAnimationFrame(frame); } else { confettiCanvas.classList.remove('show'); confettiRunning=false; cfx.clearRect(0,0,W,H); }
       }
-
       requestAnimationFrame(frame);
     }
 
-    // ---------- Spin + tick + popup ----------
-    let lastIndexForTick = null;
-
+    // ---------- Modal + Share ----------
     const modal = document.getElementById('modal');
+    const badge = document.getElementById('badge');
     const modalPrize = document.getElementById('modalPrize');
     const againBtn = document.getElementById('againBtn');
+    const shareBtn = document.getElementById('shareBtn');
     const spinBtn = document.getElementById('spinBtn');
+    const toast = document.getElementById('toast');
 
-    function openModal(prizeText) {
-      modalPrize.textContent = prizeText;
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-      againBtn.focus();
-      // Confetti + TA-DA!
-      launchConfetti(2500, 200);
-      playTada();
+    function openModal(cat, icon, text){
+      badge.textContent = `${icon} ${cat.toUpperCase()}`;
+      modalPrize.textContent = text;
+      modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); againBtn.focus();
+      launchConfetti(2600, 240); playTada();
     }
-    function closeModal() {
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
-      spinBtn.focus();
-    }
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); spinBtn.focus(); }
+    modal.addEventListener('click', e => { if(e.target===modal) closeModal(); });
     againBtn.addEventListener('click', closeModal);
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+    addEventListener('keydown', e => { if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
+
+    function showToast(msg='Gekopieerd naar klembord ✅'){
+      toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1600);
+    }
+    async function sharePrize(cat, icon, text){
+      const shareText = `${icon} ${cat} — ${text}\nDraai ook mee voor KiKa 💛`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Mijn KiKa-prijs', text: shareText, url: location.href });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(`${shareText}\n${location.href}`);
+          showToast();
+        } else {
+          // laatste fallback
+          const ta = document.createElement('textarea'); ta.value = `${shareText}\n${location.href}`;
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+          showToast();
+        }
+      } catch(e) {
+        // delen geannuleerd of geblokkeerd: stil houden
+      }
+    }
+
+    // Koppel share-knop dynamisch met huidige prijs
+    let lastSharePayload = { cat:'', icon:'', text:'' };
+    shareBtn.addEventListener('click', ()=> sharePrize(lastSharePayload.cat, lastSharePayload.icon, lastSharePayload.text));
+
+    // ---------- Spin + ticks ----------
+    let lastIndexForTick = null;
 
     function spinWheel() {
       if (spinning) return;
       spinning = true;
 
-      // Audio initialiseren/ontgrendelen bij user-actie
-      initAudio();   // voor ticks
-      primeTada();   // unlock HTMLAudio
+      initAudio(); // ticks
+      primeTada(); // unlock ta-da
 
       const startRotation = rotation;
       const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 rondjes
       const target = startRotation + extra;
 
-      const duration = 2500;
+      const duration = 2600;
       const startTime = performance.now();
-
       lastIndexForTick = null;
 
       function animate(now) {
@@ -483,10 +474,7 @@
         const pointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
         const idx = Math.floor(pointerAngle / slice) % labels.length;
 
-        if (idx !== lastIndexForTick) { // klik per segment
-          playTick();
-          lastIndexForTick = idx;
-        }
+        if (idx !== lastIndexForTick) { playTick(); lastIndexForTick = idx; }
 
         if (t < 1) {
           requestAnimationFrame(animate);
@@ -494,12 +482,16 @@
           rotation = target % (Math.PI * 2);
           spinning = false;
 
+          // Eindresultaat → categorie + random tekst
           const finalPointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
           const finalIndex = Math.floor(finalPointerAngle / slice) % labels.length;
-          openModal(`Je hebt gewonnen: ${labels[finalIndex]}`);
+
+          const seg = segments[finalIndex];
+          const text = seg.items[Math.floor(Math.random() * seg.items.length)];
+          lastSharePayload = { cat: seg.title, icon: seg.icon, text };
+          openModal(seg.title, seg.icon, text);
         }
       }
-
       requestAnimationFrame(animate);
     }
 
