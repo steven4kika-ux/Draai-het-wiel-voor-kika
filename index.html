@@ -235,9 +235,10 @@ const categories = Object.keys(prizeData);
 /* ===== CANVAS WIEL ===== */
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
-const angle = 5 * Math.PI / categories.length;
+const angle = 2 * Math.PI / categories.length;
 let rot = 0;
 let spinning = false;
+
 
 function draw(){
   ctx.clearRect(0,0,300,300);
