@@ -41,6 +41,8 @@
       font-weight: 700;
       cursor: pointer;
     }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
     .note {
       background: #fff6f8;
       border-radius: 10px;
@@ -58,6 +60,8 @@
       width: 320px;
       height: 340px;
     }
+
+    /* Pijltje/indicator bovenaan */
     .pointer {
       position: absolute;
       top: 0;
@@ -68,188 +72,440 @@
       border-left: 12px solid transparent;
       border-right: 12px solid transparent;
       border-bottom: 18px solid var(--brand);
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.25));
       z-index: 2;
     }
+
     canvas {
+      display: block;
       background: #fff;
       border-radius: 50%;
       box-shadow: 0 10px 24px rgba(0,0,0,.08);
     }
 
-    /* ---------- Modal ---------- */
+    .result { display:none; } /* uitslag-tekst verstoppen; we tonen modal */
+
+    /* ---------- Modal (popup) ---------- */
     .modal {
       position: fixed;
       inset: 0;
       display: none;
-      justify-content: center;
       align-items: center;
-      z-index: 1001;
+      justify-content: center;
+      z-index: 1001; /* boven confetti */
     }
     .modal.open { display: flex; }
     .modal::before {
-      content:"";
-      position:absolute;
-      inset:0;
-      background:rgba(0,0,0,.45);
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.45);
     }
     .modal__card {
-      background:#fff;
-      padding:24px;
-      border-radius:16px;
-      z-index:1;
-      width:min(90vw,420px);
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      width: min(90vw, 420px);
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.25);
+      z-index: 1;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop {
+      from { transform: scale(.96); opacity: .6; }
+      to   { transform: scale(1);   opacity: 1;  }
+    }
+    .modal__title { margin: 0 0 8px; font-size: 24px; }
+    .modal__prize { margin: 10px 0 18px; font-size: 18px; font-weight: 700; }
+    .modal__btn {
+      display: inline-block;
+      background: var(--brand);
+      color: #1a1a1a;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
     }
 
-    /* ---------- Confetti ---------- */
+    /* ---------- Confetti canvas ---------- */
     #confetti {
       position: fixed;
       inset: 0;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
       display: none;
-      z-index: 1000;
+      z-index: 1000; /* onder modal, boven pagina */
     }
     #confetti.show { display: block; }
-
-    /* ---------- Inklapbare verantwoording ---------- */
-    .disclaimer {
-      margin-top: 32px;
-      background: rgba(255,255,255,0.65);
-      border-radius: 12px;
-      font-size: 12px;
-      color: #444;
-      text-align: left;
-      overflow: hidden;
-    }
-    .disclaimer__header {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 14px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .disclaimer__arrow {
-      transition: transform .2s ease;
-    }
-    .disclaimer.open .disclaimer__arrow {
-      transform: rotate(180deg);
-    }
-    .disclaimer__content {
-      display: none;
-      padding: 0 14px 14px;
-      line-height: 1.45;
-    }
-    .disclaimer.open .disclaimer__content {
-      display: block;
-    }
   </style>
 </head>
-
 <body>
-<main>
-  <h1>Draai het wiel voor KiKa 💛</h1>
+  <main>
+    <h1>Draai het wiel voor KiKa 💛</h1>
 
-  <p>
-    Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-    Met jouw donatie laat ik mijn wielen rollen!<br>
-    Als dank mag je aan dit wiel draaien 🎉
-  </p>
+    <p>Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
+      Hierbij vraag ik jouw hulp! Met jouw donatie laat ik mijn wielen rollen…<br>
+      Als dank voor jouw steun mag je aan dit wiel draaien 🎉</p>
 
-  <div class="actions">
-    <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
-      Doneer nu
-    </button>
-    <button id="spinBtn" onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
-  </div>
-
-  <div class="note">Prijzen hebben geen geldwaarde</div>
-
-  <div class="wheel-wrap">
-    <div class="pointer"></div>
-    <canvas id="wheel" width="300" height="300"></canvas>
-  </div>
-
-  <!-- Inklapbare disclaimer -->
-  <div id="disclaimer" class="disclaimer">
-    <div class="disclaimer__header" onclick="toggleDisclaimer()">
-      <span>Verantwoording</span>
-      <span class="disclaimer__arrow">⌄</span>
+    <div class="actions">
+      <button id="donateBtn" type="button"
+              onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon','_blank')">
+        Doneer nu
+      </button>
+      <button id="spinBtn" type="button" onclick="spinWheel()">
+        Ik heb gedoneerd → Draai!
+      </button>
     </div>
-    <div class="disclaimer__content">
-      Deze actie en dit draaiwiel zijn door mijzelf bedacht en gemaakt om geld
-      in te zamelen voor KiKa.<br>
-      De prijzen hebben geen geldwaarde en zijn bedoeld als bedankje.<br>
-      Ik heb niet de intentie om rechten van derden te schenden.
+
+    <div class="note">Prijzen hebben geen geldwaarde</div>
+
+    <div class="wheel-wrap">
+      <div class="pointer" aria-hidden="true"></div>
+      <canvas id="wheel" width="300" height="300" aria-label="Draaiwiel"></canvas>
+    </div>
+
+    <div id="result" class="result" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- Confetti overlay -->
+  <canvas id="confetti"></canvas>
+
+  <!-- Modal (popup) -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal__card" role="document">
+      <h2 class="modal__title">Gefeliciteerd! 🎉</h2>
+      <p id="modalPrize" class="modal__prize"></p>
+      <button id="againBtn" class="modal__btn" type="button">Nog een keer draaien</button>
     </div>
   </div>
-</main>
 
-<canvas id="confetti"></canvas>
+  <script>
+    // ---------- Canvas/Wheel ----------
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
 
-<div id="modal" class="modal">
-  <div class="modal__card">
-    <h2>Gefeliciteerd! 🎉</h2>
-    <p id="modalPrize"></p>
-    <button onclick="closeModal()">Nog een keer draaien</button>
-  </div>
-</div>
+    const size = canvas.width;      // 300
+    const cx   = size / 2;          // 150
+    const cy   = size / 2;          // 150
+    const r    = 140;               // radius
 
-<script>
-/* DISCLAIMER */
-function toggleDisclaimer() {
-  document.getElementById('disclaimer').classList.toggle('open');
-}
+    const labels = [
+      "High five 🙌",
+      "Dankjewel 💛",
+      "Virtuele knuffel 🤗",
+      "Topper ⭐",
+      "Goed bezig 🎉",
+      "Respect 👏"
+    ];
+    const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
 
-/* WIEL (ingekort voor overzicht) */
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const labels = ["High five 🙌","Dankjewel 💛","Virtuele knuffel 🤗","Topper ⭐","Goed bezig 🎉","Respect 👏"];
-const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
-const slice = Math.PI * 2 / labels.length;
-let rotation = 0, spinning = false;
+    const slice = (Math.PI * 2) / labels.length;
+    let rotation = 0;
+    let spinning = false;
 
-function drawWheel(){
-  ctx.clearRect(0,0,300,300);
-  ctx.save();
-  ctx.translate(150,150);
-  ctx.rotate(rotation);
-  for(let i=0;i<labels.length;i++){
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.arc(0,0,140,i*slice,(i+1)*slice);
-    ctx.fillStyle=colors[i];
-    ctx.fill();
-    ctx.rotate(slice/2);
-    ctx.textAlign="right";
-    ctx.fillStyle="#111";
-    ctx.fillText(labels[i],130,5);
-    ctx.rotate(slice/2);
-  }
-  ctx.restore();
-}
-drawWheel();
+    function resetTransform() { ctx.setTransform(1,0,0,1,0,0); }
 
-function spinWheel(){
-  if(spinning) return;
-  spinning=true;
-  const target = rotation + Math.PI * 8;
-  const start = performance.now();
-  function anim(t){
-    const p=Math.min((t-start)/2500,1);
-    rotation = target*p;
-    drawWheel();
-    if(p<1)requestAnimationFrame(anim);
-    else{
-      spinning=false;
-      document.getElementById("modalPrize").textContent =
-        "Je hebt gewonnen: " + labels[Math.floor(Math.random()*labels.length)];
-      document.getElementById("modal").classList.add("open");
+    function drawWheel() {
+      resetTransform();
+      ctx.clearRect(0, 0, size, size);
+
+      ctx.translate(cx, cy);
+      ctx.rotate(rotation);
+
+      for (let i = 0; i < labels.length; i++) {
+        const start = i * slice;
+        const end   = start + slice;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        ctx.save();
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#111";
+        ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText(labels[i], r - 10, 5);
+        ctx.restore();
+      }
+
+      resetTransform();
+    }
+
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    // ---------- Tick-geluid (Web Audio) ----------
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+    function playTick() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 1400;
+      const now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.3, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.06);
+    }
+
+    // ---------- Base64 TA-DA ----------
+    // We genereren één keer een kleine WAV (0.8s) en plaatsen die in een <audio> element.
+    // 'Ta' = C5 (523.25 Hz) ~350ms, 'da' = E5+G5 (659.25 & 783.99 Hz) ~450ms.
+    const tadaAudio = new Audio();
+    tadaAudio.preload = 'auto';
+    tadaAudio.volume = 0.9;
+
+
+function buildTadaWavBase64() {
+  const sr = 44100;
+  const dur = 1.0; // iets langer & vrolijker
+  const attack = 0.01, release = 0.12;
+  const n = Math.floor(sr * dur);
+
+  // Oplopend, vrolijk melodietje (belletjes-achtig)
+  const notes = [
+    { f: 880,  start: 0.00, end: 0.25 }, // A5
+    { f: 1046, start: 0.20, end: 0.45 }, // C6
+    { f: 1318, start: 0.40, end: 0.75 }  // E6
+  ];
+
+  const headerBytes = 44;
+  const dataSize = n * 2;
+  const buffer = new ArrayBuffer(headerBytes + dataSize);
+  const view = new DataView(buffer);
+
+  function writeStr(off, str) {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(off + i, str.charCodeAt(i));
     }
   }
-  requestAnimationFrame(anim);
+
+  // WAV header
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+
+    let sample = 0;
+    for (const note of notes) {
+      if (t >= note.start && t <= note.end) {
+        sample += Math.sin(2 * Math.PI * note.f * t);
+      }
+    }
+
+    // Belletjes-effect (lichte vibrato)
+    sample *= (1 + 0.25 * Math.sin(2 * Math.PI * 12 * t));
+    sample *= 0.4;
+
+    // Envelope
+    const envA = Math.min(1, t / attack);
+    const envR = Math.min(1, (dur - t) / release);
+    const env = Math.max(0, Math.min(1, envA * envR));
+
+    const val = Math.max(-1, Math.min(1, sample * env));
+    view.setInt16(offset, val * 0x7FFF, true);
+    offset += 2;
+  }
+
+  const u8 = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < u8.length; i += 0x8000) {
+    binary += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+  }
+  return 'data:audio/wav;base64,' + btoa(binary);
 }
-function closeModal(){
-  document.getElementById("modal").classList.remove("open");
-}
-</script>
+
+    // Bouw data URI één keer bij laden:
+    tadaAudio.src = buildTadaWavBase64();
+
+    // Sommige browsers eisen een "unlock" na eerste user-actie:
+    let tadaPrimed = false;
+    function primeTada() {
+      if (tadaPrimed) return;
+      const v = tadaAudio.volume;
+      tadaAudio.volume = 0;
+      const p = tadaAudio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(()=>{ tadaAudio.pause(); tadaAudio.currentTime = 0; tadaAudio.volume = v; tadaPrimed = true; })
+         .catch(()=>{ /* stilzwijgend: user zal later klikken, dan lukt het */ });
+      } else {
+        // oudere browsers
+        tadaPrimed = true;
+      }
+    }
+    function playTada() {
+      try {
+        tadaAudio.currentTime = 0;
+        tadaAudio.play();
+      } catch(e) { /* negeren als geblokkeerd */ }
+    }
+
+    // ---------- Confetti ----------
+    const confettiCanvas = document.getElementById('confetti');
+    const cfx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiRunning = false;
+
+    function resizeConfetti() {
+      confettiCanvas.width  = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', () => { if (confettiRunning) resizeConfetti(); });
+
+    function launchConfetti(duration = 2500, count = 180) {
+      resizeConfetti();
+      confettiCanvas.classList.add('show');
+      confettiRunning = true;
+
+      const W = confettiCanvas.width;
+      const H = confettiCanvas.height;
+
+      const palette = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0","#ffd166","#ef476f"];
+      confettiParticles = Array.from({ length: count }, () => ({
+        x: Math.random() * W,
+        y: -20 - Math.random() * 80,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 10,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 3,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3
+      }));
+
+      const start = performance.now();
+
+      function frame(now) {
+        const elapsed = now - start;
+        cfx.clearRect(0, 0, W, H);
+
+        for (const p of confettiParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.05;
+          p.rot += p.vr;
+
+          cfx.save();
+          cfx.translate(p.x, p.y);
+          cfx.rotate(p.rot);
+          cfx.fillStyle = p.color;
+          cfx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          cfx.restore();
+        }
+
+        if (elapsed < duration) {
+          requestAnimationFrame(frame);
+        } else {
+          confettiCanvas.classList.remove('show');
+          confettiRunning = false;
+          cfx.clearRect(0, 0, W, H);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- Spin + tick + popup ----------
+    let lastIndexForTick = null;
+
+    const modal = document.getElementById('modal');
+    const modalPrize = document.getElementById('modalPrize');
+    const againBtn = document.getElementById('againBtn');
+    const spinBtn = document.getElementById('spinBtn');
+
+    function openModal(prizeText) {
+      modalPrize.textContent = prizeText;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      againBtn.focus();
+      // Confetti + TA-DA!
+      launchConfetti(2500, 200);
+      playTada();
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      spinBtn.focus();
+    }
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    againBtn.addEventListener('click', closeModal);
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+
+      // Audio initialiseren/ontgrendelen bij user-actie
+      initAudio();   // voor ticks
+      primeTada();   // unlock HTMLAudio
+
+      const startRotation = rotation;
+      const extra = Math.random() * Math.PI * 6 + Math.PI * 4; // 4–10 rondjes
+      const target = startRotation + extra;
+
+      const duration = 2500;
+      const startTime = performance.now();
+
+      lastIndexForTick = null;
+
+      function animate(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = easeOutCubic(t);
+        rotation = startRotation + (target - startRotation) * eased;
+
+        drawWheel();
+
+        // Huidig segment onder pointer (12-uur positie = 270°)
+        const pointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
+        const idx = Math.floor(pointerAngle / slice) % labels.length;
+
+        if (idx !== lastIndexForTick) { // klik per segment
+          playTick();
+          lastIndexForTick = idx;
+        }
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          rotation = target % (Math.PI * 2);
+          spinning = false;
+
+          const finalPointerAngle = (Math.PI * 1.5 - rotation + Math.PI * 2) % (Math.PI * 2);
+          const finalIndex = Math.floor(finalPointerAngle / slice) % labels.length;
+          openModal(`Je hebt gewonnen: ${labels[finalIndex]}`);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Eerste render
+    drawWheel();
+  </script>
 </body>
 </html>
