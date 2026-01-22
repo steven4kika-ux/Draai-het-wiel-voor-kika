@@ -211,11 +211,14 @@
     <div id="result" class="result" role="status" aria-live="polite"></div>
     
 
-<div id="disclaimer" class="disclaimer" role="note">
-  <div class="disclaimer__header" onclick="toggleDisclaimer()">
-    <span>disclaimer</span>
-    <span class="disclaimer__arrow">▾</span>
-  </div>
+
+<div class="disclaimer__header" onclick="toggleDisclaimer()">
+  <span class="disclaimer__title">
+    ℹ️ disclaimer
+  </span>
+  <span class="disclaimer__arrow">▾</span>
+</div>
+
 
   <div class="disclaimer__content">
     Deze actie en dit draaiwiel zijn door mijzelf bedacht en gemaakt
@@ -229,6 +232,12 @@
     Mocht iemand vragen of opmerkingen hebben, neem dan gerust contact met mij op.
   </div>
 </div>
+
+.disclaimer__title {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
 
   </main>
 
