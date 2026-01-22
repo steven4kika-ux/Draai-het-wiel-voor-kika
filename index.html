@@ -266,79 +266,79 @@
     tadaAudio.preload = 'auto';
     tadaAudio.volume = 0.9;
 
-    function buildTadaWavBase64() {
-      const sr = 44100;
-      const dur = 0.8; // seconden
-      const attack = 0.01, release = 0.08;
-      const n = Math.floor(sr * dur);
-      const f1 = 523.25, f2 = 659.25, f3 = 783.99;
 
-      // PCM 16-bit mono
-      const headerBytes = 44;
-      const bytesPerSample = 2;
-      const dataSize = n * bytesPerSample;
-      const buffer = new ArrayBuffer(headerBytes + dataSize);
-      const view = new DataView(buffer);
+function buildTadaWavBase64() {
+  const sr = 44100;
+  const dur = 1.0; // iets langer & vrolijker
+  const attack = 0.01, release = 0.12;
+  const n = Math.floor(sr * dur);
 
-      // helper: schrijf ASCII
-      function writeStr(off, str) {
-        for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
-      }
+  // Oplopend, vrolijk melodietje (belletjes-achtig)
+  const notes = [
+    { f: 880,  start: 0.00, end: 0.25 }, // A5
+    { f: 1046, start: 0.20, end: 0.45 }, // C6
+    { f: 1318, start: 0.40, end: 0.75 }  // E6
+  ];
 
-      // WAV header
-      writeStr(0, 'RIFF');
-      view.setUint32(4, 36 + dataSize, true);
-      writeStr(8, 'WAVE');
-      writeStr(12, 'fmt ');
-      view.setUint32(16, 16, true);      // subchunk1 size
-      view.setUint16(20, 1, true);       // audio format = PCM
-      view.setUint16(22, 1, true);       // channels = 1
-      view.setUint32(24, sr, true);      // sample rate
-      view.setUint32(28, sr * 2, true);  // byte rate = sr * channels * 2
-      view.setUint16(32, 2, true);       // block align
-      view.setUint16(34, 16, true);      // bits per sample
-      writeStr(36, 'data');
-      view.setUint32(40, dataSize, true);
+  const headerBytes = 44;
+  const dataSize = n * 2;
+  const buffer = new ArrayBuffer(headerBytes + dataSize);
+  const view = new DataView(buffer);
 
-      // samples
-      let offset = 44;
-      for (let i = 0; i < n; i++) {
-        const t = i / sr;
-
-        // eenvoudige envelope
-        const envA = Math.min(1, t / attack);
-        const envR = Math.min(1, (dur - t) / release);
-        const env = Math.max(0, Math.min(1, envA * envR));
-
-        let sample;
-        if (t < 0.35) {
-          // 'ta' - enkele toon
-          sample = Math.sin(2 * Math.PI * f1 * t) * 0.65;
-        } else {
-          // 'da' - tweestemmig akkoord
-          const s2 = Math.sin(2 * Math.PI * f2 * t);
-          const s3 = Math.sin(2 * Math.PI * f3 * t);
-          sample = (s2 + s3) * 0.45; // mix, lager niveau om clipping te voorkomen
-        }
-
-        // heel klein beetje shimmer-noise
-        sample += (Math.random() * 2 - 1) * 0.02;
-
-        const val = Math.max(-1, Math.min(1, sample * env));
-        view.setInt16(offset, val * 0x7FFF, true);
-        offset += 2;
-      }
-
-      // base64 encoderen
-      const u8 = new Uint8Array(buffer);
-      const chunk = 0x8000;
-      let binary = '';
-      for (let i = 0; i < u8.length; i += chunk) {
-        binary += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
-      }
-      const b64 = btoa(binary);
-      return 'data:audio/wav;base64,' + b64;
+  function writeStr(off, str) {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(off + i, str.charCodeAt(i));
     }
+  }
+
+  // WAV header
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+
+    let sample = 0;
+    for (const note of notes) {
+      if (t >= note.start && t <= note.end) {
+        sample += Math.sin(2 * Math.PI * note.f * t);
+      }
+    }
+
+    // Belletjes-effect (lichte vibrato)
+    sample *= (1 + 0.25 * Math.sin(2 * Math.PI * 12 * t));
+    sample *= 0.4;
+
+    // Envelope
+    const envA = Math.min(1, t / attack);
+    const envR = Math.min(1, (dur - t) / release);
+    const env = Math.max(0, Math.min(1, envA * envR));
+
+    const val = Math.max(-1, Math.min(1, sample * env));
+    view.setInt16(offset, val * 0x7FFF, true);
+    offset += 2;
+  }
+
+  const u8 = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < u8.length; i += 0x8000) {
+    binary += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+  }
+  return 'data:audio/wav;base64,' + btoa(binary);
+}
 
     // Bouw data URI één keer bij laden:
     tadaAudio.src = buildTadaWavBase64();
