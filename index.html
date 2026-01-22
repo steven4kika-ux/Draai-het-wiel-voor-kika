@@ -140,7 +140,14 @@
       z-index: 1000; /* onder modal, boven pagina */
     }
     #confetti.show { display: block; }
-    
+
+  
+.disclaimer__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 
 /* ---------- Inklapbare verantwoording ---------- */
 .disclaimer {
@@ -180,7 +187,6 @@
 .disclaimer.open .disclaimer__content {
   display: block;
 }
-``
   </style>
 </head>
 <body>
@@ -212,12 +218,25 @@
     
 
 
-<div class="disclaimer__header" onclick="toggleDisclaimer()">
-  <span class="disclaimer__title">
-    ℹ️ disclaimer
-  </span>
-  <span class="disclaimer__arrow">▾</span>
+
+<div id="disclaimer" class="disclaimer" role="note">
+  <div class="disclaimer__header" onclick="toggleDisclaimer()">
+    <span class="disclaimer__title">ℹ️ Verantwoording</span>
+    <span class="disclaimer__arrow">▾</span>
+  </div>
+
+  <div class="disclaimer__content">
+    Deze actie en dit draaiwiel zijn door mijzelf bedacht en gemaakt
+    om geld in te zamelen voor KiKa.<br>
+    De prijzen op het wiel hebben geen geldwaarde en zijn bedoeld
+    als een persoonlijk bedankje.<br>
+    Ik heb niet de intentie om derden te benadelen of rechten
+    (zoals auteurs- of merkrechten) te schenden.
+    Mocht iemand vragen of opmerkingen hebben,
+    neem dan gerust contact met mij op.
+  </div>
 </div>
+
 
 
   <div class="disclaimer__content">
@@ -570,10 +589,10 @@ function buildTadaWavBase64() {
     }
 
 
+
 function toggleDisclaimer() {
   document.getElementById('disclaimer').classList.toggle('open');
 }
-``
 
     // Eerste render
     drawWheel();
