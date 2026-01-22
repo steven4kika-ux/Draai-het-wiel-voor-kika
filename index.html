@@ -140,6 +140,42 @@
       z-index: 1000; /* onder modal, boven pagina */
     }
     #confetti.show { display: block; }
+    
+/* ---------- Wegklikbare verantwoording ---------- */
+.disclaimer {
+  position: relative;
+  margin-top: 32px;
+  background: rgba(255,255,255,0.65);
+  border-radius: 12px;
+  padding: 14px 38px 14px 14px;
+  font-size: 12px;
+  color: #444;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.disclaimer strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.disclaimer button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  appearance: none;
+  border: none;
+  background: none;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+.disclaimer button:hover {
+  color: #000;
+}
   </style>
 </head>
 <body>
@@ -168,6 +204,21 @@
     </div>
 
     <div id="result" class="result" role="status" aria-live="polite"></div>
+    
+<div id="disclaimer" class="disclaimer" role="note">
+  <button type="button" aria-label="Sluiten" onclick="closeDisclaimer()">✕</button>
+
+  <strong>Verantwoording</strong>
+  Deze actie en dit draaiwiel zijn door mijzelf bedacht en gemaakt
+  om geld in te zamelen voor KiKa.
+  <br>
+  De prijzen op het wiel hebben geen geldwaarde en zijn
+  bedoeld als een persoonlijk bedankje.
+  <br>
+  Ik heb niet de intentie om derden te benadelen of rechten
+  (zoals auteurs- of merkrechten) te schenden.
+  Mocht iemand vragen of opmerkingen hebben, neem dan gerust contact met mij op.
+</div>
   </main>
 
   <!-- Confetti overlay -->
@@ -503,6 +554,11 @@ function buildTadaWavBase64() {
 
       requestAnimationFrame(animate);
     }
+
+function closeDisclaimer() {
+  const el = document.getElementById('disclaimer');
+  if (el) el.style.display = 'none';
+}
 
     // Eerste render
     drawWheel();
