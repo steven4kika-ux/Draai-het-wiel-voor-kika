@@ -416,11 +416,12 @@ function spinWheel(){
   })(t0);
 
 }
+
 function openModal(text){
   document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
   document.getElementById('modal').classList.add('open');
 
-  playGameShowJingle({ volume: 0.7 }); // 📺 GAME SHOW!
+  playGameShowJingle({ volume: 0.7 }); // ✅ hier hoort hij
   launchDoubleConfetti();
 }
 
