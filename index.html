@@ -70,7 +70,6 @@ button{
   border-right:12px solid transparent;
   border-bottom:18px solid var(--brand);
   z-index:2;
-  /* kleine schaduw voor diepte */
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
 }
 
@@ -166,26 +165,7 @@ Doneer nu
   </div>
 </div>
 
-
-
-
 <script>
-/* ====== Canvas wiel ====== */
-const canvas = document.getElementById('wheel');
-const ctx = canvas.getContext('2d');
-const size = 300, c = size/2, r = 140;
-const labels = 
-const jokes = [...];
-const quotes = [...];
-const challenges = [...];
-
-const labels = [
-  random(jokes),
-  random(quotes),
-  random(challenges),
-  ...
-];
-  
 /* ========= CATEGORIEËN ========= */
 
 // 😂 Betere moppen (kort, warm, echt leuk)
@@ -229,13 +209,12 @@ const verrassingen = [
   "Je mag trots zijn op jezelf 😁"
 ];
 
-
 /* ========= LABELS PER CATEGORIE ========= */
-
 function randomItem(arr){
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// Elke categorie is een vast vak; inhoud wisselt per pageload
 const labels = [
   `😂 Mop\n${randomItem(moppen)}`,
   `🧠 Wist je dit?\n${randomItem(feitjes)}`,
@@ -244,27 +223,46 @@ const labels = [
   `🎉 Verrassing\n${randomItem(verrassingen)}`
 ];
 
+/* ====== Canvas wiel ====== */
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const size = 300, c = size/2, r = 140;
 
-const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+// 5 kleuren (één per categorie)
+const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/labels.length;
 let rotation = 0, spinning = false;
+
+// Helper om multiline te tekenen (split op \n, centreren)
+function drawLabelMultiline(text, radius){
+  const lines = String(text).split('\n');
+  ctx.fillStyle = "#111";
+  ctx.textAlign = "center";
+  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  const lineHeight = 14;
+  const total = lineHeight * (lines.length - 1);
+  lines.forEach((ln, i) => {
+    ctx.fillText(ln, 0, (i * lineHeight) - total/2);
+  });
+}
 
 function drawWheel(){
   ctx.clearRect(0,0,size,size);
   ctx.save();
   ctx.translate(c,c); ctx.rotate(rotation);
   for(let i=0;i<labels.length;i++){
+    // taartpunt
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.arc(0,0,r,i*slice,(i+1)*slice);
-    ctx.fillStyle = colors[i%colors.length];
+    ctx.fillStyle = colors[i % colors.length];
     ctx.fill();
+
+    // label
     ctx.save();
-    ctx.rotate(i*slice+slice/2);
-    ctx.fillStyle = "#111";
-    ctx.textAlign = "right";
-    ctx.font = "14px system-ui";
-    ctx.fillText(labels[i], r-10, 5);
+    ctx.rotate(i*slice + slice/2);
+    ctx.translate(0, -8); // klein omhoog zodat het netter oogt
+    drawLabelMultiline(labels[i], r-10);
     ctx.restore();
   }
   ctx.restore();
@@ -281,8 +279,8 @@ function resizeConfetti(){
 }
 
 function wheelCenter(){
-  const r = canvas.getBoundingClientRect();
-  return { x:r.left+r.width/2, y:r.top+r.height/2 };
+  const rct = canvas.getBoundingClientRect();
+  return { x:rct.left+rct.width/2, y:rct.top+rct.height/2 };
 }
 
 function explode(count=160){
@@ -343,9 +341,7 @@ function ensureAudio(){
 
 /* 🎶 Vrolijke winnaars-jingle (belletjes + clap + tambourijn) */
 function playGameShowJingle({ volume = 0.65 } = {}) {
-  // Vrolijke variant: belletjes + handclap + tambourijn + korte akkoordenstap (C-majeur)
   ensureAudio();
-
   const t0 = audioCtx.currentTime;
 
   // Master
@@ -433,17 +429,16 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
   tambourine({ start: t0 + 0.00, dur: 0.22, gain: 0.08, pan: 0.12 });
   bell({ freq: 784.00, start: t0 + 0.02, dur: 0.45, peak: 0.32, pan: -0.05 }); // G5
 
-  // 2) Korte I–IV–V smiles (C-E-G, F-A-C, G-B-D)
+  // 2) I–IV–V smiles
   const chordStart = t0 + 0.18;
-  // C‑E‑G
   bell({ freq: 523.25, start: chordStart + 0.00, dur: 0.42, peak: 0.28, pan: -0.12 });
   bell({ freq: 659.25, start: chordStart + 0.01, dur: 0.42, peak: 0.26, pan: 0.00  });
   bell({ freq: 783.99, start: chordStart + 0.02, dur: 0.42, peak: 0.24, pan: 0.12  });
-  // F‑A‑C
+
   bell({ freq: 349.23 * 2, start: chordStart + 0.20, dur: 0.38, peak: 0.26, pan: -0.1 });
   bell({ freq: 440.00 * 2, start: chordStart + 0.21, dur: 0.38, peak: 0.24, pan: 0.0  });
   bell({ freq: 261.63 * 2, start: chordStart + 0.22, dur: 0.38, peak: 0.24, pan: 0.1  });
-  // G‑B‑D
+
   bell({ freq: 392.00 * 2, start: chordStart + 0.38, dur: 0.38, peak: 0.26, pan: -0.1 });
   bell({ freq: 493.88 * 2, start: chordStart + 0.39, dur: 0.38, peak: 0.24, pan: 0.0  });
   bell({ freq: 293.66 * 2, start: chordStart + 0.40, dur: 0.38, peak: 0.22, pan: 0.1  });
@@ -454,20 +449,19 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
     bell({ freq: f, start: spStart + i * 0.05, dur: 0.22, peak: 0.18 - i * 0.02, pan: (i - 2) * 0.12 });
   });
 
-  // 4) Glimlach-einde (C‑E‑G)
+  // 4) Glimlach-einde
   const end = t0 + 0.76;
   handClap({ start: end + 0.02, gain: 0.20 });
   tambourine({ start: end + 0.00, dur: 0.22, gain: 0.1, pan: -0.1 });
   bell({ freq: 523.25, start: end + 0.00, dur: 0.5, peak: 0.34, pan: -0.08 });
   bell({ freq: 659.25, start: end + 0.01, dur: 0.5, peak: 0.32, pan:  0.00 });
-  bell({ freq: 783.99, start: end + 0.02, dur: 0.5, peak: 0.30, pan:  0.08 });
+  bell({ freq: 783.99, start: end + 0.02, dur: 0.5, peak:  0.30, pan:  0.08 });
 }
 
 /* 🔔 Tick bij elke segment-overgang */
 function playTick(){
   ensureAudio();
 
-  // Haptics
   if (navigator.vibrate) navigator.vibrate(8);
 
   const t0 = audioCtx.currentTime;
@@ -477,7 +471,6 @@ function playTick(){
   osc.type = 'square';
   osc.frequency.setValueAtTime(1200, t0);
 
-  // Kleine attack voor “tik”-gevoel
   gain.gain.setValueAtTime(0.001, t0);
   gain.gain.linearRampToValueAtTime(0.12, t0 + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
@@ -486,20 +479,19 @@ function playTick(){
   osc.start(t0);
   osc.stop(t0 + 0.07);
 
-  // Pointer micro-bounce
   if (pointerEl){
     pointerEl.classList.remove('ticking');
-    void pointerEl.offsetWidth; // reflow
+    void pointerEl.offsetWidth;
     pointerEl.classList.add('ticking');
   }
 }
 
 /* ====== Mechanische weerstand ====== */
 let detentOffset = 0;
-const DETENT_BASE = 0.025;        // kracht van terugslag
-const DETENT_DECAY = 0.88;        // demping
-const DETENT_SNAP_FORWARD = 0.6;  // snap vooruit
-const DETENT_CLAMP = 0.15;        // max |offset|
+const DETENT_BASE = 0.025;
+const DETENT_DECAY = 0.88;
+const DETENT_SNAP_FORWARD = 0.6;
+const DETENT_CLAMP = 0.15;
 
 function spinWheel(){
   if(spinning) return;
@@ -507,7 +499,7 @@ function spinWheel(){
   lastTickIndex = null;
   detentOffset = 0;
 
-  ensureAudio(); // audio ontgrendelen door deze user-actie
+  ensureAudio(); // audio ontgrendelen door user-actie
 
   const start = rotation;
   const target = start + Math.random()*Math.PI*6 + Math.PI*4; // 4–10π
@@ -516,10 +508,9 @@ function spinWheel(){
 
   (function anim(t){
     const p = Math.min((t - t0) / DURATION, 1);
-    // Cubic ease-out
     const baseRot = start + (target - start) * (1 - Math.pow(1 - p, 3));
 
-    // mechanische weerstand
+    // weerstand
     detentOffset *= DETENT_DECAY;
     if (detentOffset >  DETENT_CLAMP) detentOffset =  DETENT_CLAMP;
     if (detentOffset < -DETENT_CLAMP) detentOffset = -DETENT_CLAMP;
@@ -527,20 +518,18 @@ function spinWheel(){
     rotation = baseRot + detentOffset;
     drawWheel();
 
-    // Huidige slice onder pointer (top = 1.5π)
+    // slice index onder de pointer (top = 1.5π)
     const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
     const idx = Math.floor(a / slice) % labels.length;
 
-    // Nieuwe slice? klik + weerstand
     if (lastTickIndex === null || idx !== lastTickIndex) {
       playTick();
 
-      // weerstand schaalt met snelheid
       const speedFactor = (1 - p) * (1 - p);
       const impulse = DETENT_BASE * (0.35 + 0.65 * speedFactor);
 
-      detentOffset -= impulse; // terugslag
-      setTimeout(()=>{ detentOffset += impulse * DETENT_SNAP_FORWARD; }, 60); // snap fwd
+      detentOffset -= impulse;
+      setTimeout(()=>{ detentOffset += impulse * DETENT_SNAP_FORWARD; }, 60);
 
       lastTickIndex = idx;
     }
