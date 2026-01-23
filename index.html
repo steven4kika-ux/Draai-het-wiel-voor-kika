@@ -128,25 +128,6 @@ canvas#wheel{
   z-index:1000;
 }
 #confetti.show{display:block}
-  
-.toggle{
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  margin:8px 0 20px; font-size:14px;
-}
-.switch{ --w:44px; --h:24px; position:relative; width:var(--w); height:var(--h); }
-.switch input{ display:none; }
-.slider{
-  position:absolute; inset:0; background:#ddd; border-radius:999px; transition:.2s;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.15);
-}
-.slider::before{
-  content:""; position:absolute; width:20px; height:20px; left:2px; top:2px;
-  background:white; border-radius:50%; transition:.2s;
-  box-shadow:0 1px 2px rgba(0,0,0,.2);
-}
-.switch input:checked + .slider{ background:var(--brand); }
-.switch input:checked + .slider::before{ transform:translateX(20px); }
-
 </style>
 </head>
 
@@ -168,14 +149,6 @@ Doneer nu
 
 <div class="note">Prijzen hebben geen geldwaarde</div>
 
-<div class="toggle" title="Voelbare klikjes bij elke ratel">
-  <span>Mechanische weerstand</span>
-  <label class="switch" aria-label="Mechanische weerstand aan/uit">
-    <input type="checkbox" id="resistToggle" checked>
-    <span class="slider"></span>
-  </label>
-</div>
-
 <div class="wheel-wrap">
   <div id="pointer" class="pointer"></div>
   <canvas id="wheel" width="300" height="300"></canvas>
@@ -192,7 +165,6 @@ Doneer nu
     <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
   </div>
 </div>
-
 
 
 <script>
@@ -285,7 +257,7 @@ function launchDoubleConfetti(){
 
 /* ====== Ratel / Tick geluid via Web Audio API ====== */
 let audioCtx;
-let lastTickIndex = null; // detecteer overgang naar nieuwe slice
+let lastTickIndex = null; // om te detecteren wanneer we een nieuwe slice passeren
 const pointerEl = document.getElementById('pointer');
 
 function ensureAudio(){
@@ -340,27 +312,15 @@ function playTick(){
   pointerEl.classList.add('ticking');
 }
 
-/* ====== Toggle: mechanische weerstand ====== */
-let resistanceEnabled = true;
-try {
-  resistanceEnabled = JSON.parse(localStorage.getItem('resistanceEnabled') ?? 'true');
-} catch(e){ resistanceEnabled = true; }
-
-const resistToggle = document.getElementById('resistToggle');
-if (resistToggle){
-  resistToggle.checked = !!resistanceEnabled;
-  resistToggle.addEventListener('change', ()=>{
-    resistanceEnabled = resistToggle.checked;
-    localStorage.setItem('resistanceEnabled', JSON.stringify(resistanceEnabled));
-  });
-}
-
-/* ====== Mechanische weerstand ====== */
+/* ====== Mechanische weerstand ======
+   We voegen een extra hoek-offset toe (detentOffset) die
+   bij elke tik een kleine terugslag geeft en dan weg-eindt.
+========================================================= */
 let detentOffset = 0;
-const DETENT_BASE = 0.025;     // ~1.43° max-impuls
-const DETENT_DECAY = 0.88;     // demping per frame
-const DETENT_SNAP_FORWARD = 0.6; // hoeveel we “terugduwen”
-const DETENT_CLAMP = 0.15;     // max |offset| in radialen (veiligheid)
+const DETENT_BASE = 0.025;   // ~1.43° max-impuls (pas aan voor sterker/zwakker)
+const DETENT_DECAY = 0.88;   // demping per frame (0.80 = snel; 0.95 = traag)
+const DETENT_SNAP_FORWARD = 0.6; // hoeveel van de terugslag we “terugduwen”
+const DETENT_CLAMP = 0.15;   // veiligheid: max |offset| in radialen
 
 function spinWheel(){
   if(spinning) return;
@@ -380,35 +340,33 @@ function spinWheel(){
     // Cubic ease-out
     const baseRot = start + (target - start) * (1 - Math.pow(1 - p, 3));
 
-    // Pas mechanische weerstand toe (indien ingeschakeld)
+    // Pas mechanische weerstand toe:
     detentOffset *= DETENT_DECAY;
+    // veiligheid clamp
     if (detentOffset >  DETENT_CLAMP) detentOffset =  DETENT_CLAMP;
     if (detentOffset < -DETENT_CLAMP) detentOffset = -DETENT_CLAMP;
 
     rotation = baseRot + detentOffset;
     drawWheel();
 
-    // Huidige slice onder de pointer (top = 1.5π)
+    // Bepaal huidige slice onder de pointer (top = 1.5π)
     const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
     const idx = Math.floor(a / slice) % labels.length;
 
-    // Nieuwe slice? Klik + evt. weerstand
+    // Als we in een NIEUW segment zijn: klik + weerstand
     if (lastTickIndex === null || idx !== lastTickIndex) {
+      // Geluid/haptics
       playTick();
 
-      if (resistanceEnabled){
-        // Snelheidsfactor: sterker bij hoge snelheid
-        const speedFactor = (1 - p) * (1 - p);
-        const impulse = DETENT_BASE * (0.35 + 0.65 * speedFactor);
+      // Snelheidsfactor: sterker bij hoge snelheid, subtiel bij lage
+      const speedFactor = (1 - p) * (1 - p); // ~deriv van ease-out
+      const impulse = DETENT_BASE * (0.35 + 0.65 * speedFactor);
 
-        // mini-terugslag
-        detentOffset -= impulse;
+      // 1) mini-terugslag
+      detentOffset -= impulse;
 
-        // snap vooruit (check vlag opnieuw bij uitvoeren)
-        setTimeout(()=> {
-          if (resistanceEnabled) detentOffset += impulse * DETENT_SNAP_FORWARD;
-        }, 60);
-      }
+      // 2) kleine “snap” vooruit (verhoogt tastbaarheidsgevoel)
+      setTimeout(()=> { detentOffset += impulse * DETENT_SNAP_FORWARD; }, 60);
 
       lastTickIndex = idx;
     }
@@ -416,6 +374,7 @@ function spinWheel(){
     if (p < 1) requestAnimationFrame(anim);
     else {
       spinning = false;
+      // finale index opnieuw bepalen met definitieve rotation
       const finalA = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
       const finalIdx = Math.floor(finalA / slice) % labels.length;
       openModal(labels[finalIdx]);
@@ -435,7 +394,6 @@ function closeModal(){
 
 drawWheel();
 </script>
-
 
 </body>
 </html>
