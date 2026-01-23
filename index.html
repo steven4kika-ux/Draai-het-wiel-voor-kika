@@ -140,10 +140,10 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 </p>
 
 <div class="actions">
-<button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">
-Doneer nu
-</button>
-<button onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
+  <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">
+    Doneer nu
+  </button>
+  <button onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
 </div>
 
 <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -233,16 +233,67 @@ const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/labels.length;
 let rotation = 0, spinning = false;
 
-// Helper om multiline te tekenen (split op \n, centreren)
-function drawLabelMultiline(text, radius){
-  const lines = String(text).split('\n');
-  ctx.fillStyle = "#111";
-  ctx.textAlign = "center";
-  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+/* ====== Tekst helper: wrap & tekenen naar buitenrand ====== */
+function wrapLines(text, maxWidth, maxLines = 3, ellipsis = "…") {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = "";
+
+  for (let i = 0; i < words.length; i++) {
+    const test = line ? line + " " + words[i] : words[i];
+    const w = ctx.measureText(test).width;
+    if (w <= maxWidth) {
+      line = test;
+    } else {
+      if (line) lines.push(line);
+      line = words[i];
+      if (lines.length === maxLines - 1) { // laatste regel → ellipsis
+        // vul rest tot zoveel mogelijk met ellipsis
+        while (ctx.measureText(line + ellipsis).width > maxWidth && line.length > 0) {
+          line = line.slice(0, -1);
+        }
+        lines.push(line + ellipsis);
+        return lines;
+      }
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, maxLines);
+}
+
+function drawLabel(text, radius){
+  const [rawTitle, ...rest] = String(text).split('\n');
+  const content = rest.join(' ').trim();
+
+  const x = radius - 10;       // rechts uitlijnen tegen de rand
   const lineHeight = 14;
-  const total = lineHeight * (lines.length - 1);
-  lines.forEach((ln, i) => {
-    ctx.fillText(ln, 0, (i * lineHeight) - total/2);
+
+  // Titel (vet)
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#111";
+  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  const title = rawTitle || "";
+  const contentFont = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+
+  // Wrap de content met normale font-meting
+  ctx.font = contentFont;
+  const wrapped = wrapLines(content, 130, 3); // max 130px breed, max 3 regels
+
+  // Totale hoogte bepalen voor verticale centrering
+  const totalLines = 1 + wrapped.length;
+  const totalHeight = (totalLines - 1) * lineHeight;
+  let y = - Math.floor(totalHeight / 2); // centreren rondom as
+
+  // Titel tekenen
+  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  ctx.fillText(title, x, y);
+  y += lineHeight;
+
+  // Content
+  ctx.font = contentFont;
+  wrapped.forEach(line => {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
   });
 }
 
@@ -251,18 +302,17 @@ function drawWheel(){
   ctx.save();
   ctx.translate(c,c); ctx.rotate(rotation);
   for(let i=0;i<labels.length;i++){
-    // taartpunt
+    // sector
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.arc(0,0,r,i*slice,(i+1)*slice);
     ctx.fillStyle = colors[i % colors.length];
     ctx.fill();
 
-    // label
+    // label: draai naar midden van sector en teken richting buitenrand
     ctx.save();
     ctx.rotate(i*slice + slice/2);
-    ctx.translate(0, -8); // klein omhoog zodat het netter oogt
-    drawLabelMultiline(labels[i], r-10);
+    drawLabel(labels[i], r);
     ctx.restore();
   }
   ctx.restore();
@@ -519,7 +569,8 @@ function spinWheel(){
     drawWheel();
 
     // slice index onder de pointer (top = 1.5π)
-    const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
+    const twoPi = Math.PI * 2;
+    const a = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
     const idx = Math.floor(a / slice) % labels.length;
 
     if (lastTickIndex === null || idx !== lastTickIndex) {
@@ -538,9 +589,19 @@ function spinWheel(){
       requestAnimationFrame(anim);
     } else {
       spinning = false;
-      const finalA = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
-      const finalIdx = Math.floor(finalA / slice) % labels.length;
-      openModal(labels[finalIdx]);
+
+      // Finale index veilig bepalen
+      const finalA = (Math.PI * 1.5 - (rotation % twoPi) + twoPi) % twoPi;
+      const rawIdx = Math.floor(finalA / slice);
+      const finalIdx = ((rawIdx % labels.length) + labels.length) % labels.length;
+
+      const prize = labels?.[finalIdx];
+      if (!prize) {
+        console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, labelsLen: labels?.length });
+        openModal('🎁 Verrassing: je bent een topper! 🙌');
+      } else {
+        openModal(prize);
+      }
     }
   })(t0);
 }
