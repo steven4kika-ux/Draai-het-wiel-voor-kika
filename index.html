@@ -264,10 +264,30 @@ function ensureAudio(){
   if(!audioCtx){
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-}
 
 function playTick(){
-  
+  ensureAudio();
+  if (navigator.vibrate) navigator.vibrate(8);
+
+  const t0 = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1200, t0);
+  gain.gain.setValueAtTime(0.1, t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + 0.06);
+
+  pointerEl.classList.remove('ticking');
+  void pointerEl.offsetWidth;
+  pointerEl.classList.add('ticking');
+}
+
+ 
 function playGameShowJingle({ volume = 0.7 } = {}){
   ensureAudio();
 
@@ -486,12 +506,7 @@ function spinWheel(){
       openModal(labels[finalIdx]);
     }
   })(t0);
-}
 
-function openModal(text){
-  document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
-  document.getElementById('modal').classList.add('open');
-  launchDoubleConfetti();
 }
 function openModal(text){
   document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
