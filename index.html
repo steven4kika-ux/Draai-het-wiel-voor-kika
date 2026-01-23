@@ -601,9 +601,19 @@ function openModal(prizeText, categoryText){
   playGameShowJingle({ volume: 0.65 });
 
   // 🎉 MEGA confetti zolang de popup open is
-  const isMega =
-    typeof prizeText === 'string' &&
-    /confetti\s*bonus/i.test(prizeText.normalize("NFKD"));
+
+function isConfettiBonus(text){
+  if (typeof text !== 'string') return false;
+  // Unicode normaliseren + trimmen + lowercasen
+  const t = text.normalize('NFKD').toLowerCase().replace(/\s+/g, ' ').trim();
+  // Zowel met als zonder emoji, met streepje of spatie, werkt:
+  return (
+    t.includes('confetti-bonus') ||  // met streepje
+    t.includes('confetti bonus')  || // met spatie
+    /confetti.?bonus/.test(t)        // tolerant: confetti[alles]bonus
+  );
+}
+
 
   if (isMega){
     startMegaConfetti();
@@ -611,6 +621,15 @@ function openModal(prizeText, categoryText){
     launchStandardConfetti();
   }
 }
+
+const isMega = isConfettiBonus(prizeText);
+console.log('[CONFETTI] prizeText=', prizeText, ' -> isMega=', isMega);
+if (isMega){
+  startMegaConfetti();
+} else {
+  launchStandardConfetti();
+}
+``
 
 
 
