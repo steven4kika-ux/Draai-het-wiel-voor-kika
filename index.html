@@ -155,6 +155,45 @@ Doneer nu
 
 <script>
   
+/* ---------- Tik-geluid per segment ---------- */
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playTick() {
+  if (!audioCtx) return;
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "square";
+  osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(
+    400,
+    audioCtx.currentTime + 0.04
+  );
+
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(
+    0.25,
+    audioCtx.currentTime + 0.005
+  );
+  gain.gain.exponentialRampToValueAtTime(
+    0.0001,
+    audioCtx.currentTime + 0.06
+  );
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.07);
+}
+
 // Respecteer systeeminstelling voor minder animatie (nodig voor spinWheel)
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -294,51 +333,61 @@ function launchDoubleConfetti(){
 
 
 
+
 function spinWheel(){
-  if(spinning) return;
+  if (spinning) return;
   spinning = true;
-  ensureAudio(); // activeer audio na user-actie
-  
-  // ✔ alleen als de knop bestaat
-  const spinBtn = document.getElementById('spinBtn');
-  if (spinBtn) spinBtn.disabled = true;
 
-  const start = rotation;
-  const minTurns = prefersReducedMotion ? Math.PI*2 : Math.PI*4;
-  const randomExtra = Math.random()*Math.PI*6;
-  const target = start + randomExtra + minTurns;
-  const t0 = performance.now();
-  const duration = prefersReducedMotion ? 900 : 2600;
+  ensureAudio(); // audio activeren na klik
 
-  const slice = Math.PI * 2 / labels.length;
-  let prevAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
-  let nextThreshold = Math.floor(prevAngle / slice) * slice + slice;
+  const startRotation = rotation;
+  const extraSpins = Math.random() * Math.PI * 6 + Math.PI * 4;
+  const targetRotation = startRotation + extraSpins;
 
-  (function anim(tStart){
-    function step(t){
-      const p = Math.min((t - tStart)/duration, 1);
-      rotation = start + (target - start) * (1 - Math.pow(1 - p, 3));
-      drawWheel();
+  const duration = 2600;
+  const startTime = performance.now();
 
-      const curAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
-      while (curAngle >= nextThreshold) {
-        if (!prefersReducedMotion) playTick();
-        nextThreshold += slice;
-      }
+  const sliceAngle = Math.PI * 2 / labels.length;
 
-      if(p < 1){
-        requestAnimationFrame(step);
-      } else {
-        const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
-        const i = Math.floor(a / slice) % labels.length;
-        spinning = false;
-        if (spinBtn) spinBtn.disabled = false;
-        openModal(labels[i]);
-      }
+  // 👉 om tik-overgangen te detecteren
+  let lastTickIndex = Math.floor(startRotation / sliceAngle);
+
+  function animate(now){
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // ease-out
+    const eased = 1 - Math.pow(1 - progress, 3);
+    rotation = startRotation + (targetRotation - startRotation) * eased;
+
+    drawWheel();
+
+    // ✅ huidige overgang-index
+    const currentIndex = Math.floor(rotation / sliceAngle);
+
+    if (currentIndex !== lastTickIndex) {
+      playTick();                 // 🔊 TIK
+      lastTickIndex = currentIndex;
     }
-    requestAnimationFrame(step);
-  })(t0);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+
+      // winnaar bepalen
+      const a =
+        (Math.PI * 1.5 - rotation + Math.PI * 2) %
+        (Math.PI * 2);
+      const index = Math.floor(a / sliceAngle) % labels.length;
+
+      openModal(labels[index]);
+    }
+  }
+
+  requestAnimationFrame(animate);
 }
+
 
 
 function openModal(text){
