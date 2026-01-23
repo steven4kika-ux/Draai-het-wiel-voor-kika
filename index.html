@@ -87,36 +87,64 @@ canvas#wheel{
   border-radius:50%;
 }
 
+/* Popup lager in beeld */
 .modal{
   position:fixed;
   inset:0;
   display:none;
-  align-items:flex-start;     /* ⬅ niet meer exact midden */
+  align-items:flex-start;     /* niet exact midden */
   justify-content:center;
-  padding-top:50vh;           /* ⬅ popup lager in beeld */
+  padding-top:50vh;           /* lager in beeld (pas evt. aan naar 22–26vh) */
   z-index:1001;
   pointer-events:none;
 }
-
 .modal.open{display:flex}
 .modal__card{
-  pointer-events:auto; background:white; border-radius:16px; padding:24px;
-  width:min(90vw,420px); text-align:center; box-shadow:0 20px 40px rgba(0,0,0,.25);
+  pointer-events:auto;
+  background:white;
+  border-radius:16px;
+  padding:24px;
+  width:min(90vw,420px);
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
 }
 .modal__btn{
-  background:var(--brand); border:0; padding:10px 16px; border-radius:999px; font-weight:700; cursor:pointer;
+  background:var(--brand);
+  border:0;
+  padding:10px 16px;
+  border-radius:999px;
+  font-weight:700;
+  cursor:pointer;
 }
 
 #confetti{
   position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
 }
 #confetti.show{display:block}
-  
+
 .modal__cat{
   margin:0 0 6px;
   font-weight:700;
   color:var(--brand);
 }
+
+/* Deelknop + fallback */
+.modal__btn--secondary{
+  background:#fff; color:#222; border:2px solid var(--brand);
+  margin-top:8px;
+}
+.share{ margin-top:10px; }
+.share__fallback{ display:none; margin-top:10px; }
+.share__fallback.show{ display:block; }
+.share__row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:8px 0; }
+.share__link{
+  padding:6px 10px; border-radius:999px; background:#f2f2f2; color:#222; text-decoration:none;
+  font-weight:600; border:1px solid #e6e6e6;
+}
+.share__copy{
+  border:0; border-radius:8px; padding:6px 10px; background:#efefef; font-weight:600; cursor:pointer;
+}
+.share__ok{ font-size:12px; color:#3a7; margin-top:6px; min-height:1em; }
 </style>
 </head>
 
@@ -145,16 +173,33 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 
 <canvas id="confetti"></canvas>
 
-<div id="modal" class="modal">
-  <div class="modal__card">
-    <h2>Gefeliciteerd 🎉</h2>
-  <p id="modalCategory" class="modal__cat"></p>  
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal__card" tabindex="-1">
+    <h2 id="modalTitle">Gefeliciteerd 🎉</h2>
+    <p id="modalCategory" class="modal__cat"></p>
     <p id="modalPrize"></p>
+
+    <!-- DEEL-blok -->
+    <div class="share">
+      <button id="shareBtn" class="modal__btn modal__btn--secondary" onclick="sharePrize()">📤 Deel je prijs</button>
+
+      <!-- Fallback -->
+      <div id="shareFallback" class="share__fallback" aria-live="polite">
+        <div class="share__row">
+          <a id="shareWhatsApp" class="share__link" target="_blank" rel="noopener">WhatsApp</a>
+          <a id="shareX"        class="share__link" target="_blank" rel="noopener">X</a>
+          <a id="shareFB"       class="share__link" target="_blank" rel="noopener">Facebook</a>
+          <a id="shareLI"       class="share__link" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+        <button id="copyShare" class="share__copy" type="button">📋 Kopieer tekst</button>
+        <div id="copyFeedback" class="share__ok" aria-live="polite"></div>
+      </div>
+    </div>
+
     <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
   </div>
 </div>
 
-  
 <script>
 /* ========= CATEGORIEËN ========= */
 const moppen = [
@@ -204,11 +249,9 @@ const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const size = 300, c = size/2, r = 140;
 
-const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"]; // 1 per categorie
+const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
-
-/* Highlight state: -1 = geen selectie */
 let selectedIndex = -1;
 
 function drawCategoryLabel(text, radius){
@@ -263,14 +306,14 @@ const confettiCanvas = document.getElementById('confetti');
 const cfx = confettiCanvas.getContext('2d');
 
 let particles = [];
-let confettiRAF = null;     // requestAnimationFrame id
-let confettiLoop = false;   // true = blijf animeren (mega bonus)
-let burstTimer = null;      // interval id (periodieke bursts)
+let confettiRAF = null;
+let confettiLoop = false;
+let burstTimer = null;
 
-const HARD_LIMIT = 10000;   // absolute veiligheidslimiet
+const HARD_LIMIT = 10000;
 
 function resizeConfetti(){
-  const dpr = Math.min(devicePixelRatio || 1, 2); // retina scherpte met cap
+  const dpr = Math.min(devicePixelRatio || 1, 2);
   confettiCanvas.width  = Math.floor(innerWidth  * dpr);
   confettiCanvas.height = Math.floor(innerHeight * dpr);
   confettiCanvas.style.width  = innerWidth + 'px';
@@ -283,11 +326,8 @@ function wheelCenter(){
   return { x: r.left + r.width/2, y: r.top + r.height/2 };
 }
 
-/**
- * Voeg één confetti-burst toe (met levensduur) met performance cap
- */
 function addBurst({ count=180, g=0.15, spread=9, sizeMul=1, palette } = {}){
-  const MAX_PARTICLES = 8000; // zachte cap
+  const MAX_PARTICLES = 8000;
   if (particles.length > MAX_PARTICLES) return;
 
   const o = wheelCenter();
@@ -307,17 +347,15 @@ function addBurst({ count=180, g=0.15, spread=9, sizeMul=1, palette } = {}){
       w, h,
       c: colors[Math.floor(Math.random()*colors.length)],
       life: 0,
-      maxLife: 4000 + Math.random() * 2500 // 4–6.5s
+      maxLife: 4000 + Math.random() * 2500
     });
   }
 }
 
 function stepAndDraw(dt){
   cfx.clearRect(0,0,innerWidth,innerHeight);
-
   const airFriction = Math.pow(0.992, dt/16);
 
-  // harde cap: snij oudste deeltjes af
   if (particles.length > HARD_LIMIT){
     particles.splice(0, particles.length - HARD_LIMIT);
   }
@@ -330,7 +368,6 @@ function stepAndDraw(dt){
     p.r  += p.vr * (dt/16);
     p.life += dt;
 
-    // tekenen
     cfx.save();
     cfx.translate(p.x, p.y);
     cfx.rotate(p.r);
@@ -338,7 +375,6 @@ function stepAndDraw(dt){
     cfx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
     cfx.restore();
 
-    // Houd alleen levende/zichtbare deeltjes
     const alive = p.life < p.maxLife;
     const onscreen = p.y < innerHeight + 80;
     return alive && onscreen;
@@ -347,7 +383,7 @@ function stepAndDraw(dt){
 
 function tickConfetti(t){
   if (!tickConfetti.prev) tickConfetti.prev = t;
-  const dt = Math.min(50, t - tickConfetti.prev); // cap dt voor spikes
+  const dt = Math.min(50, t - tickConfetti.prev);
   tickConfetti.prev = t;
 
   stepAndDraw(dt);
@@ -369,17 +405,16 @@ function ensureAnimating(){
   }
 }
 
-/* 🎊 Normale confetti (eenmalig, zoals eerst) */
+/* 🎊 Normale confetti (eenmalig) */
 function launchStandardConfetti(){
   ensureAnimating();
   addBurst({ count: 180, g: 0.15, spread: 9, sizeMul: 1.0 });
   setTimeout(() => addBurst({ count: 140, g: 0.15, spread: 9, sizeMul: 1.0 }), 300);
-  // confettiLoop blijft false → animatie stopt vanzelf zodra deeltjes weg zijn
 }
 
-/* 💥 Oneindige confetti bij bonus — blijft poppen tot popup dicht is */
+/* 💥 Oneindige confetti (bonus) — blijft poppen tot popup dicht is */
 function startMegaConfetti(){
-  if (confettiLoop) return;       // al bezig
+  if (confettiLoop) return;
   confettiLoop = true;
   ensureAnimating();
 
@@ -388,32 +423,26 @@ function startMegaConfetti(){
   setTimeout(() => addBurst({ count: 280, g: 0.16, spread: 10, sizeMul: 1.10 }), 220);
   setTimeout(() => addBurst({ count: 220, g: 0.17, spread: 11, sizeMul: 1.10 }), 480);
 
-  // Doorlopend ritme (bursts blijven komen)
+  // Doorlopend ritme
   burstTimer = setInterval(() => {
     addBurst({ count: 220, g: 0.17, spread: 11, sizeMul: 1.10 });
     setTimeout(() => addBurst({ count: 160, g: 0.18, spread: 8, sizeMul: 1.00 }), 180);
-    // af en toe extra regen voor variatie
     if (Math.random() < 0.33){
       setTimeout(() => addBurst({ count: 140, g: 0.19, spread: 9, sizeMul: 1.05 }), 420);
     }
-  }, 800); // elke 0.8s
+  }, 800);
 }
 
-/* Stop de loop; bestaande deeltjes vallen rustig uit beeld, canvas verdwijnt daarna */
 function stopMegaConfetti(){
   confettiLoop = false;
   if (burstTimer){
     clearInterval(burstTimer);
     burstTimer = null;
   }
-  // tickConfetti blijft lopen tot particles leeg zijn; daarna verdwijnt canvas automatisch
 }
 
-// Scherp blijven bij resize wanneer confetti actief is
 window.addEventListener('resize', () => {
-  if (confettiRAF || confettiLoop) {
-    resizeConfetti();
-  }
+  if (confettiRAF || confettiLoop) resizeConfetti();
 });
 
 /* ====== Audio (tick + jingle) ====== */
@@ -531,13 +560,13 @@ function spinWheel(){
   spinning = true;
   lastTickIndex = null;
   detentOffset = 0;
-  selectedIndex = -1;       // highlight reset
+  selectedIndex = -1;
   drawWheel();
 
-  ensureAudio(); // ontgrendel audio
+  ensureAudio();
 
   const start = rotation;
-  const target = start + Math.random()*Math.PI*6 + Math.PI*4; // 4–10π
+  const target = start + Math.random()*Math.PI*6 + Math.PI*4;
   const t0 = performance.now(), DURATION = 2600;
 
   (function anim(t){
@@ -569,32 +598,28 @@ function spinWheel(){
     } else {
       spinning = false;
 
-      // Finale index
       const finalA = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
       const rawIdx = Math.floor(finalA / slice);
       const finalIdx = ((rawIdx % categoryLabels.length) + categoryLabels.length) % categoryLabels.length;
 
-      // 🔆 Highlight de gekozen categorie op het rad
       selectedIndex = finalIdx;
       drawWheel();
 
-      // 🎯 Kies nu de prijs UIT de gekozen categorie
       const prizeArr = categoryData[finalIdx];
       const prize = randomItem(prizeArr);
       if (!prize) {
         console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, len: categoryLabels.length });
         openModal('🎁 Verrassing: je bent een topper! 🙌', categoryLabels[finalIdx]);
       } else {
-        openModal(prize, categoryLabels[finalIdx]); // popup met prijs + categorie
+        openModal(prize, categoryLabels[finalIdx]);
       }
     }
   })(t0);
 }
 
-/* ====== Popup + detectie confetti-bonus ====== */
+/* ====== Popup + confetti-bonus detectie ====== */
 function isConfettiBonus(text){
   if (typeof text !== 'string') return false;
-  // Normalize + tolerant match (spatie/streepje/varianten)
   const t = text.normalize('NFKD').toLowerCase().replace(/\s+/g, ' ').trim();
   return (
     t.includes('confetti-bonus') ||
@@ -603,34 +628,103 @@ function isConfettiBonus(text){
   );
 }
 
+let currentWin = { category:'', prize:'' };
+
+const WHEEL_URL  = window.location.origin + window.location.pathname;
+const DONATE_URL = 'https://24kika.nl/doneren/?deelnemer=steven-arbon';
+
+function buildShareData(){
+  const title = `Gefeliciteerd! (${currentWin.category})`;
+  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
+  const url   = WHEEL_URL; // of DONATE_URL als je direct doneren wilt pushen
+  return { title, text, url };
+}
+
+function fillFallbackLinks(){
+  const { text, url } = buildShareData();
+  const wa = document.getElementById('shareWhatsApp');
+  const tw = document.getElementById('shareX');
+  const fb = document.getElementById('shareFB');
+  const li = document.getElementById('shareLI');
+
+  if (wa) wa.href = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
+  if (tw) tw.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  if (fb) fb.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+  if (li) li.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+}
+
+async function copyShareToClipboard(){
+  const { text, url } = buildShareData();
+  const payload = `${text}\n${url}`;
+  const feedback = document.getElementById('copyFeedback');
+  try{
+    if (navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(payload);
+    }else{
+      const ta = document.createElement('textarea');
+      ta.value = payload;
+      document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    if (feedback) feedback.textContent = 'Gekopieerd ✔️';
+  }catch(e){
+    if (feedback) feedback.textContent = 'Kopiëren mislukt. Probeer de knoppen hierboven.';
+  }
+}
+
+// Web Share + fallback
+async function sharePrize(){
+  const data = buildShareData();
+  const fb = document.getElementById('shareFallback');
+
+  if (navigator.share){
+    try{
+      await navigator.share({ title: data.title, text: data.text, url: data.url });
+      if (fb) fb.classList.remove('show');
+      return;
+    }catch(err){
+      // user cancel of not allowed -> toon fallback
+    }
+  }
+  fillFallbackLinks();
+  if (fb) fb.classList.add('show');
+}
+document.getElementById('copyShare')?.addEventListener('click', copyShareToClipboard);
+
 function openModal(prizeText, categoryText){
   const catEl = document.getElementById('modalCategory');
   const prizeEl = document.getElementById('modalPrize');
 
-  if (catEl)   catEl.textContent   = categoryText || '';
-  if (prizeEl) prizeEl.textContent = prizeText   || '';
+  currentWin = { category: (categoryText || '').trim(), prize: (prizeText || '').trim() };
+
+  if (catEl)   catEl.textContent   = currentWin.category;
+  if (prizeEl) prizeEl.textContent = currentWin.prize;
 
   document.getElementById('modal').classList.add('open');
+  // focus voor toegankelijkheid
+  setTimeout(()=>document.querySelector('.modal__card')?.focus(),0);
+
   playGameShowJingle({ volume: 0.65 });
 
   const mega = isConfettiBonus(prizeText);
   console.log('[CONFETTI] prizeText=', prizeText, ' -> isMega=', mega);
 
   if (mega){
-    startMegaConfetti();     // 💥 blijft poppen tot je sluit
+    startMegaConfetti();     // blijft poppen tot je sluit
   } else {
-    launchStandardConfetti(); // 🎊 korte confetti
+    launchStandardConfetti();
   }
 }
 
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  stopMegaConfetti();     // mega-loop stoppen als actief
+  stopMegaConfetti();
+  document.getElementById('shareFallback')?.classList.remove('show');
   selectedIndex = -1;
   drawWheel();
 }
 
-// Esc sluit popup (kleine UX-polsih)
+// Esc sluit popup
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && document.getElementById('modal').classList.contains('open')) {
     closeModal();
@@ -640,7 +734,5 @@ document.addEventListener('keydown', (e) => {
 /* ====== Start ====== */
 drawWheel();
 </script>
-
-
-
-  
+</body>
+</html>
