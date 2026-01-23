@@ -154,6 +154,55 @@ Doneer nu
 </div>
 
 <script>
+  
+/* ---------- Audio (tik-geluid) ---------- */
+let audioCtx = null;
+let mute = false;
+
+// Korte 'tik' met oscillator (zonder externe bestanden)
+function playTick() {
+  if (mute) return;
+  if (!audioCtx) return; // wordt lazy-geïnitialiseerd bij eerste user-actie
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  // Een “clicky” tik: hoge startfrequentie die snel daalt
+  osc.type = "square";
+  osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(420, audioCtx.currentTime + 0.04);
+
+  // Heel korte, scherpe envelope
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.06);
+
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.07);
+}
+
+// Zorg dat AudioContext na user-actie wordt geactiveerd (autoplay policy)
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      // stil falen
+    }
+  }
+}
+
+// optionele mute-knop (als aanwezig)
+const muteBtn = document.getElementById('muteBtn');
+if (muteBtn) {
+  muteBtn.addEventListener('click', () => {
+    mute = !mute;
+    muteBtn.setAttribute('aria-pressed', String(!mute));
+    muteBtn.textContent = mute ? "🔇 Geluid uit" : "🔊 Geluid aan";
+  });
+}
+
 const canvas=document.getElementById('wheel');
 const ctx=canvas.getContext('2d');
 const size=300,c=size/2,r=140;
@@ -239,25 +288,60 @@ function launchDoubleConfetti(){
  })(start);
 }
 
+
 function spinWheel(){
- if(spinning)return;
- spinning=true;
- const start=rotation;
- const target=start+Math.random()*Math.PI*6+Math.PI*4;
- const t0=performance.now();
- (function anim(t){
-  const p=Math.min((t-t0)/2600,1);
-  rotation=start+(target-start)*(1-Math.pow(1-p,3));
-  drawWheel();
-  if(p<1) requestAnimationFrame(anim);
-  else{
-   spinning=false;
-   const a=(Math.PI*1.5-rotation+Math.PI*2)%(Math.PI*2);
-   const i=Math.floor(a/slice)%labels.length;
-   openModal(labels[i]);
-  }
- })(t0);
+  if(spinning) return;
+  spinning = true;
+  ensureAudio(); // activeer audio na user-actie
+  spinBtn.disabled = true;
+
+  const start = rotation;
+  const minTurns = prefersReducedMotion ? Math.PI*2 : Math.PI*4;
+  const randomExtra = Math.random()*Math.PI*6;
+  const target = start + randomExtra + minTurns;
+  const t0 = performance.now();
+  const duration = prefersReducedMotion ? 900 : 2600;
+
+  // Voor tik-detectie:
+  const slice = Math.PI * 2 / labels.length;
+  let prevAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+  // We tikken wanneer we over een veelvoud van 'slice' heen gaan (tegenwijzerzin).
+  // Omdat de pointer boven zit en we het wiel draaien, gebruiken we de absolute rotatie als “hoek”.
+  let nextThreshold = Math.floor(prevAngle / slice) * slice + slice;
+
+  (function anim(tStart){
+    function step(t){
+      const p = Math.min((t - tStart)/duration, 1);
+      // easeOutCubic
+      rotation = start + (target - start) * (1 - Math.pow(1 - p, 3));
+      drawWheel();
+
+      // Huidige genormaliseerde hoek 0..2π
+      const curAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+
+      // Detecteer hoeveel drempels we overschreden sinds vorige frame
+      // Omdat rotatie toeneemt, checken we drempels vooruit:
+      while (curAngle >= nextThreshold) {
+        if (!prefersReducedMotion) playTick();
+        nextThreshold += slice;
+      }
+
+      prevAngle = curAngle;
+
+      if(p < 1){
+        requestAnimationFrame(step);
+      } else {
+        const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
+        const i = Math.floor(a / slice) % labels.length;
+        spinning = false;
+        spinBtn.disabled = false;
+        openModal(labels[i]);
+      }
+    }
+    requestAnimationFrame(step);
+  })(t0);
 }
+
 
 function openModal(text){
  document.getElementById('modalPrize').textContent=`Je hebt gewonnen: ${text}`;
