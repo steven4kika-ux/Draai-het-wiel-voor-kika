@@ -174,7 +174,77 @@ Doneer nu
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const size = 300, c = size/2, r = 140;
-const labels = ["High five 🙌","Dankjewel 💛","Virtuele knuffel 🤗","Topper ⭐","Goed bezig 🎉","Respect 👏"];
+const labels = 
+const jokes = [...];
+const quotes = [...];
+const challenges = [...];
+
+const labels = [
+  random(jokes),
+  random(quotes),
+  random(challenges),
+  ...
+];
+  
+/* ========= CATEGORIEËN ========= */
+
+// 😂 Betere moppen (kort, warm, echt leuk)
+const moppen = [
+  "Waarom won de skeeler een prijs? Omdat hij altijd blijft rollen 💪",
+  "Ik zou hier een mop plaatsen… maar jij bent de echte winnaar 😄",
+  "Gefeliciteerd! Je hebt +1 goed‑gevoel gewonnen ✨",
+  "Mijn benen deden 24 uur mee. Jij deed vandaag iets nóg belangrijkers 💛",
+  "Dit wiel draait op goede daden — dankjewel 🙌"
+];
+
+// 🧠 Leuke feitjes
+const feitjes = [
+  "Wist je dat lachen stress vermindert? 😊",
+  "Elke donatie helpt KiKa bij beter onderzoek 💛",
+  "Bewegen maakt je hersenen aantoonbaar vrolijker 🧠✨",
+  "Samen kleine acties doen maakt een groot verschil 🌍"
+];
+
+// 💬 Quotes
+const quotes = [
+  "Kleine moeite, groot verschil 💛",
+  "Samen maken we kanker kansloos.",
+  "Wie goed doet, ontmoet geluk ✨",
+  "Vandaag heb jij iets goeds gedaan 🌈"
+];
+
+// 🎯 Mini‑challenges
+const challenges = [
+  "Geef vandaag iemand een compliment 😊",
+  "Drink een extra glas water 💧",
+  "Stuur dit wiel door naar 1 vriend(in) 🔄",
+  "Loop vandaag 5 minuten extra 🚶‍♂️"
+];
+
+// 🎉 Verrassingen
+const verrassingen = [
+  "🎉 Confetti‑bonus! Jij bent officieel een Topper!",
+  "Virtuele high‑five van Steven 🙌",
+  "Deze draai gaf je +1 karma ✨",
+  "Je mag trots zijn op jezelf 😁"
+];
+
+
+/* ========= LABELS PER CATEGORIE ========= */
+
+function randomItem(arr){
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const labels = [
+  `😂 Mop\n${randomItem(moppen)}`,
+  `🧠 Wist je dit?\n${randomItem(feitjes)}`,
+  `💬 Quote\n${randomItem(quotes)}`,
+  `🎯 Challenge\n${randomItem(challenges)}`,
+  `🎉 Verrassing\n${randomItem(verrassingen)}`
+];
+
+
 const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/labels.length;
 let rotation = 0, spinning = false;
