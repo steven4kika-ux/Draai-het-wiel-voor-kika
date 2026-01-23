@@ -552,48 +552,32 @@ function spinWheel(){
   })(t0);
 }
 
-/* ====== Popup ====== */
-function openModal(prizeText, categoryText){
-  con
+/* ====== Popup (SCHONE, WERKENDE VERSIE) ====== */
 function openModal(prizeText, categoryText){
   const catEl = document.getElementById('modalCategory');
   const prizeEl = document.getElementById('modalPrize');
+
   if (catEl)   catEl.textContent   = categoryText || '';
   if (prizeEl) prizeEl.textContent = prizeText   || '';
 
   document.getElementById('modal').classList.add('open');
   playGameShowJingle({ volume: 0.65 });
 
-  // 👇 Als het écht de Confetti‑bonus is → MEGA confetti
-  const isMega = typeof prizeText === 'string' &&
-                 prizeText.startsWith("🎉 Confetti‑bonus! Jij bent officieel een Topper!");
+  // 🎉 MEGA confetti bij Confetti‑bonus
+  const isMega =
+    typeof prizeText === 'string' &&
+    prizeText.startsWith("🎉 Confetti‑bonus! Jij bent officieel een Topper!");
 
   if (isMega){
-    launchMegaConfetti();
+    launchMegaConfetti();     // 💥 EXTRA VEEL CONFETTI
   } else {
-    launchStandardConfetti();
+    launchStandardConfetti(); // 🎊 normale confetti
   }
-}
-st catEl = document.getElementById('modalCategory');
-  const prizeEl = document.getElementById('modalPrize');
-  if (catEl)   catEl.textContent   = categoryText || '';
-  if (prizeEl) prizeEl.textContent = prizeText   || '';
-
-  document.getElementById('modal').classList.add('open');
-  playGameShowJingle({ volume: 0.65 });
-  launchDoubleConfetti();
 }
 
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  // Highlight uit als popup dicht is (optioneel). Wil je het laten staan? haal deze 2 regels weg.
   selectedIndex = -1;
   drawWheel();
 }
 
-/* ====== Start ====== */
-drawWheel();
-</script>
-
-</body>
-</html>
