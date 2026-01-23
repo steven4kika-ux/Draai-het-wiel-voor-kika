@@ -200,6 +200,10 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
       </div>
     </div>
 
+<button id="badgeBtn" class="modal__btn modal__btn--secondary" onclick="downloadBadgePNG()">
+  📸 Download badge (PNG)
+</button>
+
     <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
   </div>
 </div>
@@ -609,6 +613,216 @@ function spinWheel(){
       selectedIndex = finalIdx;
       drawWheel();
 
+/* ====== Badge-generator (1080×1080 PNG) ====== */
+
+/**
+ * Tekent een deelbare badge op een <canvas> en retourneert het canvas.
+ * @param {string} prize    - de gewonnen prijs
+ * @param {string} category - de categorie (Mop/Feit/Quote/Challenge/Verrassing)
+ * @param {object} opts     - { size: 1080 }
+ */
+function drawBadgeToCanvas(prize, category, opts={}) {
+  const size = opts.size || 1080;            // vierkant
+  const pad  = Math.round(size * 0.06);      // buitenmarges
+  const brand = getComputedStyle(document.documentElement)
+                 .getPropertyValue('--brand').trim() || '#ffb703';
+
+  // Canvas + context
+  const cvs = document.createElement('canvas');
+  cvs.width = cvs.height = size;
+  const ctx = cvs.getContext('2d');
+
+  // Achtergrond: zachte radiale gradient
+  const grad = ctx.createRadialGradient(size*0.5, size*0.4, size*0.1, size*0.5, size*0.6, size*0.8);
+  grad.addColorStop(0, '#fff8fb');
+  grad.addColorStop(1, '#ffe0ef');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  // Subtiele schaduw rand
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.beginPath();
+  const r = size/2 - pad/2;
+  ctx.arc(size/2, size/2, r, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Confetti scatter (achtergrond)
+  drawConfettiScatter(ctx, size, 90);
+
+  // Titel-badge bovenin
+  const topY = pad + 20;
+  drawRibbon(ctx, size/2, topY, Math.round(size*0.66), 60, brand);
+  ctx.fillStyle = '#111';
+  ctx.font = `700 ${Math.round(size*0.06)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('KiKa wiel – winnaar!', size/2, topY);
+
+  // Categorie pill
+  const pillY = topY + Math.round(size*0.12);
+  drawPill(ctx, size/2, pillY, Math.round(size*0.34), Math.round(size*0.07), brand);
+  ctx.fillStyle = '#111';
+  ctx.font = `700 ${Math.round(size*0.05)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.fillText(category || 'Categorie', size/2, pillY);
+
+  // Grote prijs tekst (meerdere regels)
+  const bodyMaxW = size - pad*2;
+  const bodyY = pillY + Math.round(size*0.10);
+  ctx.fillStyle = '#222';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = `600 ${Math.round(size*0.065)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  const lines = wrapText(ctx, prize || 'Gefeliciteerd!', bodyMaxW, Math.round(size*0.09), 4);
+  drawLines(ctx, lines, size/2, bodyY, Math.round(size*0.09));
+
+  // Footer: call to action
+  const ctaY = size - pad - Math.round(size*0.12);
+  drawPill(ctx, size/2, ctaY, Math.round(size*0.58), Math.round(size*0.075), '#111');
+  ctx.fillStyle = brand;
+  ctx.font = `700 ${Math.round(size*0.045)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.fillText('Draai ook mee & steun KiKa 💛', size/2, ctaY);
+
+  // Kleine URL onderaan
+  ctx.fillStyle = '#555';
+  ctx.font = `400 ${Math.round(size*0.028)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  const shareURL = (window.location.origin + window.location.pathname);
+  ctx.fillText(shareURL, size/2, size - pad + 10);
+
+  // Voorgrond confetti extra
+  drawConfettiScatter(ctx, size, 30, 0.65);
+
+  return cvs;
+}
+
+function wrapText(ctx, text, maxWidth, lineHeight, maxLines = 4){
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (let i=0; i<words.length; i++){
+    const test = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(test).width <= maxWidth){
+      line = test;
+    } else {
+      if (line) lines.push(line);
+      line = words[i];
+      if (lines.length === maxLines - 1){
+        // laatste regel met ellipsis
+        while (ctx.measureText(line + '…').width > maxWidth && line.length > 0){
+          line = line.slice(0, -1);
+        }
+        lines.push(line + '…');
+        return lines;
+      }
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, maxLines);
+}
+
+function drawLines(ctx, lines, centerX, startY, lineHeight){
+  lines.forEach((ln, i) => {
+    ctx.fillText(ln, centerX, startY + i*lineHeight);
+  });
+}
+
+function drawPill(ctx, cx, cy, w, h, color){
+  ctx.save();
+  ctx.fillStyle = color;
+  const r = h/2;
+  ctx.beginPath();
+  ctx.moveTo(cx - w/2 + r, cy - h/2);
+  ctx.arcTo(cx + w/2, cy - h/2, cx + w/2, cy + h/2, r);
+  ctx.arcTo(cx + w/2, cy + h/2, cx - w/2, cy + h/2, r);
+  ctx.arcTo(cx - w/2, cy + h/2, cx - w/2, cy - h/2, r);
+  ctx.arcTo(cx - w/2, cy - h/2, cx + w/2, cy - h/2, r);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(0,0,0,.08)';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawRibbon(ctx, cx, cy, w, h, color){
+  // lint met kleine staarten
+  const r = 14;
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,.08)';
+  ctx.shadowBlur  = 8;
+  // basis rechthoek
+  ctx.beginPath();
+  ctx.moveTo(cx - w/2, cy - h/2);
+  ctx.lineTo(cx + w/2, cy - h/2);
+  ctx.lineTo(cx + w/2, cy + h/2);
+  ctx.lineTo(cx - w/2, cy + h/2);
+  ctx.closePath();
+  ctx.fill();
+
+  // staarten
+  ctx.fillStyle = color;
+  const tailW = Math.max(24, Math.round(w*0.06));
+  const tailH = Math.max(24, Math.round(h*0.9));
+  // links
+  ctx.beginPath();
+  ctx.moveTo(cx - w/2, cy + h/2);
+  ctx.lineTo(cx - w/2 - tailW, cy + h/2 + tailH/2);
+  ctx.lineTo(cx - w/2 + tailW*0.3, cy + h/2);
+  ctx.closePath();
+  ctx.fill();
+  // rechts
+  ctx.beginPath();
+  ctx.moveTo(cx + w/2, cy + h/2);
+  ctx.lineTo(cx + w/2 + tailW, cy + h/2 + tailH/2);
+  ctx.lineTo(cx + w/2 - tailW*0.3, cy + h/2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawConfettiScatter(ctx, size, count=80, alpha=0.35){
+  const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  for (let i=0; i<count; i++){
+    const x = Math.random()*size;
+    const y = Math.random()*size;
+    const w = 6 + Math.random()*16;
+    const h = 8 + Math.random()*18;
+    const r = Math.random()*Math.PI*2;
+    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(r);
+    ctx.fillRect(-w/2, -h/2, w, h);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/**
+ * Bouwt de badge en triggert een download als PNG.
+ * Gebruikt currentWin {category, prize} uit je modal-open flow.
+ */
+function downloadBadgePNG(){
+  try{
+    const cvs = drawBadgeToCanvas(currentWin.prize || 'Gefeliciteerd!',
+                                  currentWin.category || 'Categorie',
+                                  { size: 1080 });
+    const a = document.createElement('a');
+    a.href = cvs.toDataURL('image/png');
+    a.download = `kika-badge-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(e){
+    console.error('Badge genereren mislukt:', e);
+    alert('Oops, badge kon niet worden gemaakt. Probeer het opnieuw.');
+  }
+}
       const prizeArr = categoryData[finalIdx];
       const prize = randomItem(prizeArr);
       if (!prize) {
