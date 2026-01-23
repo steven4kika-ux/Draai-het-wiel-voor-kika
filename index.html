@@ -267,6 +267,112 @@ function ensureAudio(){
 }
 
 function playTick(){
+  
+function playGameShowJingle({ volume = 0.7 } = {}){
+  ensureAudio();
+
+  const t0 = audioCtx.currentTime;
+  const master = audioCtx.createGain();
+  master.gain.setValueAtTime(volume, t0);
+  master.connect(audioCtx.destination);
+
+  /* ---------- Helpers ---------- */
+  function osc({ type='sawtooth', freq=440, start=t0, dur=0.5, peak=0.4, attack=0.01, pan=0 }) {
+    const o = audioCtx.createOscillator();
+    o.type = type;
+    const g = audioCtx.createGain();
+    const p = audioCtx.createStereoPanner();
+
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.linearRampToValueAtTime(peak, start + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+    o.frequency.setValueAtTime(freq, start);
+    p.pan.setValueAtTime(pan, start);
+
+    o.connect(g).connect(p).connect(master);
+    o.start(start);
+    o.stop(start + dur + 0.05);
+  }
+
+  function noiseHit({ start, dur=0.35, peak=0.25 }) {
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i=0;i<data.length;i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1 - i/data.length, 2);
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(peak, start);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+    src.connect(g).connect(master);
+    src.start(start);
+    src.stop(start + dur);
+  }
+
+  /* ---------- 1️⃣ Drum impact ---------- */
+  // Low boom
+  oscillateBass();
+
+  function oscillateBass(){
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    const g = audioCtx.createGain();
+
+    o.frequency.setValueAtTime(120, t0);
+    o.frequency.exponentialRampToValueAtTime(50, t0 + 0.25);
+
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.exponentialRampToValueAtTime(0.6, t0 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.4);
+
+    o.connect(g).connect(master);
+    o.start(t0);
+    o.stop(t0 + 0.5);
+  }
+
+  // Cymbal splash
+  noiseHit({ start: t0 + 0.02, dur: 0.4, peak: 0.18 });
+
+  /* ---------- 2️⃣ Game show brass stab ---------- */
+  // C‑E‑G akkoord (brass‑achtig)
+  osc({ freq:261.63, start:t0+0.05, dur:0.35, peak:0.35, pan:-0.1 });
+  osc({ freq:329.63, start:t0+0.06, dur:0.35, peak:0.32, pan:0 });
+  osc({ freq:392.00, start:t0+0.07, dur:0.35, peak:0.30, pan:0.1 });
+
+  /* ---------- 3️⃣ Spannings‑riser ---------- */
+  const riser = audioCtx.createOscillator();
+  const riserGain = audioCtx.createGain();
+  riser.type='sawtooth';
+  riser.frequency.setValueAtTime(400, t0+0.25);
+  riser.frequency.exponentialRampToValueAtTime(1600, t0+0.75);
+  riserGain.gain.setValueAtTime(0.001, t0+0.25);
+  riserGain.gain.linearRampToValueAtTime(0.22, t0+0.55);
+  riserGain.gain.exponentialRampToValueAtTime(0.0001, t0+0.9);
+
+  riser.connect(riserGain).connect(master);
+  riser.start(t0+0.25);
+  riser.stop(t0+0.9);
+
+  /* ---------- 4️⃣ Finale TA‑DA ---------- */
+  const end = t0 + 0.85;
+
+  // G‑C‑E “winner” akkoord
+  osc({ freq:392.00, start:end, dur:0.6, peak:0.45, pan:-0.06 });
+  osc({ freq:523.25, start:end+0.01, dur:0.6, peak:0.42, pan:0 });
+  osc({ freq:659.25, start:end+0.02, dur:0.6, peak:0.40, pan:0.06 });
+
+  // Sparkle top‑note
+  osc({ type:'triangle', freq:2093.00, start:end+0.08, dur:0.25, peak:0.18, pan:0.1 });
+
+  /* ---------- Mobiel: mini vibe ---------- */
+  if (navigator.vibrate) {
+    navigator.vibrate([12, 30, 20]);
+  }
+}
+
   ensureAudio();
 
   // VIBRATIE (optioneel)
@@ -387,6 +493,14 @@ function openModal(text){
   document.getElementById('modal').classList.add('open');
   launchDoubleConfetti();
 }
+function openModal(text){
+  document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
+  document.getElementById('modal').classList.add('open');
+
+  playGameShowJingle({ volume: 0.7 }); // 📺 GAME SHOW!
+  launchDoubleConfetti();
+}
+
 
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
