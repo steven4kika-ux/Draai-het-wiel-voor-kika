@@ -80,9 +80,7 @@ button{
   60%  { transform:translate(-50%,-5px) rotate(4deg); }
   100% { transform:translate(-50%,-6px) rotate(0deg); }
 }
-.pointer.ticking{
-  animation:tick-bounce 120ms ease-out;
-}
+.pointer.ticking{ animation:tick-bounce 120ms ease-out; }
 
 canvas#wheel{
   background:#fff;
@@ -90,41 +88,21 @@ canvas#wheel{
 }
 
 .modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:1001;
-  pointer-events:none;
+  position:fixed; inset:0; display:none;
+  align-items:center; justify-content:center;
+  z-index:1001; pointer-events:none;
 }
 .modal.open{display:flex}
-
 .modal__card{
-  pointer-events:auto;
-  background:white;
-  border-radius:16px;
-  padding:24px;
-  width:min(90vw,420px);
-  text-align:center;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  pointer-events:auto; background:white; border-radius:16px; padding:24px;
+  width:min(90vw,420px); text-align:center; box-shadow:0 20px 40px rgba(0,0,0,.25);
 }
-
 .modal__btn{
-  background:var(--brand);
-  border:0;
-  padding:10px 16px;
-  border-radius:999px;
-  font-weight:700;
-  cursor:pointer;
+  background:var(--brand); border:0; padding:10px 16px; border-radius:999px; font-weight:700; cursor:pointer;
 }
 
 #confetti{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  display:none;
-  z-index:1000;
+  position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
 }
 #confetti.show{display:block}
 </style>
@@ -140,9 +118,7 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 </p>
 
 <div class="actions">
-  <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">
-    Doneer nu
-  </button>
+  <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">Doneer nu</button>
   <button onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
 </div>
 
@@ -167,8 +143,6 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 
 <script>
 /* ========= CATEGORIEËN ========= */
-
-// 😂 Betere moppen (kort, warm, echt leuk)
 const moppen = [
   "Waarom won de skeeler een prijs? Omdat hij altijd blijft rollen 💪",
   "Ik zou hier een mop plaatsen… maar jij bent de echte winnaar 😄",
@@ -177,7 +151,6 @@ const moppen = [
   "Dit wiel draait op goede daden — dankjewel 🙌"
 ];
 
-// 🧠 Leuke feitjes
 const feitjes = [
   "Wist je dat lachen stress vermindert? 😊",
   "Elke donatie helpt KiKa bij beter onderzoek 💛",
@@ -185,7 +158,6 @@ const feitjes = [
   "Samen kleine acties doen maakt een groot verschil 🌍"
 ];
 
-// 💬 Quotes
 const quotes = [
   "Kleine moeite, groot verschil 💛",
   "Samen maken we kanker kansloos.",
@@ -193,7 +165,6 @@ const quotes = [
   "Vandaag heb jij iets goeds gedaan 🌈"
 ];
 
-// 🎯 Mini‑challenges
 const challenges = [
   "Geef vandaag iemand een compliment 😊",
   "Drink een extra glas water 💧",
@@ -201,7 +172,6 @@ const challenges = [
   "Loop vandaag 5 minuten extra 🚶‍♂️"
 ];
 
-// 🎉 Verrassingen
 const verrassingen = [
   "🎉 Confetti‑bonus! Jij bent officieel een Topper!",
   "Virtuele high‑five van Steven 🙌",
@@ -209,99 +179,33 @@ const verrassingen = [
   "Je mag trots zijn op jezelf 😁"
 ];
 
-/* ========= LABELS PER CATEGORIE ========= */
-function randomItem(arr){
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+function randomItem(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 
-// Elke categorie is een vast vak; inhoud wisselt per pageload
-const labels = [
-  `😂 Mop\n${randomItem(moppen)}`,
-  `🧠 Wist je dit?\n${randomItem(feitjes)}`,
-  `💬 Quote\n${randomItem(quotes)}`,
-  `🎯 Challenge\n${randomItem(challenges)}`,
-  `🎉 Verrassing\n${randomItem(verrassingen)}`
-];
+/* ========= TEKST OP RAD: ALLEEN CATEGORIEËN ========= */
+const categoryLabels = ['😂 Mop', '🧠 Wist je dit?', '💬 Quote', '🎯 Challenge', '🎉 Verrassing'];
+const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 
 /* ====== Canvas wiel ====== */
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const size = 300, c = size/2, r = 140;
 
-// 5 kleuren (één per categorie)
-const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
-const slice = Math.PI*2/labels.length;
+const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"]; // 1 per categorie
+const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
 
-/* ====== Tekst helper: wrap & tekenen naar buitenrand ====== */
-function wrapLines(text, maxWidth, maxLines = 3, ellipsis = "…") {
-  const words = String(text).split(/\s+/);
-  const lines = [];
-  let line = "";
-
-  for (let i = 0; i < words.length; i++) {
-    const test = line ? line + " " + words[i] : words[i];
-    const w = ctx.measureText(test).width;
-    if (w <= maxWidth) {
-      line = test;
-    } else {
-      if (line) lines.push(line);
-      line = words[i];
-      if (lines.length === maxLines - 1) { // laatste regel → ellipsis
-        // vul rest tot zoveel mogelijk met ellipsis
-        while (ctx.measureText(line + ellipsis).width > maxWidth && line.length > 0) {
-          line = line.slice(0, -1);
-        }
-        lines.push(line + ellipsis);
-        return lines;
-      }
-    }
-  }
-  if (line) lines.push(line);
-  return lines.slice(0, maxLines);
-}
-
-function drawLabel(text, radius){
-  const [rawTitle, ...rest] = String(text).split('\n');
-  const content = rest.join(' ').trim();
-
-  const x = radius - 10;       // rechts uitlijnen tegen de rand
-  const lineHeight = 14;
-
-  // Titel (vet)
+function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
-  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-  const title = rawTitle || "";
-  const contentFont = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-
-  // Wrap de content met normale font-meting
-  ctx.font = contentFont;
-  const wrapped = wrapLines(content, 130, 3); // max 130px breed, max 3 regels
-
-  // Totale hoogte bepalen voor verticale centrering
-  const totalLines = 1 + wrapped.length;
-  const totalHeight = (totalLines - 1) * lineHeight;
-  let y = - Math.floor(totalHeight / 2); // centreren rondom as
-
-  // Titel tekenen
-  ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-  ctx.fillText(title, x, y);
-  y += lineHeight;
-
-  // Content
-  ctx.font = contentFont;
-  wrapped.forEach(line => {
-    ctx.fillText(line, x, y);
-    y += lineHeight;
-  });
+  ctx.font = "bold 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  ctx.fillText(text, radius - 10, 4); // tegen de buitenrand, licht gecentreerd
 }
 
 function drawWheel(){
   ctx.clearRect(0,0,size,size);
   ctx.save();
   ctx.translate(c,c); ctx.rotate(rotation);
-  for(let i=0;i<labels.length;i++){
+  for(let i=0;i<categoryLabels.length;i++){
     // sector
     ctx.beginPath();
     ctx.moveTo(0,0);
@@ -309,10 +213,10 @@ function drawWheel(){
     ctx.fillStyle = colors[i % colors.length];
     ctx.fill();
 
-    // label: draai naar midden van sector en teken richting buitenrand
+    // label: draai naar sector-midden en teken richting buitenrand
     ctx.save();
     ctx.rotate(i*slice + slice/2);
-    drawLabel(labels[i], r);
+    drawCategoryLabel(categoryLabels[i], r);
     ctx.restore();
   }
   ctx.restore();
@@ -323,52 +227,36 @@ const confettiCanvas = document.getElementById('confetti');
 const cfx = confettiCanvas.getContext('2d');
 let particles = [];
 
-function resizeConfetti(){
-  confettiCanvas.width = innerWidth;
-  confettiCanvas.height = innerHeight;
-}
-
+function resizeConfetti(){ confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight; }
 function wheelCenter(){
   const rct = canvas.getBoundingClientRect();
   return { x:rct.left+rct.width/2, y:rct.top+rct.height/2 };
 }
-
 function explode(count=160){
   const o = wheelCenter();
   const palette = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
   for(let i=0;i<count;i++){
-    const a = Math.random()*Math.PI*2;
-    const s = 4+Math.random()*5;
+    const a = Math.random()*Math.PI*2, s = 4+Math.random()*5;
     particles.push({
-      x:o.x,y:o.y,
-      vx:Math.cos(a)*s,
-      vy:Math.sin(a)*s,
-      g:0.15,
-      r:Math.random()*Math.PI,
-      vr:(Math.random()-.5)*.3,
-      w:6+Math.random()*6,
-      h:8+Math.random()*10,
+      x:o.x,y:o.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, g:0.15,
+      r:Math.random()*Math.PI, vr:(Math.random()-.5)*.3,
+      w:6+Math.random()*6, h:8+Math.random()*10,
       c:palette[Math.floor(Math.random()*palette.length)]
     });
   }
 }
-
 function launchDoubleConfetti(){
   resizeConfetti();
   confettiCanvas.classList.add('show');
   explode(180);
-  setTimeout(()=>explode(140),300); // ⭐ tweede knal
+  setTimeout(()=>explode(140),300);
   const start = performance.now();
   (function frame(t){
     cfx.clearRect(0,0,innerWidth,innerHeight);
     particles.forEach(p=>{
       p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=.99;
-      cfx.save();
-      cfx.translate(p.x,p.y);
-      cfx.rotate(p.r+=p.vr);
-      cfx.fillStyle=p.c;
-      cfx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
-      cfx.restore();
+      cfx.save(); cfx.translate(p.x,p.y); cfx.rotate(p.r+=p.vr);
+      cfx.fillStyle=p.c; cfx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cfx.restore();
     });
     if(t-start<2600) requestAnimationFrame(frame);
     else { particles=[]; confettiCanvas.classList.remove('show'); }
@@ -377,171 +265,113 @@ function launchDoubleConfetti(){
 
 /* ====== Audio (tick + vrolijke jingle) ====== */
 let audioCtx;
-let lastTickIndex = null; // om te detecteren wanneer we een nieuwe slice passeren
+let lastTickIndex = null;
 const pointerEl = document.getElementById('pointer');
 
 function ensureAudio(){
-  if(!audioCtx){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
 }
 
-/* 🎶 Vrolijke winnaars-jingle (belletjes + clap + tambourijn) */
+/* Vrolijke winnaars-jingle (belletjes + clap + tambourijn) */
 function playGameShowJingle({ volume = 0.65 } = {}) {
   ensureAudio();
   const t0 = audioCtx.currentTime;
-
-  // Master
   const master = audioCtx.createGain();
   master.gain.setValueAtTime(Math.max(0, Math.min(1, volume)), t0);
   master.connect(audioCtx.destination);
 
-  // Helpers
   function bell({ freq, start, dur = 0.5, peak = 0.35, pan = 0 }) {
-    const sine = audioCtx.createOscillator();
-    const tri  = audioCtx.createOscillator();
-    sine.type = 'sine'; tri.type = 'triangle';
-    sine.frequency.setValueAtTime(freq, start);
-    tri.frequency.setValueAtTime(freq * 2, start);
-
-    const g = audioCtx.createGain();
-    g.gain.setValueAtTime(0.0001, start);
-    g.gain.linearRampToValueAtTime(peak, start + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-
-    const p = audioCtx.createStereoPanner();
-    p.pan.setValueAtTime(pan, start);
-
-    sine.connect(g);
-    tri.connect(g);
-    g.connect(p).connect(master);
-
+    const sine = audioCtx.createOscillator(), tri = audioCtx.createOscillator();
+    sine.type='sine'; tri.type='triangle';
+    sine.frequency.setValueAtTime(freq,start);
+    tri.frequency.setValueAtTime(freq*2,start);
+    const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001,start);
+    g.gain.linearRampToValueAtTime(peak,start+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+    const p = audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start);
+    sine.connect(g); tri.connect(g); g.connect(p).connect(master);
     sine.start(start); tri.start(start);
-    sine.stop(start + dur + 0.05); tri.stop(start + dur + 0.05);
+    sine.stop(start+dur+0.05); tri.stop(start+dur+0.05);
   }
-
   function handClap({ start, gain = 0.24 }) {
-    const bursts = [0, 0.012, 0.028];
-    bursts.forEach((off, i) => {
-      const len = Math.floor(audioCtx.sampleRate * 0.06);
-      const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let n = 0; n < len; n++) {
-        const w = (Math.random() * 2 - 1);
-        data[n] = w * Math.pow(1 - n / len, 2.2);
-      }
-      const src = audioCtx.createBufferSource();
-      src.buffer = buf;
-      const g = audioCtx.createGain();
-      const decay = 0.06 + i * 0.02;
-
-      g.gain.setValueAtTime(gain * (1 - i * 0.2), start + off);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + off + decay);
-
-      src.connect(g).connect(master);
-      src.start(start + off);
-      src.stop(start + off + decay + 0.02);
+    const bursts=[0,0.012,0.028];
+    bursts.forEach((off,i)=>{
+      const len=Math.floor(audioCtx.sampleRate*0.06);
+      const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+      const data=buf.getChannelData(0);
+      for(let n=0;n<len;n++){ const w=(Math.random()*2-1); data[n]=w*Math.pow(1-n/len,2.2); }
+      const src=audioCtx.createBufferSource(); src.buffer=buf;
+      const g=audioCtx.createGain(); const decay=0.06+i*0.02;
+      g.gain.setValueAtTime(gain*(1-i*0.2),start+off);
+      g.gain.exponentialRampToValueAtTime(0.0001,start+off+decay);
+      src.connect(g).connect(master); src.start(start+off); src.stop(start+off+decay+0.02);
     });
   }
-
   function tambourine({ start, dur = 0.25, gain = 0.08, pan = 0.1 }) {
-    const len = Math.floor(audioCtx.sampleRate * dur);
-    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) {
-      const t = i / len;
-      const n = (Math.random() * 2 - 1);
-      data[i] = n * (0.8 + 0.2 * Math.random()) * Math.pow(1 - t, 2.0);
-    }
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-
-    const g = audioCtx.createGain();
-    g.gain.setValueAtTime(gain, start);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-
-    const p = audioCtx.createStereoPanner();
-    p.pan.setValueAtTime(pan, start);
-
-    src.connect(g).connect(p).connect(master);
-    src.start(start);
-    src.stop(start + dur + 0.05);
+    const len=Math.floor(audioCtx.sampleRate*dur);
+    const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<len;i++){ const t=i/len; const n=(Math.random()*2-1); data[i]=n*(0.8+0.2*Math.random())*Math.pow(1-t,2.0); }
+    const src=audioCtx.createBufferSource(); src.buffer=buf;
+    const g=audioCtx.createGain(); g.gain.setValueAtTime(gain,start);
+    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+    const p=audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start);
+    src.connect(g).connect(p).connect(master); src.start(start); src.stop(start+dur+0.05);
   }
 
-  // Mini haptics
-  if (navigator.vibrate) navigator.vibrate([10, 20, 10]);
+  if (navigator.vibrate) navigator.vibrate([10,20,10]);
 
-  // 1) Start-hit
-  handClap({ start: t0 + 0.00, gain: 0.24 });
-  tambourine({ start: t0 + 0.00, dur: 0.22, gain: 0.08, pan: 0.12 });
-  bell({ freq: 784.00, start: t0 + 0.02, dur: 0.45, peak: 0.32, pan: -0.05 }); // G5
+  handClap({ start:t0+0.00, gain:0.24 });
+  tambourine({ start:t0+0.00, dur:0.22, gain:0.08, pan:0.12 });
+  bell({ freq:784.00, start:t0+0.02, dur:0.45, peak:0.32, pan:-0.05 });
 
-  // 2) I–IV–V smiles
-  const chordStart = t0 + 0.18;
-  bell({ freq: 523.25, start: chordStart + 0.00, dur: 0.42, peak: 0.28, pan: -0.12 });
-  bell({ freq: 659.25, start: chordStart + 0.01, dur: 0.42, peak: 0.26, pan: 0.00  });
-  bell({ freq: 783.99, start: chordStart + 0.02, dur: 0.42, peak: 0.24, pan: 0.12  });
+  const chordStart=t0+0.18;
+  bell({ freq:523.25, start:chordStart+0.00, dur:0.42, peak:0.28, pan:-0.12 });
+  bell({ freq:659.25, start:chordStart+0.01, dur:0.42, peak:0.26, pan:0.00 });
+  bell({ freq:783.99, start:chordStart+0.02, dur:0.42, peak:0.24, pan:0.12 });
 
-  bell({ freq: 349.23 * 2, start: chordStart + 0.20, dur: 0.38, peak: 0.26, pan: -0.1 });
-  bell({ freq: 440.00 * 2, start: chordStart + 0.21, dur: 0.38, peak: 0.24, pan: 0.0  });
-  bell({ freq: 261.63 * 2, start: chordStart + 0.22, dur: 0.38, peak: 0.24, pan: 0.1  });
+  bell({ freq:349.23*2, start:chordStart+0.20, dur:0.38, peak:0.26, pan:-0.1 });
+  bell({ freq:440.00*2, start:chordStart+0.21, dur:0.38, peak:0.24, pan:0.0 });
+  bell({ freq:261.63*2, start:chordStart+0.22, dur:0.38, peak:0.24, pan:0.1 });
 
-  bell({ freq: 392.00 * 2, start: chordStart + 0.38, dur: 0.38, peak: 0.26, pan: -0.1 });
-  bell({ freq: 493.88 * 2, start: chordStart + 0.39, dur: 0.38, peak: 0.24, pan: 0.0  });
-  bell({ freq: 293.66 * 2, start: chordStart + 0.40, dur: 0.38, peak: 0.22, pan: 0.1  });
+  bell({ freq:392.00*2, start:chordStart+0.38, dur:0.38, peak:0.26, pan:-0.1 });
+  bell({ freq:493.88*2, start:chordStart+0.39, dur:0.38, peak:0.24, pan:0.0 });
+  bell({ freq:293.66*2, start:chordStart+0.40, dur:0.38, peak:0.22, pan:0.1 });
 
-  // 3) Sparkle arpeggio omhoog
-  const spStart = t0 + 0.44;
-  [1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00].forEach((f, i) => {
-    bell({ freq: f, start: spStart + i * 0.05, dur: 0.22, peak: 0.18 - i * 0.02, pan: (i - 2) * 0.12 });
+  const spStart=t0+0.44;
+  [1046.50,1174.66,1318.51,1567.98,1760.00,2093.00].forEach((f,i)=>{
+    bell({ freq:f, start:spStart+i*0.05, dur:0.22, peak:0.18-i*0.02, pan:(i-2)*0.12 });
   });
 
-  // 4) Glimlach-einde
-  const end = t0 + 0.76;
-  handClap({ start: end + 0.02, gain: 0.20 });
-  tambourine({ start: end + 0.00, dur: 0.22, gain: 0.1, pan: -0.1 });
-  bell({ freq: 523.25, start: end + 0.00, dur: 0.5, peak: 0.34, pan: -0.08 });
-  bell({ freq: 659.25, start: end + 0.01, dur: 0.5, peak: 0.32, pan:  0.00 });
-  bell({ freq: 783.99, start: end + 0.02, dur: 0.5, peak:  0.30, pan:  0.08 });
+  const end=t0+0.76;
+  handClap({ start:end+0.02, gain:0.20 });
+  tambourine({ start:end+0.00, dur:0.22, gain:0.1, pan:-0.1 });
+  bell({ freq:523.25, start:end+0.00, dur:0.5, peak:0.34, pan:-0.08 });
+  bell({ freq:659.25, start:end+0.01, dur:0.5, peak:0.32, pan:0.00 });
+  bell({ freq:783.99, start:end+0.02, dur:0.5, peak:0.30, pan:0.08 });
 }
 
-/* 🔔 Tick bij elke segment-overgang */
+/* 🔔 Tick */
 function playTick(){
   ensureAudio();
-
   if (navigator.vibrate) navigator.vibrate(8);
-
   const t0 = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-
   osc.type = 'square';
   osc.frequency.setValueAtTime(1200, t0);
-
   gain.gain.setValueAtTime(0.001, t0);
   gain.gain.linearRampToValueAtTime(0.12, t0 + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
-
   osc.connect(gain).connect(audioCtx.destination);
-  osc.start(t0);
-  osc.stop(t0 + 0.07);
-
-  if (pointerEl){
-    pointerEl.classList.remove('ticking');
-    void pointerEl.offsetWidth;
-    pointerEl.classList.add('ticking');
-  }
+  osc.start(t0); osc.stop(t0 + 0.07);
+  if (pointerEl){ pointerEl.classList.remove('ticking'); void pointerEl.offsetWidth; pointerEl.classList.add('ticking'); }
 }
 
 /* ====== Mechanische weerstand ====== */
 let detentOffset = 0;
-const DETENT_BASE = 0.025;
-const DETENT_DECAY = 0.88;
-const DETENT_SNAP_FORWARD = 0.6;
-const DETENT_CLAMP = 0.15;
+const DETENT_BASE = 0.025, DETENT_DECAY = 0.88, DETENT_SNAP_FORWARD = 0.6, DETENT_CLAMP = 0.15;
 
 function spinWheel(){
   if(spinning) return;
@@ -549,18 +379,16 @@ function spinWheel(){
   lastTickIndex = null;
   detentOffset = 0;
 
-  ensureAudio(); // audio ontgrendelen door user-actie
+  ensureAudio(); // ontgrendel audio
 
   const start = rotation;
   const target = start + Math.random()*Math.PI*6 + Math.PI*4; // 4–10π
-  const t0 = performance.now();
-  const DURATION = 2600; // ms
+  const t0 = performance.now(), DURATION = 2600;
 
   (function anim(t){
     const p = Math.min((t - t0) / DURATION, 1);
     const baseRot = start + (target - start) * (1 - Math.pow(1 - p, 3));
 
-    // weerstand
     detentOffset *= DETENT_DECAY;
     if (detentOffset >  DETENT_CLAMP) detentOffset =  DETENT_CLAMP;
     if (detentOffset < -DETENT_CLAMP) detentOffset = -DETENT_CLAMP;
@@ -568,20 +396,16 @@ function spinWheel(){
     rotation = baseRot + detentOffset;
     drawWheel();
 
-    // slice index onder de pointer (top = 1.5π)
     const twoPi = Math.PI * 2;
     const a = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
-    const idx = Math.floor(a / slice) % labels.length;
+    const idx = Math.floor(a / slice) % categoryLabels.length;
 
     if (lastTickIndex === null || idx !== lastTickIndex) {
       playTick();
-
       const speedFactor = (1 - p) * (1 - p);
       const impulse = DETENT_BASE * (0.35 + 0.65 * speedFactor);
-
       detentOffset -= impulse;
       setTimeout(()=>{ detentOffset += impulse * DETENT_SNAP_FORWARD; }, 60);
-
       lastTickIndex = idx;
     }
 
@@ -591,16 +415,18 @@ function spinWheel(){
       spinning = false;
 
       // Finale index veilig bepalen
-      const finalA = (Math.PI * 1.5 - (rotation % twoPi) + twoPi) % twoPi;
+      const finalA = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
       const rawIdx = Math.floor(finalA / slice);
-      const finalIdx = ((rawIdx % labels.length) + labels.length) % labels.length;
+      const finalIdx = ((rawIdx % categoryLabels.length) + categoryLabels.length) % categoryLabels.length;
 
-      const prize = labels?.[finalIdx];
+      // 🎯 Kies nu de prijs UIT de gekozen categorie
+      const prizeArr = categoryData[finalIdx];
+      const prize = randomItem(prizeArr);
       if (!prize) {
-        console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, labelsLen: labels?.length });
+        console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, len: categoryLabels.length });
         openModal('🎁 Verrassing: je bent een topper! 🙌');
       } else {
-        openModal(prize);
+        openModal(prize); // popup toont alleen de gewonnen prijs
       }
     }
   })(t0);
@@ -609,17 +435,13 @@ function spinWheel(){
 function openModal(text){
   document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
   document.getElementById('modal').classList.add('open');
-
-  playGameShowJingle({ volume: 0.65 }); // ✨ vrolijke jingle
+  playGameShowJingle({ volume: 0.65 });
   launchDoubleConfetti();
 }
 
-function closeModal(){
-  document.getElementById('modal').classList.remove('open');
-}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
 
 drawWheel();
 </script>
-
 </body>
 </html>
