@@ -88,10 +88,16 @@ canvas#wheel{
 }
 
 .modal{
-  position:fixed; inset:0; display:none;
-  align-items:center; justify-content:center;
-  z-index:1001; pointer-events:none;
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:flex-start;     /* ⬅ niet meer exact midden */
+  justify-content:center;
+  padding-top:22vh;           /* ⬅ popup lager in beeld */
+  z-index:1001;
+  pointer-events:none;
 }
+
 .modal.open{display:flex}
 .modal__card{
   pointer-events:auto; background:white; border-radius:16px; padding:24px;
@@ -111,7 +117,6 @@ canvas#wheel{
   font-weight:700;
   color:var(--brand);
 }
-``
 </style>
 </head>
 
@@ -213,38 +218,42 @@ function drawCategoryLabel(text, radius){
   ctx.fillText(text, radius - 10, 4); // tegen buitenrand, licht gecentreerd
 }
 
+
 function drawWheel(){
   ctx.clearRect(0,0,size,size);
   ctx.save();
-  ctx.translate(c,c); ctx.rotate(rotation);
+  ctx.translate(c,c);
+  ctx.rotate(rotation);
 
   for(let i=0;i<categoryLabels.length;i++){
     const isSelected = (selectedIndex === i);
     const dimOthers  = (selectedIndex !== -1 && !isSelected);
 
     ctx.save();
-    if (dimOthers) ctx.globalAlpha = 0.45;
+    if (dimOthers) ctx.globalAlpha = 0.4;
 
-    // sector vullen
+    // sector
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.arc(0,0,r,i*slice,(i+1)*slice);
-    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillStyle = colors[i];
     ctx.fill();
 
-    // extra glow/stroke op de gekozen categorie
+    // highlight
     if (isSelected){
-      ctx.shadowColor = 'rgba(255,255,255,.85)';
-      ctx.shadowBlur  = 18;
-      ctx.lineWidth   = 4;
-      ctx.strokeStyle = '#fff';
-      ctx.stroke();            // witte rand over de sectorlijnen
-      ctx.shadowBlur  = 0;     // reset
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#fff";
+      ctx.shadowColor = "rgba(255,255,255,.9)";
+      ctx.shadowBlur = 18;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     }
 
-    // label tekenen
+    // label
+    ctx.translate(0,0);
     ctx.rotate(i*slice + slice/2);
     drawCategoryLabel(categoryLabels[i], r);
+
     ctx.restore();
   }
 
