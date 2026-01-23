@@ -131,7 +131,7 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">
 Doneer nu
 </button>
-<button onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
+<button id="spinBtn" onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
 </div>
 
 <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -154,6 +154,10 @@ Doneer nu
 </div>
 
 <script>
+  
+// Respecteer systeeminstelling voor minder animatie (nodig voor spinWheel)
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   
 /* ---------- Audio (tik-geluid) ---------- */
 let audioCtx = null;
@@ -289,11 +293,15 @@ function launchDoubleConfetti(){
 }
 
 
+
 function spinWheel(){
   if(spinning) return;
   spinning = true;
   ensureAudio(); // activeer audio na user-actie
-  spinBtn.disabled = true;
+  
+  // ✔ alleen als de knop bestaat
+  const spinBtn = document.getElementById('spinBtn');
+  if (spinBtn) spinBtn.disabled = true;
 
   const start = rotation;
   const minTurns = prefersReducedMotion ? Math.PI*2 : Math.PI*4;
@@ -302,31 +310,21 @@ function spinWheel(){
   const t0 = performance.now();
   const duration = prefersReducedMotion ? 900 : 2600;
 
-  // Voor tik-detectie:
   const slice = Math.PI * 2 / labels.length;
   let prevAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
-  // We tikken wanneer we over een veelvoud van 'slice' heen gaan (tegenwijzerzin).
-  // Omdat de pointer boven zit en we het wiel draaien, gebruiken we de absolute rotatie als “hoek”.
   let nextThreshold = Math.floor(prevAngle / slice) * slice + slice;
 
   (function anim(tStart){
     function step(t){
       const p = Math.min((t - tStart)/duration, 1);
-      // easeOutCubic
       rotation = start + (target - start) * (1 - Math.pow(1 - p, 3));
       drawWheel();
 
-      // Huidige genormaliseerde hoek 0..2π
       const curAngle = (rotation % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
-
-      // Detecteer hoeveel drempels we overschreden sinds vorige frame
-      // Omdat rotatie toeneemt, checken we drempels vooruit:
       while (curAngle >= nextThreshold) {
         if (!prefersReducedMotion) playTick();
         nextThreshold += slice;
       }
-
-      prevAngle = curAngle;
 
       if(p < 1){
         requestAnimationFrame(step);
@@ -334,7 +332,7 @@ function spinWheel(){
         const a = (Math.PI*1.5 - rotation + Math.PI*2) % (Math.PI*2);
         const i = Math.floor(a / slice) % labels.length;
         spinning = false;
-        spinBtn.disabled = false;
+        if (spinBtn) spinBtn.disabled = false;
         openModal(labels[i]);
       }
     }
