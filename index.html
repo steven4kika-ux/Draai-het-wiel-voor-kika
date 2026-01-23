@@ -105,6 +105,13 @@ canvas#wheel{
   position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
 }
 #confetti.show{display:block}
+  
+.modal__cat{
+  margin:0 0 6px;
+  font-weight:700;
+  color:var(--brand);
+}
+``
 </style>
 </head>
 
@@ -136,10 +143,12 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
 <div id="modal" class="modal">
   <div class="modal__card">
     <h2>Gefeliciteerd 🎉</h2>
+  <p id="modalCategory" class="modal__cat"></p>  
     <p id="modalPrize"></p>
     <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
   </div>
 </div>
+
 
 <script>
 /* ========= CATEGORIEËN ========= */
@@ -194,31 +203,51 @@ const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"]; // 1 per cat
 const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
 
+/* Highlight state: -1 = geen selectie */
+let selectedIndex = -1;
+
 function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
   ctx.font = "bold 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-  ctx.fillText(text, radius - 10, 4); // tegen de buitenrand, licht gecentreerd
+  ctx.fillText(text, radius - 10, 4); // tegen buitenrand, licht gecentreerd
 }
 
 function drawWheel(){
   ctx.clearRect(0,0,size,size);
   ctx.save();
   ctx.translate(c,c); ctx.rotate(rotation);
+
   for(let i=0;i<categoryLabels.length;i++){
-    // sector
+    const isSelected = (selectedIndex === i);
+    const dimOthers  = (selectedIndex !== -1 && !isSelected);
+
+    ctx.save();
+    if (dimOthers) ctx.globalAlpha = 0.45;
+
+    // sector vullen
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.arc(0,0,r,i*slice,(i+1)*slice);
     ctx.fillStyle = colors[i % colors.length];
     ctx.fill();
 
-    // label: draai naar sector-midden en teken richting buitenrand
-    ctx.save();
+    // extra glow/stroke op de gekozen categorie
+    if (isSelected){
+      ctx.shadowColor = 'rgba(255,255,255,.85)';
+      ctx.shadowBlur  = 18;
+      ctx.lineWidth   = 4;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();            // witte rand over de sectorlijnen
+      ctx.shadowBlur  = 0;     // reset
+    }
+
+    // label tekenen
     ctx.rotate(i*slice + slice/2);
     drawCategoryLabel(categoryLabels[i], r);
     ctx.restore();
   }
+
   ctx.restore();
 }
 
@@ -263,7 +292,7 @@ function launchDoubleConfetti(){
   })(start);
 }
 
-/* ====== Audio (tick + vrolijke jingle) ====== */
+/* ====== Audio (tick + jingle) ====== */
 let audioCtx;
 let lastTickIndex = null;
 const pointerEl = document.getElementById('pointer');
@@ -352,7 +381,7 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
   bell({ freq:783.99, start:end+0.02, dur:0.5, peak:0.30, pan:0.08 });
 }
 
-/* 🔔 Tick */
+/* 🔔 Tick (per segment) */
 function playTick(){
   ensureAudio();
   if (navigator.vibrate) navigator.vibrate(8);
@@ -378,6 +407,8 @@ function spinWheel(){
   spinning = true;
   lastTickIndex = null;
   detentOffset = 0;
+  selectedIndex = -1;       // highlight reset
+  drawWheel();
 
   ensureAudio(); // ontgrendel audio
 
@@ -414,34 +445,50 @@ function spinWheel(){
     } else {
       spinning = false;
 
-      // Finale index veilig bepalen
+      // Finale index
       const finalA = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
       const rawIdx = Math.floor(finalA / slice);
       const finalIdx = ((rawIdx % categoryLabels.length) + categoryLabels.length) % categoryLabels.length;
+
+      // 🔆 Highlight de gekozen categorie op het rad
+      selectedIndex = finalIdx;
+      drawWheel();
 
       // 🎯 Kies nu de prijs UIT de gekozen categorie
       const prizeArr = categoryData[finalIdx];
       const prize = randomItem(prizeArr);
       if (!prize) {
         console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, len: categoryLabels.length });
-        openModal('🎁 Verrassing: je bent een topper! 🙌');
+        openModal('🎁 Verrassing: je bent een topper! 🙌', categoryLabels[finalIdx]);
       } else {
-        openModal(prize); // popup toont alleen de gewonnen prijs
+        openModal(prize, categoryLabels[finalIdx]); // popup met prijs + categorie
       }
     }
   })(t0);
 }
 
-function openModal(text){
-  document.getElementById('modalPrize').textContent = `Je hebt gewonnen: ${text}`;
+/* ====== Popup ====== */
+function openModal(prizeText, categoryText){
+  const catEl = document.getElementById('modalCategory');
+  const prizeEl = document.getElementById('modalPrize');
+  if (catEl)   catEl.textContent   = categoryText || '';
+  if (prizeEl) prizeEl.textContent = prizeText   || '';
+
   document.getElementById('modal').classList.add('open');
   playGameShowJingle({ volume: 0.65 });
   launchDoubleConfetti();
 }
 
-function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  // Highlight uit als popup dicht is (optioneel). Wil je het laten staan? haal deze 2 regels weg.
+  selectedIndex = -1;
+  drawWheel();
+}
 
+/* ====== Start ====== */
 drawWheel();
 </script>
+
 </body>
 </html>
