@@ -232,17 +232,19 @@ canvas#wheel{
 .selfie__hint{ font-size:13px; color:#666; margin:6px 0 10px; text-align:center; padding:0 10px; }
 .selfie__wrap{ display:grid; gap:8px; justify-items:center; padding:0 10px 12px; }
 
-/* Stacking video + canvas voor live preview */
+/* Stacking video + canvas voor live preview
+   FIX: container krijgt ECHT hoogte (anders 0 op mobiel) */
 .selfie__stack{
   position:relative;
   width:min(88vw, 420px);
+  aspect-ratio:1 / 1;          /* => hoogte aanwezig */
+  min-height:280px;            /* fallback voor oude browsers */
 }
 .selfie__stack .selfie__video,
 .selfie__stack .selfie__canvas{
   position:absolute; inset:0;
-  width:100%; height:auto;
-  aspect-ratio:1 / 1;
-  object-fit:cover;
+  width:100%; height:100%;    /* vulling van de container */
+  object-fit:cover;            /* center-crop */
   border-radius:12px;
 }
 .selfie__stack .selfie__canvas{ z-index:1; }
@@ -251,7 +253,7 @@ canvas#wheel{
 .selfie__btn{ background:#111; color:#fff; border:0; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer; }
 .selfie__btn--ghost{ background:#fff; color:#111; border:2px solid #111; }
 
-/* Confetti canvas */
+/* Confetti canvas (pagina) */
 #confetti{
   position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
 }
@@ -280,7 +282,7 @@ Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun Ki
 </p>
 
 <div class="actions">
-  <a class="btn" href="https://24kika.nl/doneren/?deelnemer=steven-arbon" target="_blank" rel="noopener">Doneer nu</a>
+  https://24kika.nl/doneren/?deelnemer=steven-arbonDoneer nu</a>
   <button type="button" onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
 </div>
 
@@ -300,7 +302,7 @@ Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun Ki
   <div class="modal__backdrop" onclick="closeModal()"></div>
 
   <section class="modal__sheet" role="document">
-    <header class="sheet__header" id="sheetHeader">
+    <header class="sheet__header" id="sheetHeader" tabindex="-1">
       <div class="sheet__handle" aria-hidden="true"></div>
       <h2 id="modalTitle" class="sheet__title">Gefeliciteerd 🎉</h2>
     </header>
@@ -448,7 +450,7 @@ function drawWheel(){
   ctx.restore();
 }
 
-/* ========= Confetti (pagina, niet selfie) ========= */
+/* ========= Confetti (pagina) ========= */
 const confettiCanvas = document.getElementById('confetti');
 const cfx = confettiCanvas.getContext('2d');
 let particles = [], confettiRAF=null, confettiLoop=false, burstTimer=null;
@@ -796,13 +798,15 @@ function stopSelfiePreviewLoop(){
   if (previewPulseTimer){ clearInterval(previewPulseTimer); previewPulseTimer = null; }
 }
 
+/* Flow helpers */
 function showSelfieBlock(show){
   if (!selfieBlock) return;
   selfieBlock.hidden = !show;
-  if (show){ selfieBlock.open = false; } // start dicht
+  if (show){ selfieBlock.open = true; } // accordion open voor gebruik
   if (!show) stopSelfie();
 }
 
+/* Start camera — robuust voor iOS */
 async function startSelfie(){
   try{
     btnStartCam.disabled = true; selfieErr.textContent = '';
@@ -810,9 +814,29 @@ async function startSelfie(){
     selfieVideo.style.display  = 'block';
     btnShot.disabled = true;
 
-    const constraints = { video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1280} }, audio:false };
-    const stream = await navigator.mediaDevices?.getUserMedia(constraints);
-    selfieStream = stream; selfieVideo.srcObject = stream; await selfieVideo.play();
+    // iOS autoplay/inline
+    selfieVideo.setAttribute('playsinline','');
+    selfieVideo.setAttribute('muted','');
+    selfieVideo.muted = true;
+
+    if (!navigator.mediaDevices?.getUserMedia){
+      throw new Error('Camera niet beschikbaar in deze browser.');
+    }
+
+    const constraints = {
+      video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1280} },
+      audio:false
+    };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    selfieStream = stream; selfieVideo.srcObject = stream;
+
+    // Wacht tot we echte dimensies hebben
+    await new Promise(res=>{
+      if (selfieVideo.readyState >= 2) res();
+      else selfieVideo.onloadedmetadata = () => res();
+    });
+
+    await selfieVideo.play();
 
     startSelfiePreviewLoop();              // live preview (confetti + tekst)
     btnShot.disabled = false;
@@ -823,10 +847,19 @@ async function startSelfie(){
   }
 }
 
+/* Als iemand op shot drukt zonder camera, eerst camera starten */
+async function ensureCameraThenShot(){
+  if (!selfieStream){
+    await startSelfie().catch(()=>{});
+    if (!selfieStream) return; // abort bij fout
+  }
+  await takeSelfie();
+}
+
 async function takeSelfie(){
   // burst precies op het shot
   triggerPreviewBurst({ count: REDUCED_MOTION ? 20 : 40, speed: 300, centerY: selfieCanvas.height*0.5 });
-  // wacht één frame zodat de burst in het canvas staat en bevriest
+  // Wacht één frame zodat de burst in het canvas staat en bevriest
   requestAnimationFrame(() => {
     stopSelfiePreviewLoop();
     selfieVideo.style.display = 'none';
@@ -864,9 +897,11 @@ function stopSelfie(){
 }
 
 /* Tap op preview -> kleine burst */
-document.querySelector('.selfie__stack')?.addEventListener('click', () => {
-  if (!previewRAF) return; // alleen tijdens live preview
-  triggerPreviewBurst({ count: 28, speed: 260 });
+document.addEventListener('click', (e) => {
+  const stack = document.querySelector('.selfie__stack');
+  if (stack && stack.contains(e.target) && previewRAF){
+    triggerPreviewBurst({ count: 28, speed: 260 });
+  }
 });
 
 /* ========= Share ========= */
@@ -931,7 +966,7 @@ resizeWheelCanvas();
 
 /* Selfie events */
 btnStartCam?.addEventListener('click', startSelfie);
-btnShot?.addEventListener('click', takeSelfie);
+btnShot?.addEventListener('click', ensureCameraThenShot);
 btnDownload?.addEventListener('click', downloadSelfie);
 btnRetake?.addEventListener('click', retakeSelfie);
 </script>
