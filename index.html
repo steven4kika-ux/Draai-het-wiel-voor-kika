@@ -31,9 +31,10 @@ main{
   text-align:center;
 }
 
-h1{margin:0 0 8px;font-size:28px}
-p{margin:0 0 16px}
+h1{margin:0 0 8px;font-size:clamp(22px, 3.5vw, 28px)}
+p{margin:0 0 16px;font-size:clamp(15px, 2.8vw, 16px)}
 
+/* Actieknoppen */
 .actions{display:grid;gap:10px;margin:16px 0}
 button,
 a.btn{
@@ -46,6 +47,7 @@ a.btn{
   font-weight:700;
   cursor:pointer;
   text-decoration:none;
+  font-size:clamp(15px, 3vw, 16px);
 }
 
 .note{
@@ -57,14 +59,17 @@ a.btn{
   text-align:left;
 }
 
+/* Responsive wiel-container */
 .wheel-wrap{
   position:relative;
-  width:320px;height:340px;
+  width:min(92vw, 520px);  /* schaal mee met viewport, cap op desktop */
   margin:0 auto 28px;
+  padding-top:24px;        /* ruimte voor pointer */
   display:grid;
   place-items:center;
 }
 
+/* Pointer bovenaan het wiel */
 .pointer{
   position:absolute;
   top:0;left:50%;
@@ -91,7 +96,11 @@ a.btn{
   .pointer.ticking{ animation:none !important; }
 }
 
+/* Canvas is responsief: breedte 100%, vierkant via aspect-ratio */
 canvas#wheel{
+  width:100%;
+  height:auto;
+  aspect-ratio:1 / 1;
   background:#fff;
   border-radius:50%;
 }
@@ -270,27 +279,38 @@ function randomItem(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 const categoryLabels = ['😂 Mop', '🧠 Feit', '💬 Quote', '🎯 Challenge', '🎉 Verrassing'];
 const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 
-/* ====== Canvas wiel ====== */
+/* ====== Canvas wiel (responsief) ====== */
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 
-/* Retina/DPR-schaling */
 let size = 300, c = size/2, r = 140;
+
 function resizeWheelCanvas(){
+  // Bepaal de CSS-breedte van het canvas (via responsieve layout)
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const cssSize = 300; // vaste visuele maat (kan responsief gemaakt worden)
-  canvas.style.width  = cssSize + 'px';
-  canvas.style.height = cssSize + 'px';
-  canvas.width  = Math.floor(cssSize * dpr);
-  canvas.height = Math.floor(cssSize * dpr);
+  const cssSize = Math.round(canvas.getBoundingClientRect().width);
+
+  // Voor de zekerheid: guard tegen 0 (onzichtbaar)
+  const finalCssSize = Math.max(140, cssSize || 300);
+
+  // Stel fysieke pixels in op DPR
+  canvas.width  = Math.floor(finalCssSize * dpr);
+  canvas.height = Math.floor(finalCssSize * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  size = cssSize;
+  // Houd state in "CSS pixels" voor tekenlogica
+  size = finalCssSize;
   c = size/2;
   r = Math.round(size * 0.47);
+
   drawWheel();
 }
 
+// Init & on resize/orientation
+window.addEventListener('resize', resizeWheelCanvas);
+window.addEventListener('orientationchange', resizeWheelCanvas);
+
+/* Styling */
 const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
@@ -299,10 +319,10 @@ let selectedIndex = -1;
 function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
-  // schaal font licht mee met canvas-grootte
-  const fs = Math.max(12, Math.round(size * 0.043));
+  const fs = Math.max(12, Math.round(size * 0.08)); // schaal met wiel, grotere leesbaarheid
   ctx.font = `bold ${fs}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  ctx.fillText(text, radius - 10, 4);
+  // label iets naar binnen zodat het niet tegen rand aanzit
+  ctx.fillText(text, radius - Math.max(10, Math.round(size*0.04)), Math.round(size*0.008));
 }
 
 function drawWheel(){
@@ -327,10 +347,10 @@ function drawWheel(){
 
     // highlight
     if (isSelected){
-      ctx.lineWidth = 4;
+      ctx.lineWidth = Math.max(3, Math.round(size*0.012));
       ctx.strokeStyle = "#fff";
       ctx.shadowColor = "rgba(255,255,255,.9)";
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = Math.round(size*0.06);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
@@ -354,7 +374,6 @@ let confettiRAF = null;
 let confettiLoop = false;
 let burstTimer = null;
 
-/* Performance: iets lagere soft-cap */
 const HARD_LIMIT = 6000;
 
 function resizeConfetti(){
@@ -372,7 +391,7 @@ function wheelCenter(){
 }
 
 function addBurst({ count=120, g=0.15, spread=9, sizeMul=1, palette } = {}){
-  const MAX_PARTICLES = 8000; // extra guard
+  const MAX_PARTICLES = 8000;
   if (particles.length > MAX_PARTICLES) return;
 
   const o = wheelCenter();
@@ -593,6 +612,7 @@ function playTick(){
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(t0); osc.stop(t0 + 0.07);
+  const pointerEl = document.getElementById('pointer');
   if (pointerEl){ pointerEl.classList.remove('ticking'); void pointerEl.offsetWidth; pointerEl.classList.add('ticking'); }
 }
 
@@ -900,8 +920,8 @@ const DONATE_URL = 'https://24kika.nl/doneren/?deelnemer=steven-arbon';
 
 function buildShareData(){
   const title = 'KiKa-wiel delen';
-  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`; // let op: & (niet &amp;)
-  const url   = DONATE_URL; // direct doneren delen (scheelt een klik)
+  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
+  const url   = DONATE_URL; // direct doneren (scheelt klik)
   return { title, text, url };
 }
 
@@ -1001,9 +1021,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ====== Start ====== */
-window.addEventListener('resize', resizeWheelCanvas);
 resizeWheelCanvas(); // tekent ook direct het wiel
 </script>
 </body>
 </html>
-``
