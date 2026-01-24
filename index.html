@@ -67,9 +67,9 @@ a.btn{
 /* Responsive wiel-container */
 .wheel-wrap{
   position:relative;
-  width:min(92vw, 560px);    /* iets groter cap op desktop */
+  width:min(92vw, 560px);
   margin:0 auto 28px;
-  padding-top:var(--wrapTopPad); /* ruimte voor (geschaalde) pointer */
+  padding-top:var(--wrapTopPad);
   display:grid;
   place-items:center;
 }
@@ -127,7 +127,7 @@ canvas#wheel{
   background:white;
   border-radius:16px;
   padding:24px;
-  width:min(90vw,420px);
+  width:min(90vw,520px);
   text-align:center;
   box-shadow:0 20px 40px rgba(0,0,0,.25);
 }
@@ -168,6 +168,45 @@ canvas#wheel{
   border:0; border-radius:8px; padding:6px 10px; background:#efefef; font-weight:600; cursor:pointer;
 }
 .share__ok{ font-size:12px; color:#3a7; margin-top:6px; min-height:1em; }
+
+/* Selfie-blok in modal (alleen zichtbaar bij confetti-bonus) */
+.selfie{
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:#fff6f0;
+  border:1px solid #ffe0b3;
+  text-align:center;
+}
+.selfie__title{
+  margin:0 0 8px;
+  font-weight:800;
+  color:#444;
+}
+.selfie__hint{ font-size:13px; color:#666; margin:6px 0 10px; }
+.selfie__wrap{
+  display:grid; gap:8px; justify-items:center;
+}
+.selfie__video{
+  width:min(82vw, 420px);
+  max-height:60vh;
+  border-radius:12px;
+  background:#000;
+}
+.selfie__canvas{
+  width:min(82vw, 420px);
+  border-radius:12px;
+  display:none;
+}
+.selfie__row{
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px;
+}
+.selfie__btn{
+  background:#111; color:#fff; border:0; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
+}
+.selfie__btn--ghost{
+  background:#fff; color:#111; border:2px solid #111;
+}
 
 /* Visueel verborgen voor screenreaders live region */
 .sr-only{
@@ -232,6 +271,23 @@ Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun Ki
       </div>
     </div>
 
+    <!-- 📸 SELFIE-BLOK (alleen te zien bij confetti-bonus) -->
+    <div id="selfieBlock" class="selfie" hidden>
+      <p class="selfie__title">📸 Confetti‑selfie</p>
+      <p class="selfie__hint">Maak een selfie met confetti en deel ’m met de tekst: <br><strong>“Ik ben een topper, ik heb gedoneerd en steun KiKa!”</strong></p>
+      <div class="selfie__wrap">
+        <video id="selfieVideo" class="selfie__video" playsinline muted></video>
+        <canvas id="selfieCanvas" class="selfie__canvas" width="1080" height="1080" aria-label="Selfie‑voorbeeld"></canvas>
+        <div class="selfie__row">
+          <button id="btnStartCam" class="selfie__btn" type="button">🎥 Start camera</button>
+          <button id="btnShot" class="selfie__btn" type="button" disabled>📸 Neem selfie</button>
+          <button id="btnRetake" class="selfie__btn selfie__btn--ghost" type="button" hidden>↺ Opnieuw</button>
+          <button id="btnDownload" class="selfie__btn" type="button" hidden>⬇️ Download (PNG)</button>
+        </div>
+        <div id="selfieErr" class="selfie__hint" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+
     <button id="badgeBtn" class="modal__btn modal__btn--secondary" onclick="downloadBadgePNG()">
       📸 Download badge (PNG)
     </button>
@@ -288,67 +344,53 @@ const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const pointerEl = document.getElementById('pointer');
-const wrapEl = document.querySelector('.wheel-wrap');
 
 let size = 300, c = size/2, r = 140;
 
 /* Helper: schaal pointer + top padding mee met wielgrootte */
 function scalePointerWithWheel(){
-  // Base op wielgrootte (CSS pixels)
-  const ptrH = Math.round(size * 0.06);           // hoogte van de driehoek
-  const ptrSide = Math.max(10, Math.round(ptrH * 0.66));  // zijden
-
+  const ptrH = Math.round(size * 0.06);
+  const ptrSide = Math.max(10, Math.round(ptrH * 0.66));
   document.documentElement.style.setProperty('--ptrHeight', ptrH + 'px');
   document.documentElement.style.setProperty('--ptrSide', ptrSide + 'px');
-
-  // Extra ruimte boven het canvas voor de pointer
-  const wrapTopPad = ptrH + 10; // kleine marge
+  const wrapTopPad = ptrH + 10;
   document.documentElement.style.setProperty('--wrapTopPad', wrapTopPad + 'px');
 }
 
 function resizeWheelCanvas(){
-  // Bepaal de CSS-breedte van het canvas (via responsieve layout)
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cssSize = Math.round(canvas.getBoundingClientRect().width);
-  const finalCssSize = Math.max(160, cssSize || 300); // guard
+  const finalCssSize = Math.max(160, cssSize || 300);
 
-  // Stel fysieke pixels in op DPR
   canvas.width  = Math.floor(finalCssSize * dpr);
   canvas.height = Math.floor(finalCssSize * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // Houd state in "CSS pixels" voor tekenlogica
   size = finalCssSize;
   c = size/2;
   r = Math.round(size * 0.47);
 
-  // Schaal pointer en bovenmarge mee
   scalePointerWithWheel();
-
   drawWheel();
 }
 
-// Init & on resize/orientation
 window.addEventListener('resize', resizeWheelCanvas);
 window.addEventListener('orientationchange', resizeWheelCanvas);
 
-/* Styling */
 const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
 let selectedIndex = -1;
 
-/* Font-size clamp: leesbaar op mobiel, niet te groot op desktop */
 function getWheelLabelFontSize(){
-  const px = Math.round(size * 0.045);       // basis-schaal
-  return Math.max(14, Math.min(px, 22));     // clamp 14–22px
+  const px = Math.round(size * 0.045);
+  return Math.max(14, Math.min(px, 22));  // 14–22px
 }
 
 function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
   ctx.font = `bold ${getWheelLabelFontSize()}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  // label iets naar binnen zodat het niet tegen rand aanzit
   ctx.fillText(text, radius - Math.max(10, Math.round(size*0.04)), Math.round(size*0.008));
 }
 
@@ -388,7 +430,6 @@ function drawWheel(){
 
     ctx.restore();
   }
-
   ctx.restore();
 }
 
@@ -550,7 +591,6 @@ function ensureAudio(){
   if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
 }
 
-/* Vrolijke winnaars-jingle (belletjes + clap + tambourijn) */
 function playGameShowJingle({ volume = 0.65 } = {}) {
   ensureAudio();
   const t0 = audioCtx.currentTime;
@@ -624,7 +664,7 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
   bell({ freq:783.99, start:end+0.02, dur:0.5, peak:0.30, pan:0.08 });
 }
 
-/* 🔔 Tick (per segment) */
+/* 🔔 Tick */
 function playTick(){
   ensureAudio();
   if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate(8);
@@ -907,24 +947,193 @@ function drawConfettiScatter(ctx, size, count=80, alpha=0.35){
   ctx.restore();
 }
 
-/** Download als PNG (vierkant 1080×1080) */
-function downloadBadgePNG(){
+/* ====== 📸 SELFIE FUNCTIES (alleen bij confetti-bonus) ====== */
+const selfieBlock = document.getElementById('selfieBlock');
+const selfieVideo = document.getElementById('selfieVideo');
+const selfieCanvas = document.getElementById('selfieCanvas');
+const selfieErr = document.getElementById('selfieErr');
+const btnStartCam = document.getElementById('btnStartCam');
+const btnShot = document.getElementById('btnShot');
+const btnRetake = document.getElementById('btnRetake');
+const btnDownload = document.getElementById('btnDownload');
+
+let selfieStream = null;
+
+function showSelfieBlock(show){
+  if (!selfieBlock) return;
+  selfieBlock.hidden = !show;
+  if (!show) {
+    stopSelfie();
+  }
+}
+
+async function startSelfie(){
   try{
-    const cvs = drawBadgeToCanvas(
-      currentWin.prize || 'Gefeliciteerd!',
-      currentWin.category || 'Categorie',
-      { size: 1080 }
-    );
+    btnStartCam.disabled = true;
+    selfieErr.textContent = '';
+    selfieCanvas.style.display = 'none';
+    selfieVideo.style.display = 'block';
+    btnShot.disabled = true;
+
+    const constraints = {
+      video: {
+        facingMode: 'user',
+        width: { ideal: 1280 },
+        height: { ideal: 1280 }
+      },
+      audio: false
+    };
+    const stream = await navigator.mediaDevices?.getUserMedia(constraints);
+    selfieStream = stream;
+    selfieVideo.srcObject = stream;
+    await selfieVideo.play();
+    btnShot.disabled = false;
+  }catch(err){
+    console.error('Camera start mislukte:', err);
+    selfieErr.textContent = 'Camera starten mislukt. Geef toestemming of gebruik een apparaat met camera.';
+    btnStartCam.disabled = false;
+  }
+}
+
+function stopSelfie(){
+  try{
+    btnStartCam.disabled = false;
+    btnShot.disabled = true;
+    btnDownload.hidden = true;
+    btnRetake.hidden = true;
+    selfieVideo.style.display = 'block';
+    selfieCanvas.style.display = 'none';
+    if (selfieStream){
+      selfieStream.getTracks().forEach(t => t.stop());
+      selfieStream = null;
+    }
+  }catch{}
+}
+
+function drawConfettiOverlay(ctx, w, h){
+  // Rand-confetti zodat het gezicht vrij blijft
+  const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  const count = 120;
+  for (let i=0;i<count;i++){
+    // Meer kans aan randen
+    let x = Math.random()*w, y = Math.random()*h;
+    const edge = Math.random();
+    if (edge < 0.25) y = Math.random()*h*0.18;                 // boven
+    else if (edge < 0.50) y = h - Math.random()*h*0.18;        // onder
+    else if (edge < 0.75) x = Math.random()*w*0.18;            // links
+    else x = w - Math.random()*w*0.18;                         // rechts
+
+    const rw = 8 + Math.random()*18;
+    const rh = 10 + Math.random()*22;
+    const r = Math.random()*Math.PI*2;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(r);
+    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+    ctx.shadowColor = 'rgba(0,0,0,.15)';
+    ctx.shadowBlur = 6;
+    ctx.fillRect(-rw/2, -rh/2, rw, rh);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawSelfieText(ctx, w, h){
+  const text = "Ik ben een topper, ik heb gedoneerd en steun KiKa!";
+  const pad = Math.round(w*0.05);
+  const pillH = Math.round(w*0.12);
+  const pillW = Math.round(w*0.90);
+  const cx = w/2, cy = h - pad - pillH/2;
+
+  // zwarte pill
+  ctx.save();
+  ctx.fillStyle = '#111';
+  const r = pillH/2;
+  ctx.beginPath();
+  ctx.moveTo(cx - pillW/2 + r, cy - pillH/2);
+  ctx.arcTo(cx + pillW/2, cy - pillH/2, cx + pillW/2, cy + pillH/2, r);
+  ctx.arcTo(cx + pillW/2, cy + pillH/2, cx - pillW/2, cy + pillH/2, r);
+  ctx.arcTo(cx - pillW/2, cy + pillH/2, cx - pillW/2, cy - pillH/2, r);
+  ctx.arcTo(cx - pillW/2, cy - pillH/2, cx + pillW/2, cy - pillH/2, r);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(0,0,0,.25)';
+  ctx.shadowBlur = 10;
+  ctx.fill();
+
+  // tekst
+  ctx.fillStyle = '#ffb703';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `800 ${Math.round(w*0.045)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+
+  // simpele wrap
+  const maxW = pillW * 0.9;
+  const words = text.split(/\s+/);
+  const lines = [];
+  let line = '';
+  for (let i=0;i<words.length;i++){
+    const t = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(t).width <= maxW) line = t; else { lines.push(line); line = words[i]; }
+  }
+  if (line) lines.push(line);
+  const lh = Math.round(w*0.06);
+  const startY = cy - ((lines.length-1)*lh)/2;
+  lines.slice(0,3).forEach((ln, i)=> ctx.fillText(ln, cx, startY + i*lh)); // max 3 regels
+  ctx.restore();
+}
+
+async function takeSelfie(){
+  if (!selfieVideo || !selfieCanvas) return;
+  const cvs = selfieCanvas;
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+
+  // Center-crop: maak vierkant uit de video-feed
+  const vw = selfieVideo.videoWidth || 1280;
+  const vh = selfieVideo.videoHeight || 720;
+  const side = Math.min(vw, vh);
+  const sx = Math.floor((vw - side)/2);
+  const sy = Math.floor((vh - side)/2);
+
+  // Teken basisbeeld
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(selfieVideo, sx, sy, side, side, 0, 0, W, H);
+
+  // Confetti overlay
+  drawConfettiOverlay(ctx, W, H);
+
+  // Tekst overlay
+  drawSelfieText(ctx, W, H);
+
+  // UI wissel
+  selfieVideo.style.display = 'none';
+  cvs.style.display = 'block';
+  btnDownload.hidden = false;
+  btnRetake.hidden = true; // retake pas tonen nadat gedownload is, of meteen?
+  btnRetake.hidden = false;
+}
+
+function downloadSelfie(){
+  try{
     const a = document.createElement('a');
-    a.href = cvs.toDataURL('image/png');
-    a.download = `kika-badge-${Date.now()}.png`;
+    a.href = selfieCanvas.toDataURL('image/png');
+    a.download = `kika-selfie-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   }catch(e){
-    console.error('Badge genereren mislukt:', e);
-    alert('Oops, badge kon niet worden gemaakt. Probeer het opnieuw.');
+    console.error('Selfie download mislukt:', e);
+    selfieErr.textContent = 'Downloaden mislukt. Probeer opnieuw.';
   }
+}
+
+function retakeSelfie(){
+  selfieCanvas.style.display = 'none';
+  selfieVideo.style.display = 'block';
+  btnDownload.hidden = true;
+  btnRetake.hidden = true;
 }
 
 /* ====== Popup + confetti-bonus detectie ====== */
@@ -946,7 +1155,7 @@ const DONATE_URL = 'https://24kika.nl/doneren/?deelnemer=steven-arbon';
 function buildShareData(){
   const title = 'KiKa-wiel delen';
   const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
-  const url   = DONATE_URL; // direct doneren (scheelt klik)
+  const url   = DONATE_URL; // direct doneren
   return { title, text, url };
 }
 
@@ -1011,20 +1220,17 @@ function openModal(prizeText, categoryText){
   if (prizeEl) prizeEl.textContent = currentWin.prize;
 
   document.getElementById('modal').classList.add('open');
-  // focus voor toegankelijkheid
   setTimeout(()=>document.querySelector('.modal__card')?.focus(),0);
 
-  // Screenreader live announcement
   const ariaResult = document.getElementById('ariaResult');
-  if (ariaResult) {
-    ariaResult.textContent = `Categorie: ${currentWin.category}. ${currentWin.prize}`;
-  }
+  if (ariaResult) ariaResult.textContent = `Categorie: ${currentWin.category}. ${currentWin.prize}`;
 
   playGameShowJingle({ volume: 0.65 });
 
   const mega = isConfettiBonus(prizeText);
+  showSelfieBlock(mega);          // 📸 toon/verberg selfie-sectie
   if (mega){
-    startMegaConfetti();     // blijft poppen tot je sluit
+    startMegaConfetti();
   } else {
     launchStandardConfetti();
   }
@@ -1036,6 +1242,7 @@ function closeModal(){
   document.getElementById('shareFallback')?.classList.remove('show');
   selectedIndex = -1;
   drawWheel();
+  showSelfieBlock(false);  // camera opruimen
 }
 
 // Esc sluit popup
@@ -1047,6 +1254,12 @@ document.addEventListener('keydown', (e) => {
 
 /* ====== Start ====== */
 resizeWheelCanvas(); // tekent ook direct het wiel
+
+/* ====== Selfie event handlers ====== */
+btnStartCam?.addEventListener('click', startSelfie);
+btnShot?.addEventListener('click', takeSelfie);
+btnDownload?.addEventListener('click', downloadSelfie);
+btnRetake?.addEventListener('click', retakeSelfie);
 </script>
 </body>
 </html>
