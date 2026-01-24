@@ -14,10 +14,15 @@
   --btn-text:#fff;
   --brand:#ffb703;
 
-  /* Worden door JS gezet zodat pointer/wrap meeschalen */
-  --ptrSide: 12px;      /* border-left/right */
-  --ptrHeight: 18px;    /* border-bottom */
-  --wrapTopPad: 24px;   /* ruimte voor pointer */
+  /* Door JS gezet voor pointer/wrap schalen */
+  --ptrSide: 12px;
+  --ptrHeight: 18px;
+  --wrapTopPad: 24px;
+
+  /* Modal vars */
+  --sheetRadius: 18px;
+  --sheetMaxW: 560px;
+  --safeB: env(safe-area-inset-bottom, 0px);
 }
 
 *{box-sizing:border-box}
@@ -27,6 +32,12 @@ body{
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   background:var(--bg);
   color:var(--text);
+  overflow-x:hidden;
+}
+
+body.lock-scroll{
+  height:100dvh; /* voorkomt ‘rubberband’ op iOS */
+  overflow:hidden;
 }
 
 main{
@@ -74,7 +85,7 @@ a.btn{
   place-items:center;
 }
 
-/* Pointer bovenaan het wiel – schaalt mee via CSS vars */
+/* Pointer – schaalt mee via CSS vars */
 .pointer{
   position:absolute;
   top:0;left:50%;
@@ -87,7 +98,6 @@ a.btn{
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
 }
 
-/* Pointer micro-bounce bij elke “ratel” */
 @keyframes tick-bounce {
   0%   { transform:translate(-50%,-6px) rotate(0deg); }
   30%  { transform:translate(-50%,-8px) rotate(-8deg); }
@@ -95,13 +105,9 @@ a.btn{
   100% { transform:translate(-50%,-6px) rotate(0deg); }
 }
 .pointer.ticking{ animation:tick-bounce 120ms ease-out; }
+@media (prefers-reduced-motion: reduce){ .pointer.ticking{ animation:none !important; } }
 
-/* Respecteer reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .pointer.ticking{ animation:none !important; }
-}
-
-/* Canvas is responsief: breedte 100%, vierkant via aspect-ratio */
+/* Canvas is responsief: 1:1 */
 canvas#wheel{
   width:100%;
   height:auto;
@@ -110,54 +116,95 @@ canvas#wheel{
   border-radius:50%;
 }
 
-/* Popup lager in beeld */
+/* ========= Bottom‑sheet modal ========= */
 .modal{
-  position:fixed;
-  inset:0;
+  position:fixed; inset:0;
   display:none;
-  align-items:flex-start;
-  justify-content:center;
-  padding-top:50vh;
   z-index:1001;
   pointer-events:none;
+  /* dim + klik ernaast om te sluiten */
 }
-.modal.open{display:flex}
-.modal__card{
-  pointer-events:auto;
+.modal.open{display:block; pointer-events:auto}
+
+.modal__backdrop{
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:saturate(100%) blur(2px);
+}
+
+.modal__sheet{
+  position:absolute;
+  left:50%; transform:translateX(-50%);
+  bottom:0;
+  width:min(100vw, var(--sheetMaxW));
+  max-height:calc(100dvh - 12px);
   background:white;
-  border-radius:16px;
-  padding:24px;
-  width:min(90vw,520px);
-  text-align:center;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
+  border-top-left-radius:var(--sheetRadius);
+  border-top-right-radius:var(--sheetRadius);
+  box-shadow:0 -10px 30px rgba(0,0,0,.25);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
+
+/* Sheet header (sticky) */
+.sheet__header{
+  position:sticky; top:0; z-index:1;
+  background:white;
+  padding:14px 16px 10px;
+  border-bottom:1px solid #f0f0f0;
+}
+.sheet__handle{
+  width:44px; height:5px; border-radius:999px;
+  background:#e5e5e5; margin:6px auto 10px;
+}
+.sheet__title{
+  margin:0;
+  font-size:20px;
+  font-weight:800;
+  text-align:center;
+}
+
+/* Sheet body (scrollbaar) */
+.sheet__body{
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 16px 16px;
+}
+
+/* Sheet footer (sticky acties) */
+.sheet__footer{
+  position:sticky; bottom:0; z-index:1;
+  background:white;
+  border-top:1px solid #f0f0f0;
+  padding:10px 12px calc(10px + var(--safeB));
+  display:grid; gap:8px;
+}
+
 .modal__btn{
   background:var(--brand);
   border:0;
-  padding:10px 16px;
+  padding:12px 16px;
   border-radius:999px;
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
 }
-
-#confetti{
-  position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
-}
-#confetti.show{display:block}
-
-.modal__cat{
-  margin:0 0 6px;
-  font-weight:700;
-  color:var(--brand);
-}
-
-/* Deelknop + fallback */
 .modal__btn--secondary{
   background:#fff; color:#222; border:2px solid var(--brand);
-  margin-top:8px;
 }
-.share{ margin-top:10px; }
-.share__fallback{ display:none; margin-top:10px; }
+
+/* Categorie */
+.modal__cat{
+  margin:6px 0 8px;
+  font-weight:800;
+  color:var(--brand);
+  text-align:center;
+}
+#modalPrize{ margin:0 0 12px; text-align:center; }
+
+/* Deelblok */
+.share{ margin-top:8px; text-align:center; }
+.share__fallback{ display:none; margin-top:8px; }
 .share__fallback.show{ display:block; }
 .share__row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:8px 0; }
 .share__link{
@@ -169,46 +216,35 @@ canvas#wheel{
 }
 .share__ok{ font-size:12px; color:#3a7; margin-top:6px; min-height:1em; }
 
-/* Selfie-blok in modal (alleen zichtbaar bij confetti-bonus) */
+/* Selfie-blok als accordion */
 .selfie{
-  margin-top:14px;
-  padding:12px;
+  margin-top:12px;
   border-radius:12px;
   background:#fff6f0;
   border:1px solid #ffe0b3;
-  text-align:center;
 }
-.selfie__title{
-  margin:0 0 8px;
+.selfie summary{
+  list-style:none;
+  padding:12px 14px;
   font-weight:800;
-  color:#444;
+  cursor:pointer;
 }
-.selfie__hint{ font-size:13px; color:#666; margin:6px 0 10px; }
-.selfie__wrap{
-  display:grid; gap:8px; justify-items:center;
-}
-.selfie__video{
-  width:min(82vw, 420px);
-  max-height:60vh;
-  border-radius:12px;
-  background:#000;
-}
-.selfie__canvas{
-  width:min(82vw, 420px);
-  border-radius:12px;
-  display:none;
-}
-.selfie__row{
-  display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px;
-}
-.selfie__btn{
-  background:#111; color:#fff; border:0; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
-}
-.selfie__btn--ghost{
-  background:#fff; color:#111; border:2px solid #111;
-}
+.selfie summary::-webkit-details-marker{ display:none; }
+.selfie__hint{ font-size:13px; color:#666; margin:6px 0 10px; text-align:center; padding:0 10px; }
+.selfie__wrap{ display:grid; gap:8px; justify-items:center; padding:0 10px 12px; }
+.selfie__video{ width:min(88vw, 420px); max-height:60vh; border-radius:12px; background:#000; }
+.selfie__canvas{ width:min(88vw, 420px); border-radius:12px; display:none; }
+.selfie__row{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+.selfie__btn{ background:#111; color:#fff; border:0; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer; }
+.selfie__btn--ghost{ background:#fff; color:#111; border:2px solid #111; }
 
-/* Visueel verborgen voor screenreaders live region */
+/* Confetti canvas */
+#confetti{
+  position:fixed; inset:0; pointer-events:none; display:none; z-index:1000;
+}
+#confetti.show{display:block}
+
+/* Visueel verborgen voor SR */
 .sr-only{
   position:absolute !important;
   width:1px; height:1px;
@@ -246,57 +282,66 @@ Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun Ki
 
 <canvas id="confetti"></canvas>
 
-<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal__card" tabindex="-1">
-    <h2 id="modalTitle">Gefeliciteerd 🎉</h2>
-    <p id="modalCategory" class="modal__cat"></p>
-    <p id="modalPrize"></p>
+<!-- Bottom-sheet modal -->
+<div id="modal" class="modal" aria-modal="true" role="dialog" aria-labelledby="modalTitle">
+  <div class="modal__backdrop" onclick="closeModal()"></div>
 
-    <!-- DEEL-blok -->
-    <div class="share">
-      <button id="shareBtn" class="modal__btn modal__btn--secondary" onclick="sharePrize()">
-        📤 KiKa-wiel delen
+  <section class="modal__sheet" role="document">
+    <header class="sheet__header" id="sheetHeader">
+      <div class="sheet__handle" aria-hidden="true"></div>
+      <h2 id="modalTitle" class="sheet__title">Gefeliciteerd 🎉</h2>
+    </header>
+
+    <div class="sheet__body">
+      <p id="modalCategory" class="modal__cat"></p>
+      <p id="modalPrize"></p>
+
+      <!-- DEEL-blok -->
+      <div class="share">
+        <button id="shareBtn" class="modal__btn modal__btn--secondary" onclick="sharePrize()">
+          📤 KiKa-wiel delen
+        </button>
+        <div id="shareFallback" class="share__fallback" aria-live="polite">
+          <div class="share__row">
+            <a id="shareWhatsApp" class="share__link" target="_blank" rel="noopener">WhatsApp</a>
+            <a id="shareX"        class="share__link" target="_blank" rel="noopener">X</a>
+            <a id="shareFB"       class="share__link" target="_blank" rel="noopener">Facebook</a>
+            <a id="shareLI"       class="share__link" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+          <button id="copyShare" class="share__copy" type="button">📋 Kopieer tekst</button>
+          <div id="copyFeedback" class="share__ok" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- 📸 SELFIE (accordion) -->
+      <details id="selfieBlock" class="selfie" hidden>
+        <summary>📸 Confetti‑selfie</summary>
+        <p class="selfie__hint">Maak een selfie met confetti en deel ’m met de tekst:<br>
+          <strong>“Ik ben een topper, ik heb gedoneerd en steun KiKa!”</strong></p>
+        <div class="selfie__wrap">
+          <video id="selfieVideo" class="selfie__video" playsinline muted></video>
+          <canvas id="selfieCanvas" class="selfie__canvas" width="1080" height="1080" aria-label="Selfie‑voorbeeld"></canvas>
+          <div class="selfie__row">
+            <button id="btnStartCam" class="selfie__btn" type="button">🎥 Start camera</button>
+            <button id="btnShot" class="selfie__btn" type="button" disabled>📸 Neem selfie</button>
+            <button id="btnRetake" class="selfie__btn selfie__btn--ghost" type="button" hidden>↺ Opnieuw</button>
+            <button id="btnDownload" class="selfie__btn" type="button" hidden>⬇️ Download (PNG)</button>
+          </div>
+          <div id="selfieErr" class="selfie__hint" role="status" aria-live="polite"></div>
+        </div>
+      </details>
+    </div>
+
+    <footer class="sheet__footer">
+      <button id="badgeBtn" class="modal__btn modal__btn--secondary" onclick="downloadBadgePNG()">
+        📸 Download badge (PNG)
       </button>
-
-      <!-- Fallback -->
-      <div id="shareFallback" class="share__fallback" aria-live="polite">
-        <div class="share__row">
-          <a id="shareWhatsApp" class="share__link" target="_blank" rel="noopener">WhatsApp</a>
-          <a id="shareX"        class="share__link" target="_blank" rel="noopener">X</a>
-          <a id="shareFB"       class="share__link" target="_blank" rel="noopener">Facebook</a>
-          <a id="shareLI"       class="share__link" target="_blank" rel="noopener">LinkedIn</a>
-        </div>
-        <button id="copyShare" class="share__copy" type="button">📋 Kopieer tekst</button>
-        <div id="copyFeedback" class="share__ok" aria-live="polite"></div>
-      </div>
-    </div>
-
-    <!-- 📸 SELFIE-BLOK (alleen te zien bij confetti-bonus) -->
-    <div id="selfieBlock" class="selfie" hidden>
-      <p class="selfie__title">📸 Confetti‑selfie</p>
-      <p class="selfie__hint">Maak een selfie met confetti en deel ’m met de tekst: <br><strong>“Ik ben een topper, ik heb gedoneerd en steun KiKa!”</strong></p>
-      <div class="selfie__wrap">
-        <video id="selfieVideo" class="selfie__video" playsinline muted></video>
-        <canvas id="selfieCanvas" class="selfie__canvas" width="1080" height="1080" aria-label="Selfie‑voorbeeld"></canvas>
-        <div class="selfie__row">
-          <button id="btnStartCam" class="selfie__btn" type="button">🎥 Start camera</button>
-          <button id="btnShot" class="selfie__btn" type="button" disabled>📸 Neem selfie</button>
-          <button id="btnRetake" class="selfie__btn selfie__btn--ghost" type="button" hidden>↺ Opnieuw</button>
-          <button id="btnDownload" class="selfie__btn" type="button" hidden>⬇️ Download (PNG)</button>
-        </div>
-        <div id="selfieErr" class="selfie__hint" role="status" aria-live="polite"></div>
-      </div>
-    </div>
-
-    <button id="badgeBtn" class="modal__btn modal__btn--secondary" onclick="downloadBadgePNG()">
-      📸 Download badge (PNG)
-    </button>
-
-    <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
-  </div>
+      <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
+    </footer>
+  </section>
 </div>
 
-<!-- Live region voor schermlezers -->
+<!-- SR live region -->
 <div id="ariaResult" class="sr-only" aria-live="assertive"></div>
 
 <script>
@@ -308,46 +353,35 @@ const moppen = [
   "Mijn benen doen 24 uur mee. Jij deed vandaag iets nóg belangrijkers 💛",
   "Dit wiel draait op goede daden — dankjewel! 🙌"
 ];
-
 const feitjes = [
   "Wist je dat lachen stress vermindert? 😊",
   "Elke donatie helpt KiKa bij beter onderzoek 💛",
   "Bewegen maakt je hersenen aantoonbaar vrolijker 🧠✨",
   "Samen kleine acties doen maakt een groot verschil 🌍"
 ];
-
 const quotes = [
   "Kleine moeite, groot verschil 💛",
   "Samen maken we kanker kansloos.",
   "Wie goed doet, ontmoet geluk ✨",
   "Vandaag heb jij iets goeds gedaan 🌈"
 ];
-
 const challenges = [
   "Geef vandaag iemand een compliment 😊",
   "Drink een extra glas water 💧— je verdient het!",
   "Stuur dit wiel door naar 1 vriend(in) 🔄",
   "Maak een selfie op een gekke plek, post ’m op social en vraag ook te doneren voor dit wiel"
 ];
-
 const verrassingen = [
   "🎉 Confetti‑bonus! Jij bent officieel een Topper!"
 ];
-
 function randomItem(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 
-/* ========= RAD: ALLEEN CATEGORIEËN ========= */
-const categoryLabels = ['😂 Mop', '🧠 Feit', '💬 Quote', '🎯 Challenge', '🎉 Verrassing'];
-const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
-
-/* ====== Canvas wiel (responsief) ====== */
+/* ========= Wiel ========= */
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const pointerEl = document.getElementById('pointer');
 
 let size = 300, c = size/2, r = 140;
-
-/* Helper: schaal pointer + top padding mee met wielgrootte */
 function scalePointerWithWheel(){
   const ptrH = Math.round(size * 0.06);
   const ptrSide = Math.max(10, Math.round(ptrH * 0.66));
@@ -356,351 +390,147 @@ function scalePointerWithWheel(){
   const wrapTopPad = ptrH + 10;
   document.documentElement.style.setProperty('--wrapTopPad', wrapTopPad + 'px');
 }
-
 function resizeWheelCanvas(){
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cssSize = Math.round(canvas.getBoundingClientRect().width);
   const finalCssSize = Math.max(160, cssSize || 300);
-
   canvas.width  = Math.floor(finalCssSize * dpr);
   canvas.height = Math.floor(finalCssSize * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  size = finalCssSize;
-  c = size/2;
-  r = Math.round(size * 0.47);
-
+  size = finalCssSize; c = size/2; r = Math.round(size * 0.47);
   scalePointerWithWheel();
   drawWheel();
 }
-
 window.addEventListener('resize', resizeWheelCanvas);
 window.addEventListener('orientationchange', resizeWheelCanvas);
 
+const categoryLabels = ['😂 Mop', '🧠 Feit', '💬 Quote', '🎯 Challenge', '🎉 Verrassing'];
+const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/categoryLabels.length;
-let rotation = 0, spinning = false;
-let selectedIndex = -1;
+let rotation = 0, spinning = false, selectedIndex = -1;
 
-function getWheelLabelFontSize(){
-  const px = Math.round(size * 0.045);
-  return Math.max(14, Math.min(px, 22));  // 14–22px
-}
-
+function getWheelLabelFontSize(){ const px = Math.round(size * 0.045); return Math.max(14, Math.min(px, 22)); }
 function drawCategoryLabel(text, radius){
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#111";
-  ctx.font = `bold ${getWheelLabelFontSize()}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.textAlign = "right"; ctx.fillStyle = "#111";
+  ctx.font = `bold ${getWheelLabelFontSize()}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`;
   ctx.fillText(text, radius - Math.max(10, Math.round(size*0.04)), Math.round(size*0.008));
 }
-
 function drawWheel(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();
-  ctx.translate(c,c);
-  ctx.rotate(rotation);
-
+  ctx.save(); ctx.translate(c,c); ctx.rotate(rotation);
   for(let i=0;i<categoryLabels.length;i++){
     const isSelected = (selectedIndex === i);
     const dimOthers  = (selectedIndex !== -1 && !isSelected);
-
-    ctx.save();
-    if (dimOthers) ctx.globalAlpha = 0.4;
-
-    // sector
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.arc(0,0,r,i*slice,(i+1)*slice);
-    ctx.fillStyle = colors[i];
-    ctx.fill();
-
-    // highlight
-    if (isSelected){
-      ctx.lineWidth = Math.max(3, Math.round(size*0.012));
-      ctx.strokeStyle = "#fff";
-      ctx.shadowColor = "rgba(255,255,255,.9)";
-      ctx.shadowBlur = Math.round(size*0.06);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    // label
-    ctx.rotate(i*slice + slice/2);
-    drawCategoryLabel(categoryLabels[i], r);
-
+    ctx.save(); if (dimOthers) ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,i*slice,(i+1)*slice);
+    ctx.fillStyle = colors[i]; ctx.fill();
+    if (isSelected){ ctx.lineWidth = Math.max(3, Math.round(size*0.012)); ctx.strokeStyle="#fff";
+      ctx.shadowColor="rgba(255,255,255,.9)"; ctx.shadowBlur=Math.round(size*0.06); ctx.stroke(); ctx.shadowBlur=0; }
+    ctx.rotate(i*slice + slice/2); drawCategoryLabel(categoryLabels[i], r);
     ctx.restore();
   }
   ctx.restore();
 }
 
-/* ====== Confetti (standaard + oneindige mega-bonus) ====== */
+/* ========= Confetti ========= */
 const confettiCanvas = document.getElementById('confetti');
 const cfx = confettiCanvas.getContext('2d');
-
-let particles = [];
-let confettiRAF = null;
-let confettiLoop = false;
-let burstTimer = null;
-
+let particles = [], confettiRAF=null, confettiLoop=false, burstTimer=null;
 const HARD_LIMIT = 6000;
-
 function resizeConfetti(){
   const dpr = Math.min(devicePixelRatio || 1, 2);
-  confettiCanvas.width  = Math.floor(innerWidth  * dpr);
+  confettiCanvas.width  = Math.floor(innerWidth * dpr);
   confettiCanvas.height = Math.floor(innerHeight * dpr);
-  confettiCanvas.style.width  = innerWidth + 'px';
-  confettiCanvas.style.height = innerHeight + 'px';
-  cfx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  confettiCanvas.style.width = innerWidth + 'px';
+  confettiCanvas.style.height= innerHeight + 'px';
+  cfx.setTransform(dpr,0,0,dpr,0,0);
 }
-
-function wheelCenter(){
-  const r = canvas.getBoundingClientRect();
-  return { x: r.left + r.width/2, y: r.top + r.height/2 };
-}
-
+function wheelCenter(){ const r = canvas.getBoundingClientRect(); return { x:r.left + r.width/2, y:r.top + r.height/2 }; }
 function addBurst({ count=120, g=0.15, spread=9, sizeMul=1, palette } = {}){
-  const MAX_PARTICLES = 8000;
-  if (particles.length > MAX_PARTICLES) return;
-
-  const o = wheelCenter();
-  const colors = palette || ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
-  for (let i = 0; i < count; i++){
-    const a = Math.random() * Math.PI * 2;
-    const s = 3 + Math.random() * spread;
-    const w = (6 + Math.random()*8)  * sizeMul;
-    const h = (8 + Math.random()*12) * sizeMul;
-    particles.push({
-      x: o.x, y: o.y,
-      vx: Math.cos(a) * s,
-      vy: Math.sin(a) * s,
-      g,
-      r: Math.random() * Math.PI,
-      vr: (Math.random() - .5) * .35,
-      w, h,
-      c: colors[Math.floor(Math.random()*colors.length)],
-      life: 0,
-      maxLife: 4000 + Math.random() * 2500
-    });
+  const MAX_PARTICLES = 8000; if (particles.length > MAX_PARTICLES) return;
+  const o = wheelCenter(); const colors=["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+  for (let i=0;i<count;i++){ const a=Math.random()*Math.PI*2, s=3+Math.random()*spread;
+    const w=(6+Math.random()*8)*sizeMul, h=(8+Math.random()*12)*sizeMul;
+    particles.push({ x:o.x,y:o.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, g, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.35, w,h, c:colors[Math.floor(Math.random()*colors.length)], life:0, maxLife:4000+Math.random()*2500 });
   }
 }
-
 function stepAndDraw(dt){
   cfx.clearRect(0,0,innerWidth,innerHeight);
   const airFriction = Math.pow(0.992, dt/16);
-
-  if (particles.length > HARD_LIMIT){
-    particles.splice(0, particles.length - HARD_LIMIT);
-  }
-
+  if (particles.length > HARD_LIMIT) particles.splice(0, particles.length - HARD_LIMIT);
   particles = particles.filter(p => {
-    p.x  += p.vx * (dt/16);
-    p.y  += p.vy * (dt/16);
-    p.vy += p.g   * (dt/16);
-    p.vx *= airFriction;
-    p.r  += p.vr * (dt/16);
-    p.life += dt;
-
-    cfx.save();
-    cfx.translate(p.x, p.y);
-    cfx.rotate(p.r);
-    cfx.fillStyle = p.c;
-    cfx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-    cfx.restore();
-
-    const alive = p.life < p.maxLife;
-    const onscreen = p.y < innerHeight + 80;
-    return alive && onscreen;
+    p.x += p.vx*(dt/16); p.y += p.vy*(dt/16); p.vy += p.g*(dt/16); p.vx *= airFriction; p.r += p.vr*(dt/16); p.life += dt;
+    cfx.save(); cfx.translate(p.x,p.y); cfx.rotate(p.r); cfx.fillStyle=p.c; cfx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cfx.restore();
+    return p.life < p.maxLife && p.y < innerHeight + 80;
   });
 }
-
 function tickConfetti(t){
   if (!tickConfetti.prev) tickConfetti.prev = t;
-  const dt = Math.min(50, t - tickConfetti.prev);
-  tickConfetti.prev = t;
-
+  const dt = Math.min(50, t - tickConfetti.prev); tickConfetti.prev = t;
   stepAndDraw(dt);
-
-  if (confettiLoop || particles.length){
-    confettiRAF = requestAnimationFrame(tickConfetti);
-  } else {
-    confettiRAF = null;
-    confettiCanvas.classList.remove('show');
-  }
+  if (confettiLoop || particles.length){ confettiRAF = requestAnimationFrame(tickConfetti); }
+  else { confettiRAF = null; confettiCanvas.classList.remove('show'); }
 }
-
 function ensureAnimating(){
-  resizeConfetti();
-  confettiCanvas.classList.add('show');
-  if (!confettiRAF){
-    tickConfetti.prev = 0;
-    confettiRAF = requestAnimationFrame(tickConfetti);
-  }
+  resizeConfetti(); confettiCanvas.classList.add('show');
+  if (!confettiRAF){ tickConfetti.prev = 0; confettiRAF = requestAnimationFrame(tickConfetti); }
 }
-
-/* Bewegingsvoorkeur */
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* 🎊 Normale confetti (eenmalig) */
-function launchStandardConfetti(){
-  if (REDUCED_MOTION) return;
-  ensureAnimating();
-  addBurst({ count: 120, g: 0.15, spread: 9, sizeMul: 1.0 });
-  setTimeout(() => addBurst({ count: 90, g: 0.15, spread: 9, sizeMul: 1.0 }), 300);
+function launchStandardConfetti(){ if (REDUCED_MOTION) return; ensureAnimating(); addBurst({count:120}); setTimeout(()=>addBurst({count:90}),300); }
+function startMegaConfetti(){ if (REDUCED_MOTION || confettiLoop) return; confettiLoop=true; ensureAnimating();
+  addBurst({count:300,g:0.16,spread:10,sizeMul:1.15}); setTimeout(()=>addBurst({count:240,g:0.16,spread:10,sizeMul:1.10}),220); setTimeout(()=>addBurst({count:200,g:0.17,spread:11,sizeMul:1.10}),480);
+  burstTimer=setInterval(()=>{ addBurst({count:200,g:0.17,spread:11,sizeMul:1.10}); setTimeout(()=>addBurst({count:140,g:0.18,spread:8,sizeMul:1.00}),180); if(Math.random()<0.33){ setTimeout(()=>addBurst({count:120,g:0.19,spread:9,sizeMul:1.05}),420); } },800);
 }
+function stopMegaConfetti(){ confettiLoop=false; if (burstTimer){ clearInterval(burstTimer); burstTimer=null; } }
+window.addEventListener('resize', ()=>{ if (confettiRAF || confettiLoop) resizeConfetti(); });
 
-/* 💥 Oneindige confetti (bonus) — blijft poppen tot popup dicht is */
-function startMegaConfetti(){
-  if (REDUCED_MOTION) return;
-  if (confettiLoop) return;
-  confettiLoop = true;
-  ensureAnimating();
-
-  // Initiële triple-knal
-  addBurst({ count: 300, g: 0.16, spread: 10, sizeMul: 1.15 });
-  setTimeout(() => addBurst({ count: 240, g: 0.16, spread: 10, sizeMul: 1.10 }), 220);
-  setTimeout(() => addBurst({ count: 200, g: 0.17, spread: 11, sizeMul: 1.10 }), 480);
-
-  // Doorlopend ritme
-  burstTimer = setInterval(() => {
-    addBurst({ count: 200, g: 0.17, spread: 11, sizeMul: 1.10 });
-    setTimeout(() => addBurst({ count: 140, g: 0.18, spread: 8, sizeMul: 1.00 }), 180);
-    if (Math.random() < 0.33){
-      setTimeout(() => addBurst({ count: 120, g: 0.19, spread: 9, sizeMul: 1.05 }), 420);
-    }
-  }, 800);
-}
-
-function stopMegaConfetti(){
-  confettiLoop = false;
-  if (burstTimer){
-    clearInterval(burstTimer);
-    burstTimer = null;
-  }
-}
-
-window.addEventListener('resize', () => {
-  if (confettiRAF || confettiLoop) resizeConfetti();
-});
-
-/* ====== Audio (tick + jingle) ====== */
-let audioCtx;
-let lastTickIndex = null;
-
-function ensureAudio(){
-  if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-  if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
-}
-
+/* ========= Audio ========= */
+let audioCtx; let lastTickIndex=null;
+function ensureAudio(){ if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if(audioCtx.state === 'suspended'){ audioCtx.resume(); } }
 function playGameShowJingle({ volume = 0.65 } = {}) {
-  ensureAudio();
-  const t0 = audioCtx.currentTime;
-  const master = audioCtx.createGain();
-  master.gain.setValueAtTime(Math.max(0, Math.min(1, volume)), t0);
-  master.connect(audioCtx.destination);
-
-  function bell({ freq, start, dur = 0.5, peak = 0.35, pan = 0 }) {
-    const sine = audioCtx.createOscillator(), tri = audioCtx.createOscillator();
-    sine.type='sine'; tri.type='triangle';
-    sine.frequency.setValueAtTime(freq,start);
-    tri.frequency.setValueAtTime(freq*2,start);
-    const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001,start);
-    g.gain.linearRampToValueAtTime(peak,start+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
-    const p = audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start);
-    sine.connect(g); tri.connect(g); g.connect(p).connect(master);
-    sine.start(start); tri.start(start);
-    sine.stop(start+dur+0.05); tri.stop(start+dur+0.05);
-  }
-  function handClap({ start, gain = 0.24 }) {
-    const bursts=[0,0.012,0.028];
-    bursts.forEach((off,i)=>{
-      const len=Math.floor(audioCtx.sampleRate*0.06);
-      const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
-      const data=buf.getChannelData(0);
-      for(let n=0;n<len;n++){ const w=(Math.random()*2-1); data[n]=w*Math.pow(1-n/len,2.2); }
-      const src=audioCtx.createBufferSource(); src.buffer=buf;
-      const g=audioCtx.createGain(); const decay=0.06+i*0.02;
-      g.gain.setValueAtTime(gain*(1-i*0.2),start+off);
-      g.gain.exponentialRampToValueAtTime(0.0001,start+off+decay);
-      src.connect(g).connect(master); src.start(start+off); src.stop(start+off+decay+0.02);
-    });
-  }
-  function tambourine({ start, dur = 0.25, gain = 0.08, pan = 0.1 }) {
-    const len=Math.floor(audioCtx.sampleRate*dur);
-    const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
-    const data=buf.getChannelData(0);
-    for(let i=0;i<len;i++){ const t=i/len; const n=(Math.random()*2-1); data[i]=n*(0.8+0.2*Math.random())*Math.pow(1-t,2.0); }
-    const src=audioCtx.createBufferSource(); src.buffer=buf;
-    const g=audioCtx.createGain(); g.gain.setValueAtTime(gain,start);
-    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
-    const p=audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start);
-    src.connect(g).connect(p).connect(master); src.start(start); src.stop(start+dur+0.05);
-  }
-
+  ensureAudio(); const t0=audioCtx.currentTime; const master=audioCtx.createGain(); master.gain.setValueAtTime(Math.max(0,Math.min(1,volume)),t0); master.connect(audioCtx.destination);
+  function bell({ freq, start, dur=0.5, peak=0.35, pan=0 }){ const s=audioCtx.createOscillator(), t=audioCtx.createOscillator(); s.type='sine'; t.type='triangle'; s.frequency.setValueAtTime(freq,start); t.frequency.setValueAtTime(freq*2,start); const g=audioCtx.createGain(); g.gain.setValueAtTime(0.0001,start); g.gain.linearRampToValueAtTime(peak,start+0.02); g.gain.exponentialRampToValueAtTime(0.0001,start+dur); const p=audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start); s.connect(g); t.connect(g); g.connect(p).connect(master); s.start(start); t.start(start); s.stop(start+dur+0.05); t.stop(start+dur+0.05); }
+  function handClap({ start, gain=0.24 }){ const bursts=[0,0.012,0.028]; bursts.forEach((off,i)=>{ const len=Math.floor(audioCtx.sampleRate*0.06); const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate); const data=buf.getChannelData(0); for(let n=0;n<len;n++){ const w=(Math.random()*2-1); data[n]=w*Math.pow(1-n/len,2.2); } const src=audioCtx.createBufferSource(); src.buffer=buf; const g=audioCtx.createGain(); const decay=0.06+i*0.02; g.gain.setValueAtTime(gain*(1-i*0.2),start+off); g.gain.exponentialRampToValueAtTime(0.0001,start+off+decay); src.connect(g).connect(master); src.start(start+off); src.stop(start+off+decay+0.02); }); }
+  function tambourine({ start, dur=0.25, gain=0.08, pan=0.1 }){ const len=Math.floor(audioCtx.sampleRate*dur); const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate); const data=buf.getChannelData(0); for(let i=0;i<len;i++){ const t=i/len; const n=(Math.random()*2-1); data[i]=n*(0.8+0.2*Math.random())*Math.pow(1-t,2.0); } const src=audioCtx.createBufferSource(); src.buffer=buf; const g=audioCtx.createGain(); g.gain.setValueAtTime(gain,start); g.gain.exponentialRampToValueAtTime(0.0001,start+dur); const p=audioCtx.createStereoPanner(); p.pan.setValueAtTime(pan,start); src.connect(g).connect(p).connect(master); src.start(start); src.stop(start+dur+0.05); }
   if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate([10,20,10]);
-
-  handClap({ start:t0+0.00, gain:0.24 });
-  tambourine({ start:t0+0.00, dur:0.22, gain:0.08, pan:0.12 });
-  bell({ freq:784.00, start:t0+0.02, dur:0.45, peak:0.32, pan:-0.05 });
-
+  handClap({start:t0+0.00,gain:0.24}); tambourine({start:t0+0.00,dur:0.22,gain:0.08,pan:0.12}); bell({freq:784.00,start:t0+0.02,dur:0.45,peak:0.32,pan:-0.05});
   const chordStart=t0+0.18;
-  bell({ freq:523.25, start:chordStart+0.00, dur:0.42, peak:0.28, pan:-0.12 });
-  bell({ freq:659.25, start:chordStart+0.01, dur:0.42, peak:0.26, pan:0.00 });
-  bell({ freq:783.99, start:chordStart+0.02, dur:0.42, peak:0.24, pan:0.12 });
-
-  bell({ freq:349.23*2, start:chordStart+0.20, dur:0.38, peak:0.26, pan:-0.1 });
-  bell({ freq:440.00*2, start:chordStart+0.21, dur:0.38, peak:0.24, pan:0.0 });
-  bell({ freq:261.63*2, start:chordStart+0.22, dur:0.38, peak:0.24, pan:0.1 });
-
-  bell({ freq:392.00*2, start:chordStart+0.38, dur:0.38, peak:0.26, pan:-0.1 });
-  bell({ freq:493.88*2, start:chordStart+0.39, dur:0.38, peak:0.24, pan:0.0 });
-  bell({ freq:293.66*2, start:chordStart+0.40, dur:0.38, peak:0.22, pan:0.1 });
-
+  bell({freq:523.25,start:chordStart+0.00,dur:0.42,peak:0.28,pan:-0.12});
+  bell({freq:659.25,start:chordStart+0.01,dur:0.42,peak:0.26,pan:0.00});
+  bell({freq:783.99,start:chordStart+0.02,dur:0.42,peak:0.24,pan:0.12});
+  bell({freq:349.23*2,start:chordStart+0.20,dur:0.38,peak:0.26,pan:-0.1});
+  bell({freq:440.00*2,start:chordStart+0.21,dur:0.38,peak:0.24,pan:0.0});
+  bell({freq:261.63*2,start:chordStart+0.22,dur:0.38,peak:0.24,pan:0.1});
+  bell({freq:392.00*2,start:chordStart+0.38,dur:0.38,peak:0.26,pan:-0.1});
+  bell({freq:493.88*2,start:chordStart+0.39,dur:0.38,peak:0.24,pan:0.0});
+  bell({freq:293.66*2,start:chordStart+0.40,dur:0.38,peak:0.22,pan:0.1});
   const end=t0+0.76;
-  handClap({ start:end+0.02, gain:0.20 });
-  tambourine({ start:end+0.00, dur:0.22, gain:0.1, pan:-0.1 });
-  bell({ freq:523.25, start:end+0.00, dur:0.5, peak:0.34, pan:-0.08 });
-  bell({ freq:659.25, start:end+0.01, dur:0.5, peak:0.32, pan:0.00 });
-  bell({ freq:783.99, start:end+0.02, dur:0.5, peak:0.30, pan:0.08 });
+  handClap({start:end+0.02,gain:0.20}); tambourine({start:end+0.00,dur:0.22,gain:0.1,pan:-0.1});
+  bell({freq:523.25,start:end+0.00,dur:0.5,peak:0.34,pan:-0.08});
+  bell({freq:659.25,start:end+0.01,dur:0.5,peak:0.32,pan:0.00});
+  bell({freq:783.99,start:end+0.02,dur:0.5,peak:0.30,pan:0.08});
 }
-
-/* 🔔 Tick */
 function playTick(){
-  ensureAudio();
-  if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate(8);
-  const t0 = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(1200, t0);
-  gain.gain.setValueAtTime(0.001, t0);
-  gain.gain.linearRampToValueAtTime(0.12, t0 + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(t0); osc.stop(t0 + 0.07);
+  ensureAudio(); if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate(8);
+  const t0=audioCtx.currentTime; const osc=audioCtx.createOscillator(); const gain=audioCtx.createGain();
+  osc.type='square'; osc.frequency.setValueAtTime(1200,t0);
+  gain.gain.setValueAtTime(0.001,t0); gain.gain.linearRampToValueAtTime(0.12,t0+0.008); gain.gain.exponentialRampToValueAtTime(0.0001,t0+0.06);
+  osc.connect(gain).connect(audioCtx.destination); osc.start(t0); osc.stop(t0+0.07);
   if (pointerEl){ pointerEl.classList.remove('ticking'); void pointerEl.offsetWidth; pointerEl.classList.add('ticking'); }
 }
 
-/* ====== Mechanische weerstand ====== */
-let detentOffset = 0;
-const DETENT_BASE = 0.025, DETENT_DECAY = 0.88, DETENT_SNAP_FORWARD = 0.6, DETENT_CLAMP = 0.15;
-
-/* Toetsenbord: Spin met Enter/Spatie wanneer modal gesloten is */
+/* ========= Spin ========= */
+let detentOffset=0; const DETENT_BASE=0.025, DETENT_DECAY=0.88, DETENT_SNAP_FORWARD=0.6, DETENT_CLAMP=0.15;
 document.addEventListener('keydown', (e) => {
-  const modalOpen = document.getElementById('modal').classList.contains('open');
-  if (!modalOpen && (e.key === ' ' || e.key === 'Enter')) {
-    e.preventDefault();
-    spinWheel();
-  }
+  const open = document.getElementById('modal').classList.contains('open');
+  if (!open && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); spinWheel(); }
 });
-
-/* Eenvoudige focustrap in de modal */
 (function setupFocusTrap(){
-  const modal = document.getElementById('modal');
-  const card  = modal?.querySelector('.modal__card');
+  const modal = document.getElementById('modal'); const sheet = modal?.querySelector('.modal__sheet');
   modal?.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
-    const f = card.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])');
+    const f = sheet.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])');
     if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -709,245 +539,58 @@ document.addEventListener('keydown', (e) => {
 })();
 
 function spinWheel(){
-  if(spinning) return;
-  spinning = true;
-  lastTickIndex = null;
-  detentOffset = 0;
-  selectedIndex = -1;
-  drawWheel();
-
+  if(spinning) return; spinning = true; lastTickIndex = null; detentOffset = 0; selectedIndex = -1; drawWheel();
   ensureAudio();
-
-  const start = rotation;
-  const target = start + Math.random()*Math.PI*6 + Math.PI*4; // 4–10π
-  const t0 = performance.now(), DURATION = 2600;
-
+  const start = rotation; const target = start + Math.random()*Math.PI*6 + Math.PI*4; const t0=performance.now(), DURATION=2600;
   (function anim(t){
-    const p = Math.min((t - t0) / DURATION, 1);
-    const baseRot = start + (target - start) * (1 - Math.pow(1 - p, 3));
-
-    detentOffset *= DETENT_DECAY;
-    if (detentOffset >  DETENT_CLAMP) detentOffset =  DETENT_CLAMP;
-    if (detentOffset < -DETENT_CLAMP) detentOffset = -DETENT_CLAMP;
-
-    rotation = baseRot + detentOffset;
-    drawWheel();
-
-    const twoPi = Math.PI * 2;
-    const a = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
-    const idx = Math.floor(a / slice) % categoryLabels.length;
-
-    if (lastTickIndex === null || idx !== lastTickIndex) {
-      playTick();
-      const speedFactor = (1 - p) * (1 - p);
-      const impulse = DETENT_BASE * (0.35 + 0.65 * speedFactor);
-      detentOffset -= impulse;
-      setTimeout(()=>{ detentOffset += impulse * DETENT_SNAP_FORWARD; }, 60);
-      lastTickIndex = idx;
+    const p=Math.min((t-t0)/DURATION,1); const baseRot=start+(target-start)*(1-Math.pow(1-p,3));
+    detentOffset *= DETENT_DECAY; if (detentOffset > DETENT_CLAMP) detentOffset = DETENT_CLAMP; if (detentOffset < -DETENT_CLAMP) detentOffset = -DETENT_CLAMP;
+    rotation = baseRot + detentOffset; drawWheel();
+    const twoPi=Math.PI*2; const a=(Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi; const idx=Math.floor(a / slice) % categoryLabels.length;
+    if (lastTickIndex === null || idx !== lastTickIndex){
+      playTick(); const speedFactor=(1-p)*(1-p); const impulse=DETENT_BASE*(0.35+0.65*speedFactor);
+      detentOffset -= impulse; setTimeout(()=>{ detentOffset += impulse*DETENT_SNAP_FORWARD; }, 60); lastTickIndex = idx;
     }
-
-    if (p < 1) {
-      requestAnimationFrame(anim);
-    } else {
-      spinning = false;
-
-      const finalA = (Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi;
-      const rawIdx = Math.floor(finalA / slice);
-      const finalIdx = ((rawIdx % categoryLabels.length) + categoryLabels.length) % categoryLabels.length;
-
-      selectedIndex = finalIdx;
-      drawWheel();
-
-      const prizeArr = categoryData[finalIdx];
-      const prize = randomItem(prizeArr);
-      if (!prize) {
-        console.warn('Prize undefined – debug info:', { finalA, rawIdx, finalIdx, slice, len: categoryLabels.length });
-        openModal('🎁 Verrassing: je bent een topper! 🙌', categoryLabels[finalIdx]);
-      } else {
-        openModal(prize, categoryLabels[finalIdx]);
-      }
+    if (p < 1){ requestAnimationFrame(anim); } else {
+      spinning=false;
+      const finalA=(Math.PI*1.5 - (rotation % twoPi) + twoPi) % twoPi; const rawIdx=Math.floor(finalA / slice);
+      const finalIdx=((rawIdx % categoryLabels.length) + categoryLabels.length) % categoryLabels.length;
+      selectedIndex = finalIdx; drawWheel();
+      const prizeArr = categoryData[finalIdx]; const prize = randomItem(prizeArr);
+      openModal(prize || '🎁 Verrassing: je bent een topper! 🙌', categoryLabels[finalIdx]);
     }
   })(t0);
 }
 
-/* ====== Badge-generator (1080×1080 PNG) ====== */
+/* ========= Badge helpers (ongewijzigd) ========= */
 function drawBadgeToCanvas(prize, category, opts={}) {
   const size = opts.size || 1080;
   const pad  = Math.round(size * 0.06);
-  const brand = getComputedStyle(document.documentElement)
-                 .getPropertyValue('--brand').trim() || '#ffb703';
-
-  const cvs = document.createElement('canvas');
-  cvs.width = cvs.height = size;
-  const ctx = cvs.getContext('2d');
-
-  // Achtergrond
+  const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#ffb703';
+  const cvs = document.createElement('canvas'); cvs.width = cvs.height = size; const ctx = cvs.getContext('2d');
   const grad = ctx.createRadialGradient(size*0.5, size*0.4, size*0.1, size*0.5, size*0.6, size*0.8);
-  grad.addColorStop(0, '#fff8fb');
-  grad.addColorStop(1, '#ffe0ef');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-
-  // Witte cirkel body
-  ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.beginPath();
-  const r = size/2 - pad/2;
-  ctx.arc(size/2, size/2, r, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-
-  // Confetti achter
-  drawConfettiScatter(ctx, size, 90);
-
-  // Ribbon + titel
-  const topY = pad + 20;
-  drawRibbon(ctx, size/2, topY, Math.round(size*0.66), 60, brand);
-  ctx.fillStyle = '#111';
-  ctx.font = `700 ${Math.round(size*0.06)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('KiKa wiel – winnaar!', size/2, topY);
-
-  // Categorie pill
-  const pillY = topY + Math.round(size*0.12);
-  drawPill(ctx, size/2, pillY, Math.round(size*0.34), Math.round(size*0.07), brand);
-  ctx.fillStyle = '#111';
-  ctx.font = `700 ${Math.round(size*0.05)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  ctx.fillText(category || 'Categorie', size/2, pillY);
-
-  // Prijs (meerdere regels)
-  const bodyMaxW = size - pad*2;
-  const bodyY = pillY + Math.round(size*0.10);
-  ctx.fillStyle = '#222';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.font = `600 ${Math.round(size*0.065)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  const lines = wrapText(ctx, prize || 'Gefeliciteerd!', bodyMaxW, Math.round(size*0.09), 4);
-  drawLines(ctx, lines, size/2, bodyY, Math.round(size*0.09));
-
-  // CTA
-  const ctaY = size - pad - Math.round(size*0.12);
-  drawPill(ctx, size/2, ctaY, Math.round(size*0.58), Math.round(size*0.075), '#111');
-  ctx.fillStyle = brand;
-  ctx.font = `700 ${Math.round(size*0.045)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  ctx.fillText('Draai ook mee & steun KiKa 💛', size/2, ctaY);
-
-  // URL
-  ctx.fillStyle = '#555';
-  ctx.font = `400 ${Math.round(size*0.028)}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  const shareURL = (window.location.origin + window.location.pathname);
-  ctx.fillText(shareURL, size/2, size - pad + 10);
-
-  // Confetti voorgrond (met klein schaduwtje)
-  drawConfettiScatter(ctx, size, 30, 0.65);
-
-  return cvs;
+  grad.addColorStop(0,'#fff8fb'); grad.addColorStop(1,'#ffe0ef'); ctx.fillStyle=grad; ctx.fillRect(0,0,size,size);
+  ctx.save(); ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); const r=size/2 - pad/2; ctx.arc(size/2,size/2,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  drawConfettiScatter(ctx,size,90);
+  const topY = pad + 20; drawRibbon(ctx,size/2,topY,Math.round(size*0.66),60,brand);
+  ctx.fillStyle='#111'; ctx.font=`700 ${Math.round(size*0.06)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('KiKa wiel – winnaar!', size/2, topY);
+  const pillY = topY + Math.round(size*0.12); drawPill(ctx,size/2,pillY,Math.round(size*0.34),Math.round(size*0.07),brand);
+  ctx.fillStyle='#111'; ctx.font=`700 ${Math.round(size*0.05)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`; ctx.fillText(category||'Categorie', size/2, pillY);
+  const bodyMaxW=size - pad*2; const bodyY=pillY + Math.round(size*0.10); ctx.fillStyle='#222'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.font=`600 ${Math.round(size*0.065)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+  const lines=wrapText(ctx, prize||'Gefeliciteerd!', bodyMaxW, Math.round(size*0.09), 4); drawLines(ctx, lines, size/2, bodyY, Math.round(size*0.09));
+  const ctaY=size - pad - Math.round(size*0.12); drawPill(ctx,size/2,ctaY,Math.round(size*0.58),Math.round(size*0.075),'#111');
+  ctx.fillStyle=brand; ctx.font=`700 ${Math.round(size*0.045)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`; ctx.fillText('Draai ook mee & steun KiKa 💛', size/2, ctaY);
+  ctx.fillStyle='#555'; ctx.font=`400 ${Math.round(size*0.028)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`; ctx.textAlign='center'; ctx.textBaseline='bottom';
+  const shareURL=(window.location.origin + window.location.pathname); ctx.fillText(shareURL, size/2, size - pad + 10);
+  drawConfettiScatter(ctx,size,30,0.65); return cvs;
 }
+function wrapText(ctx,text,maxWidth,lineHeight,maxLines=4){ const words=String(text).split(/\s+/); const lines=[]; let line=''; for(let i=0;i<words.length;i++){ const test=line?line+' '+words[i]:words[i]; if(ctx.measureText(test).width<=maxWidth){ line=test; }else{ if(line) lines.push(line); line=words[i]; if(lines.length===maxLines-1){ while(ctx.measureText(line+'…').width>maxWidth&&line.length>0){ line=line.slice(0,-1);} lines.push(line+'…'); return lines; } } } if(line) lines.push(line); return lines.slice(0,maxLines); }
+function drawLines(ctx,lines,cx,y,lh){ lines.forEach((ln,i)=>ctx.fillText(ln,cx,y + i*lh)); }
+function drawPill(ctx,cx,cy,w,h,color){ ctx.save(); ctx.fillStyle=color; const r=h/2; ctx.beginPath(); ctx.moveTo(cx-w/2+r,cy-h/2); ctx.arcTo(cx+w/2,cy-h/2,cx+w/2,cy+h/2,r); ctx.arcTo(cx+w/2,cy+h/2,cx-w/2,cy+h/2,r); ctx.arcTo(cx-w/2,cy+h/2,cx-w/2,cy-h/2,r); ctx.arcTo(cx-w/2,cy-h/2,cx+w/2,cy-h/2,r); ctx.closePath(); ctx.shadowColor='rgba(0,0,0,.08)'; ctx.shadowBlur=8; ctx.fill(); ctx.restore(); }
+function drawRibbon(ctx,cx,cy,w,h,color){ ctx.save(); ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,0,0,.08)'; ctx.shadowBlur=8; ctx.beginPath(); ctx.moveTo(cx-w/2,cy-h/2); ctx.lineTo(cx+w/2,cy-h/2); ctx.lineTo(cx+w/2,cy+h/2); ctx.lineTo(cx-w/2,cy+h/2); ctx.closePath(); ctx.fill(); ctx.fillStyle=color; const tailW=Math.max(24,Math.round(w*0.06)); const tailH=Math.max(24,Math.round(h*0.9)); ctx.beginPath(); ctx.moveTo(cx-w/2,cy+h/2); ctx.lineTo(cx-w/2 - tailW, cy+h/2 + tailH/2); ctx.lineTo(cx-w/2 + tailW*0.3, cy+h/2); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(cx+w/2,cy+h/2); ctx.lineTo(cx+w/2 + tailW, cy+h/2 + tailH/2); ctx.lineTo(cx+w/2 - tailW*0.3, cy+h/2); ctx.closePath(); ctx.fill(); ctx.restore(); }
+function drawConfettiScatter(ctx,size,count=80,alpha=0.35){ const colors=["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"]; ctx.save(); ctx.globalAlpha=alpha; for(let i=0;i<count;i++){ const x=Math.random()*size, y=Math.random()*size, w=6+Math.random()*16, h=8+Math.random()*18, r=Math.random()*Math.PI*2; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.fillStyle=colors[Math.floor(Math.random()*colors.length)]; ctx.shadowColor='rgba(0,0,0,.08)'; ctx.shadowBlur=4; ctx.fillRect(-w/2,-h/2,w,h); ctx.restore(); } ctx.restore(); }
 
-function wrapText(ctx, text, maxWidth, lineHeight, maxLines = 4){
-  const words = String(text).split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (let i=0; i<words.length; i++){
-    const test = line ? line + ' ' + words[i] : words[i];
-    if (ctx.measureText(test).width <= maxWidth){
-      line = test;
-    } else {
-      if (line) lines.push(line);
-      line = words[i];
-      if (lines.length === maxLines - 1){
-        while (ctx.measureText(line + '…').width > maxWidth && line.length > 0){
-          line = line.slice(0, -1);
-        }
-        lines.push(line + '…');
-        return lines;
-      }
-    }
-  }
-  if (line) lines.push(line);
-  return lines.slice(0, maxLines);
-}
-
-function drawLines(ctx, lines, centerX, startY, lineHeight){
-  lines.forEach((ln, i) => ctx.fillText(ln, centerX, startY + i*lineHeight));
-}
-
-function drawPill(ctx, cx, cy, w, h, color){
-  ctx.save();
-  ctx.fillStyle = color;
-  const r = h/2;
-  ctx.beginPath();
-  ctx.moveTo(cx - w/2 + r, cy - h/2);
-  ctx.arcTo(cx + w/2, cy - h/2, cx + w/2, cy + h/2, r);
-  ctx.arcTo(cx + w/2, cy + h/2, cx - w/2, cy + h/2, r);
-  ctx.arcTo(cx - w/2, cy + h/2, cx - w/2, cy - h/2, r);
-  ctx.arcTo(cx - w/2, cy - h/2, cx + w/2, cy - h/2, r);
-  ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,.08)';
-  ctx.shadowBlur = 8;
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawRibbon(ctx, cx, cy, w, h, color){
-  ctx.save();
-  ctx.fillStyle = '#fff';
-  ctx.shadowColor = 'rgba(0,0,0,.08)';
-  ctx.shadowBlur  = 8;
-  ctx.beginPath();
-  ctx.moveTo(cx - w/2, cy - h/2);
-  ctx.lineTo(cx + w/2, cy - h/2);
-  ctx.lineTo(cx + w/2, cy + h/2);
-  ctx.lineTo(cx - w/2, cy + h/2);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = color;
-  const tailW = Math.max(24, Math.round(w*0.06));
-  const tailH = Math.max(24, Math.round(h*0.9));
-  // links
-  ctx.beginPath();
-  ctx.moveTo(cx - w/2, cy + h/2);
-  ctx.lineTo(cx - w/2 - tailW, cy + h/2 + tailH/2);
-  ctx.lineTo(cx - w/2 + tailW*0.3, cy + h/2);
-  ctx.closePath();
-  ctx.fill();
-  // rechts
-  ctx.beginPath();
-  ctx.moveTo(cx + w/2, cy + h/2);
-  ctx.lineTo(cx + w/2 + tailW, cy + h/2 + tailH/2);
-  ctx.lineTo(cx + w/2 - tailW*0.3, cy + h/2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawConfettiScatter(ctx, size, count=80, alpha=0.35){
-  const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  for (let i=0; i<count; i++){
-    const x = Math.random()*size;
-    const y = Math.random()*size;
-    const w = 6 + Math.random()*16;
-    const h = 8 + Math.random()*18;
-    const r = Math.random()*Math.PI*2;
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(r);
-    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
-    ctx.shadowColor = 'rgba(0,0,0,.08)';
-    ctx.shadowBlur = 4;
-    ctx.fillRect(-w/2, -h/2, w, h);
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-/* ====== 📸 SELFIE FUNCTIES (alleen bij confetti-bonus) ====== */
+/* ========= Selfie ========= */
 const selfieBlock = document.getElementById('selfieBlock');
 const selfieVideo = document.getElementById('selfieVideo');
 const selfieCanvas = document.getElementById('selfieCanvas');
@@ -956,37 +599,21 @@ const btnStartCam = document.getElementById('btnStartCam');
 const btnShot = document.getElementById('btnShot');
 const btnRetake = document.getElementById('btnRetake');
 const btnDownload = document.getElementById('btnDownload');
-
 let selfieStream = null;
 
 function showSelfieBlock(show){
   if (!selfieBlock) return;
   selfieBlock.hidden = !show;
-  if (!show) {
-    stopSelfie();
-  }
+  if (show){ selfieBlock.open = false; } // als accordion dicht starten
+  if (!show) stopSelfie();
 }
-
 async function startSelfie(){
   try{
-    btnStartCam.disabled = true;
-    selfieErr.textContent = '';
-    selfieCanvas.style.display = 'none';
-    selfieVideo.style.display = 'block';
-    btnShot.disabled = true;
-
-    const constraints = {
-      video: {
-        facingMode: 'user',
-        width: { ideal: 1280 },
-        height: { ideal: 1280 }
-      },
-      audio: false
-    };
+    btnStartCam.disabled = true; selfieErr.textContent = '';
+    selfieCanvas.style.display = 'none'; selfieVideo.style.display = 'block'; btnShot.disabled = true;
+    const constraints = { video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1280} }, audio:false };
     const stream = await navigator.mediaDevices?.getUserMedia(constraints);
-    selfieStream = stream;
-    selfieVideo.srcObject = stream;
-    await selfieVideo.play();
+    selfieStream = stream; selfieVideo.srcObject = stream; await selfieVideo.play(); btnShot.disabled = true; // iOS kan een tikje nodig hebben
     btnShot.disabled = false;
   }catch(err){
     console.error('Camera start mislukte:', err);
@@ -994,272 +621,120 @@ async function startSelfie(){
     btnStartCam.disabled = false;
   }
 }
-
 function stopSelfie(){
   try{
-    btnStartCam.disabled = false;
-    btnShot.disabled = true;
-    btnDownload.hidden = true;
-    btnRetake.hidden = true;
-    selfieVideo.style.display = 'block';
-    selfieCanvas.style.display = 'none';
-    if (selfieStream){
-      selfieStream.getTracks().forEach(t => t.stop());
-      selfieStream = null;
-    }
+    btnStartCam.disabled = false; btnShot.disabled = true; btnDownload.hidden = true; btnRetake.hidden = true;
+    selfieVideo.style.display = 'block'; selfieCanvas.style.display = 'none';
+    if (selfieStream){ selfieStream.getTracks().forEach(t=>t.stop()); selfieStream = null; }
   }catch{}
 }
-
 function drawConfettiOverlay(ctx, w, h){
-  // Rand-confetti zodat het gezicht vrij blijft
   const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
-  ctx.save();
-  ctx.globalAlpha = 0.9;
+  ctx.save(); ctx.globalAlpha=0.9;
   const count = 120;
   for (let i=0;i<count;i++){
-    // Meer kans aan randen
-    let x = Math.random()*w, y = Math.random()*h;
-    const edge = Math.random();
-    if (edge < 0.25) y = Math.random()*h*0.18;                 // boven
-    else if (edge < 0.50) y = h - Math.random()*h*0.18;        // onder
-    else if (edge < 0.75) x = Math.random()*w*0.18;            // links
-    else x = w - Math.random()*w*0.18;                         // rechts
-
-    const rw = 8 + Math.random()*18;
-    const rh = 10 + Math.random()*22;
-    const r = Math.random()*Math.PI*2;
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(r);
-    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
-    ctx.shadowColor = 'rgba(0,0,0,.15)';
-    ctx.shadowBlur = 6;
-    ctx.fillRect(-rw/2, -rh/2, rw, rh);
-    ctx.restore();
+    let x=Math.random()*w, y=Math.random()*h;
+    const edge=Math.random();
+    if (edge<0.25) y = Math.random()*h*0.18; else if (edge<0.5) y = h - Math.random()*h*0.18;
+    else if (edge<0.75) x = Math.random()*w*0.18; else x = w - Math.random()*w*0.18;
+    const rw=8+Math.random()*18, rh=10+Math.random()*22, r=Math.random()*Math.PI*2;
+    ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+    ctx.shadowColor='rgba(0,0,0,.15)'; ctx.shadowBlur=6; ctx.fillRect(-rw/2,-rh/2,rw,rh); ctx.restore();
   }
   ctx.restore();
 }
-
 function drawSelfieText(ctx, w, h){
   const text = "Ik ben een topper, ik heb gedoneerd en steun KiKa!";
-  const pad = Math.round(w*0.05);
-  const pillH = Math.round(w*0.12);
-  const pillW = Math.round(w*0.90);
-  const cx = w/2, cy = h - pad - pillH/2;
-
-  // zwarte pill
-  ctx.save();
-  ctx.fillStyle = '#111';
-  const r = pillH/2;
-  ctx.beginPath();
+  const pad = Math.round(w*0.05), pillH=Math.round(w*0.12), pillW=Math.round(w*0.90), cx=w/2, cy=h - pad - pillH/2;
+  ctx.save(); ctx.fillStyle='#111'; const r=pillH/2; ctx.beginPath();
   ctx.moveTo(cx - pillW/2 + r, cy - pillH/2);
   ctx.arcTo(cx + pillW/2, cy - pillH/2, cx + pillW/2, cy + pillH/2, r);
   ctx.arcTo(cx + pillW/2, cy + pillH/2, cx - pillW/2, cy + pillH/2, r);
   ctx.arcTo(cx - pillW/2, cy + pillH/2, cx - pillW/2, cy - pillH/2, r);
   ctx.arcTo(cx - pillW/2, cy - pillH/2, cx + pillW/2, cy - pillH/2, r);
-  ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,.25)';
-  ctx.shadowBlur = 10;
-  ctx.fill();
-
-  // tekst
-  ctx.fillStyle = '#ffb703';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `800 ${Math.round(w*0.045)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`;
-
-  // simpele wrap
-  const maxW = pillW * 0.9;
-  const words = text.split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (let i=0;i<words.length;i++){
-    const t = line ? line + ' ' + words[i] : words[i];
-    if (ctx.measureText(t).width <= maxW) line = t; else { lines.push(line); line = words[i]; }
-  }
-  if (line) lines.push(line);
-  const lh = Math.round(w*0.06);
-  const startY = cy - ((lines.length-1)*lh)/2;
-  lines.slice(0,3).forEach((ln, i)=> ctx.fillText(ln, cx, startY + i*lh)); // max 3 regels
-  ctx.restore();
+  ctx.closePath(); ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=10; ctx.fill();
+  ctx.fillStyle='#ffb703'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font=`800 ${Math.round(w*0.045)}px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+  const maxW=pillW*0.9; const words=text.split(/\s+/); const lines=[]; let line=''; for(let i=0;i<words.length;i++){ const t=line?line+' '+words[i]:words[i]; if(ctx.measureText(t).width<=maxW) line=t; else{ if(line) lines.push(line); line=words[i]; } } if(line) lines.push(line);
+  const lh=Math.round(w*0.06), startY=cy - ((lines.length-1)*lh)/2; lines.slice(0,3).forEach((ln,i)=>ctx.fillText(ln,cx,startY + i*lh)); ctx.restore();
 }
-
 async function takeSelfie(){
   if (!selfieVideo || !selfieCanvas) return;
-  const cvs = selfieCanvas;
-  const ctx = cvs.getContext('2d');
-  const W = cvs.width, H = cvs.height;
-
-  // Center-crop: maak vierkant uit de video-feed
-  const vw = selfieVideo.videoWidth || 1280;
-  const vh = selfieVideo.videoHeight || 720;
-  const side = Math.min(vw, vh);
-  const sx = Math.floor((vw - side)/2);
-  const sy = Math.floor((vh - side)/2);
-
-  // Teken basisbeeld
+  const cvs=selfieCanvas, ctx=cvs.getContext('2d'), W=cvs.width, H=cvs.height;
+  const vw=selfieVideo.videoWidth||1280, vh=selfieVideo.videoHeight||720; const side=Math.min(vw,vh); const sx=Math.floor((vw-side)/2), sy=Math.floor((vh-side)/2);
   ctx.clearRect(0,0,W,H);
   ctx.drawImage(selfieVideo, sx, sy, side, side, 0, 0, W, H);
-
-  // Confetti overlay
   drawConfettiOverlay(ctx, W, H);
-
-  // Tekst overlay
   drawSelfieText(ctx, W, H);
-
-  // UI wissel
-  selfieVideo.style.display = 'none';
-  cvs.style.display = 'block';
-  btnDownload.hidden = false;
-  btnRetake.hidden = true; // retake pas tonen nadat gedownload is, of meteen?
-  btnRetake.hidden = false;
+  selfieVideo.style.display='none'; cvs.style.display='block'; btnDownload.hidden=false; btnRetake.hidden=false;
 }
+function downloadSelfie(){ try{ const a=document.createElement('a'); a.href=selfieCanvas.toDataURL('image/png'); a.download=`kika-selfie-${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ console.error('Selfie download:', e); selfieErr.textContent='Downloaden mislukt. Probeer opnieuw.'; } }
+function retakeSelfie(){ selfieCanvas.style.display='none'; selfieVideo.style.display='block'; btnDownload.hidden=true; btnRetake.hidden=true; }
 
-function downloadSelfie(){
-  try{
-    const a = document.createElement('a');
-    a.href = selfieCanvas.toDataURL('image/png');
-    a.download = `kika-selfie-${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }catch(e){
-    console.error('Selfie download mislukt:', e);
-    selfieErr.textContent = 'Downloaden mislukt. Probeer opnieuw.';
-  }
-}
-
-function retakeSelfie(){
-  selfieCanvas.style.display = 'none';
-  selfieVideo.style.display = 'block';
-  btnDownload.hidden = true;
-  btnRetake.hidden = true;
-}
-
-/* ====== Popup + confetti-bonus detectie ====== */
-function isConfettiBonus(text){
-  if (typeof text !== 'string') return false;
-  const t = text.normalize('NFKD').toLowerCase().replace(/\s+/g, ' ').trim();
-  return (
-    t.includes('confetti-bonus') ||
-    t.includes('confetti bonus') ||
-    /confetti.?bonus/.test(t)
-  );
-}
-
-let currentWin = { category:'', prize:'' };
-
+/* ========= Share ========= */
 const WHEEL_URL  = window.location.origin + window.location.pathname;
 const DONATE_URL = 'https://24kika.nl/doneren/?deelnemer=steven-arbon';
+let currentWin = { category:'', prize:'' };
 
 function buildShareData(){
-  const title = 'KiKa-wiel delen';
-  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
-  const url   = DONATE_URL; // direct doneren
-  return { title, text, url };
+  const title='KiKa-wiel delen';
+  const text=`🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
+  const url=DONATE_URL; return { title, text, url };
 }
-
 function fillFallbackLinks(){
   const { text, url } = buildShareData();
-  const wa = document.getElementById('shareWhatsApp');
-  const tw = document.getElementById('shareX');
-  const fb = document.getElementById('shareFB');
-  const li = document.getElementById('shareLI');
-
+  const wa=document.getElementById('shareWhatsApp');
+  const tw=document.getElementById('shareX');
+  const fb=document.getElementById('shareFB');
+  const li=document.getElementById('shareLI');
   if (wa) wa.href = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
   if (tw) tw.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   if (fb) fb.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
   if (li) li.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
 }
-
 async function copyShareToClipboard(){
-  const { text, url } = buildShareData();
-  const payload = `${text}\n${url}`;
-  const feedback = document.getElementById('copyFeedback');
-  try{
-    if (navigator.clipboard?.writeText){
-      await navigator.clipboard.writeText(payload);
-    }else{
-      const ta = document.createElement('textarea');
-      ta.value = payload;
-      document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy'); ta.remove();
-    }
-    if (feedback) feedback.textContent = 'Gekopieerd ✔️';
-  }catch(e){
-    if (feedback) feedback.textContent = 'Kopiëren mislukt. Probeer de knoppen hierboven.';
-  }
+  const { text, url } = buildShareData(); const payload=`${text}\n${url}`; const feedback=document.getElementById('copyFeedback');
+  try{ if(navigator.clipboard?.writeText){ await navigator.clipboard.writeText(payload); } else { const ta=document.createElement('textarea'); ta.value=payload; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } if (feedback) feedback.textContent='Gekopieerd ✔️'; }catch(e){ if (feedback) feedback.textContent='Kopiëren mislukt. Probeer de knoppen hierboven.'; }
 }
-
-// Web Share + fallback
 async function sharePrize(){
-  const data = buildShareData();
-  const fb = document.getElementById('shareFallback');
-
-  if (navigator.share){
-    try{
-      await navigator.share({ title: data.title, text: data.text, url: data.url });
-      if (fb) fb.classList.remove('show');
-      return;
-    }catch(err){
-      // user cancel of not allowed -> toon fallback
-    }
-  }
-  fillFallbackLinks();
-  if (fb) fb.classList.add('show');
+  const data=buildShareData(); const fb=document.getElementById('shareFallback');
+  if (navigator.share){ try{ await navigator.share({ title:data.title, text:data.text, url:data.url }); if (fb) fb.classList.remove('show'); return; }catch{} }
+  fillFallbackLinks(); if (fb) fb.classList.add('show');
 }
 document.getElementById('copyShare')?.addEventListener('click', copyShareToClipboard);
 
+/* ========= Modal open/close ========= */
+function isConfettiBonus(text){ if (typeof text!=='string') return false; const t=text.normalize('NFKD').toLowerCase().replace(/\s+/g,' ').trim(); return ( t.includes('confetti-bonus') || t.includes('confetti bonus') || /confetti.?bonus/.test(t) ); }
 function openModal(prizeText, categoryText){
-  const catEl = document.getElementById('modalCategory');
-  const prizeEl = document.getElementById('modalPrize');
-
-  currentWin = { category: (categoryText || '').trim(), prize: (prizeText || '').trim() };
-
-  if (catEl)   catEl.textContent   = currentWin.category;
+  const catEl=document.getElementById('modalCategory'); const prizeEl=document.getElementById('modalPrize'); const modal=document.getElementById('modal');
+  currentWin = { category:(categoryText||'').trim(), prize:(prizeText||'').trim() };
+  if (catEl) catEl.textContent = currentWin.category;
   if (prizeEl) prizeEl.textContent = currentWin.prize;
-
-  document.getElementById('modal').classList.add('open');
-  setTimeout(()=>document.querySelector('.modal__card')?.focus(),0);
-
-  const ariaResult = document.getElementById('ariaResult');
-  if (ariaResult) ariaResult.textContent = `Categorie: ${currentWin.category}. ${currentWin.prize}`;
-
+  modal.classList.add('open'); document.body.classList.add('lock-scroll');
+  setTimeout(()=>document.getElementById('sheetHeader')?.focus(),0);
+  const ariaResult=document.getElementById('ariaResult'); if (ariaResult) ariaResult.textContent = `Categorie: ${currentWin.category}. ${currentWin.prize}`;
   playGameShowJingle({ volume: 0.65 });
-
   const mega = isConfettiBonus(prizeText);
-  showSelfieBlock(mega);          // 📸 toon/verberg selfie-sectie
-  if (mega){
-    startMegaConfetti();
-  } else {
-    launchStandardConfetti();
-  }
+  showSelfieBlock(mega);
+  if (mega) startMegaConfetti(); else launchStandardConfetti();
 }
-
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
+  document.body.classList.remove('lock-scroll');
   stopMegaConfetti();
   document.getElementById('shareFallback')?.classList.remove('show');
-  selectedIndex = -1;
-  drawWheel();
-  showSelfieBlock(false);  // camera opruimen
+  selectedIndex = -1; drawWheel();
+  showSelfieBlock(false);
 }
-
-// Esc sluit popup
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.getElementById('modal').classList.contains('open')) {
-    closeModal();
-  }
-});
+document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && document.getElementById('modal').classList.contains('open')) closeModal(); });
 
 /* ====== Start ====== */
-resizeWheelCanvas(); // tekent ook direct het wiel
+resizeWheelCanvas();
 
-/* ====== Selfie event handlers ====== */
-btnStartCam?.addEventListener('click', startSelfie);
-btnShot?.addEventListener('click', takeSelfie);
-btnDownload?.addEventListener('click', downloadSelfie);
-btnRetake?.addEventListener('click', retakeSelfie);
+/* Selfie events */
+document.getElementById('btnStartCam')?.addEventListener('click', startSelfie);
+document.getElementById('btnShot')?.addEventListener('click', takeSelfie);
+document.getElementById('btnDownload')?.addEventListener('click', downloadSelfie);
+document.getElementById('btnRetake')?.addEventListener('click', retakeSelfie);
 </script>
 </body>
 </html>
