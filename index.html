@@ -122,7 +122,6 @@ canvas#wheel{
   display:none;
   z-index:1001;
   pointer-events:none;
-  /* dim + klik ernaast om te sluiten */
 }
 .modal.open{display:block; pointer-events:auto}
 
@@ -232,8 +231,22 @@ canvas#wheel{
 .selfie summary::-webkit-details-marker{ display:none; }
 .selfie__hint{ font-size:13px; color:#666; margin:6px 0 10px; text-align:center; padding:0 10px; }
 .selfie__wrap{ display:grid; gap:8px; justify-items:center; padding:0 10px 12px; }
-.selfie__video{ width:min(88vw, 420px); max-height:60vh; border-radius:12px; background:#000; }
-.selfie__canvas{ width:min(88vw, 420px); border-radius:12px; display:none; }
+
+/* Stacking video + canvas voor live preview */
+.selfie__stack{
+  position:relative;
+  width:min(88vw, 420px);
+}
+.selfie__stack .selfie__video,
+.selfie__stack .selfie__canvas{
+  position:absolute; inset:0;
+  width:100%; height:auto;
+  aspect-ratio:1 / 1;
+  object-fit:cover;
+  border-radius:12px;
+}
+.selfie__stack .selfie__canvas{ z-index:1; }
+
 .selfie__row{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
 .selfie__btn{ background:#111; color:#fff; border:0; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer; }
 .selfie__btn--ghost{ background:#fff; color:#111; border:2px solid #111; }
@@ -319,8 +332,10 @@ Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun Ki
         <p class="selfie__hint">Maak een selfie met confetti en deel ’m met de tekst:<br>
           <strong>“Ik ben een topper, ik heb gedoneerd en steun KiKa!”</strong></p>
         <div class="selfie__wrap">
-          <video id="selfieVideo" class="selfie__video" playsinline muted></video>
-          <canvas id="selfieCanvas" class="selfie__canvas" width="1080" height="1080" aria-label="Selfie‑voorbeeld"></canvas>
+          <div class="selfie__stack">
+            <video id="selfieVideo" class="selfie__video" playsinline muted></video>
+            <canvas id="selfieCanvas" class="selfie__canvas" width="1080" height="1080" aria-label="Selfie‑voorbeeld"></canvas>
+          </div>
           <div class="selfie__row">
             <button id="btnStartCam" class="selfie__btn" type="button">🎥 Start camera</button>
             <button id="btnShot" class="selfie__btn" type="button" disabled>📸 Neem selfie</button>
@@ -433,7 +448,7 @@ function drawWheel(){
   ctx.restore();
 }
 
-/* ========= Confetti ========= */
+/* ========= Confetti (pagina, niet selfie) ========= */
 const confettiCanvas = document.getElementById('confetti');
 const cfx = confettiCanvas.getContext('2d');
 let particles = [], confettiRAF=null, confettiLoop=false, burstTimer=null;
@@ -562,7 +577,7 @@ function spinWheel(){
   })(t0);
 }
 
-/* ========= Badge helpers (ongewijzigd) ========= */
+/* ========= Badge helpers ========= */
 function drawBadgeToCanvas(prize, category, opts={}) {
   const size = opts.size || 1080;
   const pad  = Math.round(size * 0.06);
@@ -590,7 +605,7 @@ function drawPill(ctx,cx,cy,w,h,color){ ctx.save(); ctx.fillStyle=color; const r
 function drawRibbon(ctx,cx,cy,w,h,color){ ctx.save(); ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,0,0,.08)'; ctx.shadowBlur=8; ctx.beginPath(); ctx.moveTo(cx-w/2,cy-h/2); ctx.lineTo(cx+w/2,cy-h/2); ctx.lineTo(cx+w/2,cy+h/2); ctx.lineTo(cx-w/2,cy+h/2); ctx.closePath(); ctx.fill(); ctx.fillStyle=color; const tailW=Math.max(24,Math.round(w*0.06)); const tailH=Math.max(24,Math.round(h*0.9)); ctx.beginPath(); ctx.moveTo(cx-w/2,cy+h/2); ctx.lineTo(cx-w/2 - tailW, cy+h/2 + tailH/2); ctx.lineTo(cx-w/2 + tailW*0.3, cy+h/2); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(cx+w/2,cy+h/2); ctx.lineTo(cx+w/2 + tailW, cy+h/2 + tailH/2); ctx.lineTo(cx+w/2 - tailW*0.3, cy+h/2); ctx.closePath(); ctx.fill(); ctx.restore(); }
 function drawConfettiScatter(ctx,size,count=80,alpha=0.35){ const colors=["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"]; ctx.save(); ctx.globalAlpha=alpha; for(let i=0;i<count;i++){ const x=Math.random()*size, y=Math.random()*size, w=6+Math.random()*16, h=8+Math.random()*18, r=Math.random()*Math.PI*2; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.fillStyle=colors[Math.floor(Math.random()*colors.length)]; ctx.shadowColor='rgba(0,0,0,.08)'; ctx.shadowBlur=4; ctx.fillRect(-w/2,-h/2,w,h); ctx.restore(); } ctx.restore(); }
 
-/* ========= Selfie ========= */
+/* ========= Selfie preview + animatie ========= */
 const selfieBlock = document.getElementById('selfieBlock');
 const selfieVideo = document.getElementById('selfieVideo');
 const selfieCanvas = document.getElementById('selfieCanvas');
@@ -599,50 +614,118 @@ const btnStartCam = document.getElementById('btnStartCam');
 const btnShot = document.getElementById('btnShot');
 const btnRetake = document.getElementById('btnRetake');
 const btnDownload = document.getElementById('btnDownload');
+
 let selfieStream = null;
 
-function showSelfieBlock(show){
-  if (!selfieBlock) return;
-  selfieBlock.hidden = !show;
-  if (show){ selfieBlock.open = false; } // als accordion dicht starten
-  if (!show) stopSelfie();
-}
-async function startSelfie(){
-  try{
-    btnStartCam.disabled = true; selfieErr.textContent = '';
-    selfieCanvas.style.display = 'none'; selfieVideo.style.display = 'block'; btnShot.disabled = true;
-    const constraints = { video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1280} }, audio:false };
-    const stream = await navigator.mediaDevices?.getUserMedia(constraints);
-    selfieStream = stream; selfieVideo.srcObject = stream; await selfieVideo.play(); btnShot.disabled = true; // iOS kan een tikje nodig hebben
-    btnShot.disabled = false;
-  }catch(err){
-    console.error('Camera start mislukte:', err);
-    selfieErr.textContent = 'Camera starten mislukt. Geef toestemming of gebruik een apparaat met camera.';
-    btnStartCam.disabled = false;
-  }
-}
-function stopSelfie(){
-  try{
-    btnStartCam.disabled = false; btnShot.disabled = true; btnDownload.hidden = true; btnRetake.hidden = true;
-    selfieVideo.style.display = 'block'; selfieCanvas.style.display = 'none';
-    if (selfieStream){ selfieStream.getTracks().forEach(t=>t.stop()); selfieStream = null; }
-  }catch{}
-}
-function drawConfettiOverlay(ctx, w, h){
+/* Previewconfetti: state & helpers */
+let previewRAF = null;           // requestAnimationFrame id
+let previewConfetti = [];        // set stukjes voor preview (langzame wiebel)
+let previewBursts = [];          // tijdelijke stukjes die vanzelf wegfaden
+let previewPulseTimer = null;    // mini‑puls interval
+
+function buildPreviewConfetti(w, h){
   const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
-  ctx.save(); ctx.globalAlpha=0.9;
+  const pieces = [];
   const count = 120;
-  for (let i=0;i<count;i++){
+  for (let i = 0; i < count; i++){
+    // Startpositie vooral aan randen
     let x=Math.random()*w, y=Math.random()*h;
     const edge=Math.random();
-    if (edge<0.25) y = Math.random()*h*0.18; else if (edge<0.5) y = h - Math.random()*h*0.18;
-    else if (edge<0.75) x = Math.random()*w*0.18; else x = w - Math.random()*w*0.18;
-    const rw=8+Math.random()*18, rh=10+Math.random()*22, r=Math.random()*Math.PI*2;
-    ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
-    ctx.shadowColor='rgba(0,0,0,.15)'; ctx.shadowBlur=6; ctx.fillRect(-rw/2,-rh/2,rw,rh); ctx.restore();
+    if (edge<0.25) y = Math.random()*h*0.18;
+    else if (edge<0.50) y = h - Math.random()*h*0.18;
+    else if (edge<0.75) x = Math.random()*w*0.18;
+    else x = w - Math.random()*w*0.18;
+
+    const vx = (Math.random()*30 - 15); // px/s
+    const vy = 18 + Math.random()*14;   // px/s
+    const vr = (Math.random()-0.5)*0.6; // rad/s
+
+    pieces.push({
+      x, y,
+      w: 8 + Math.random()*18,
+      h: 10 + Math.random()*22,
+      r: Math.random()*Math.PI*2,
+      vx, vy, vr,
+      c: colors[Math.floor(Math.random()*colors.length)]
+    });
+  }
+  return pieces;
+}
+function updateConfettiPieces(pieces, w, h, dtSec, reduced=false){
+  const margin = 24;
+  for (const p of pieces){
+    if (!reduced){
+      const wobble = Math.sin((performance.now()/600) + p.x*0.01) * 6;
+      p.x += (p.vx + wobble) * dtSec * 0.25;
+      p.y += p.vy * dtSec;
+      p.r += p.vr * dtSec;
+    }
+    if (p.y > h + margin){ p.y = -margin; p.x = Math.random()*w; }
+    if (p.x < -margin) p.x = w + margin;
+    if (p.x >  w + margin) p.x = -margin;
+  }
+}
+function drawConfettiPieces(ctx, pieces){
+  ctx.save(); ctx.globalAlpha = 0.9;
+  for (const p of pieces){
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+    ctx.fillStyle = p.c; ctx.shadowColor='rgba(0,0,0,.15)'; ctx.shadowBlur=6;
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
   }
   ctx.restore();
 }
+
+/* Bursts (explosies) */
+function triggerPreviewBurst(opts = {}){
+  if (!selfieCanvas) return;
+  const W = selfieCanvas.width, H = selfieCanvas.height;
+
+  const {
+    count = REDUCED_MOTION ? 20 : 48,
+    speed = 240,
+    g     = 220,
+    lifeMin = 700,
+    lifeMax = 1200,
+    centerX = W/2,
+    centerY = H*0.55,
+    sizeMul = 1.0
+  } = opts;
+
+  const colors = ["#ffbe0b","#fb5607","#ff006e","#8338ec","#3a86ff","#06d6a0"];
+  for (let i=0;i<count;i++){
+    const a   = Math.random() * Math.PI * 2;
+    const mag = 0.55 + Math.random() * 0.75;
+    const vx  = Math.cos(a) * speed * mag;
+    const vy  = Math.sin(a) * speed * mag;
+
+    previewBursts.push({
+      x:centerX, y:centerY,
+      vx, vy,
+      vr:(Math.random()-0.5)*4.0*Math.PI/180,
+      w:(8+Math.random()*18)*sizeMul,
+      h:(10+Math.random()*22)*sizeMul,
+      r:Math.random()*Math.PI*2,
+      g,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      life:0,
+      ttl: lifeMin + Math.random()*(lifeMax-lifeMin)
+    });
+  }
+}
+function updateAndDrawBursts(ctx, dtSec){
+  const margin = 32;
+  previewBursts = previewBursts.filter(p => {
+    p.x += p.vx*dtSec; p.y += p.vy*dtSec; p.vy += p.g*dtSec; p.r += p.vr*dtSec; p.life += dtSec*1000;
+    const alpha = Math.max(0, 1 - (p.life / p.ttl)); if (alpha <= 0) return false;
+    ctx.save(); ctx.globalAlpha = 0.95 * alpha; ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle = p.c; ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=6; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    const off = (p.x < -margin || p.x > ctx.canvas.width + margin || p.y > ctx.canvas.height + margin);
+    return !off;
+  });
+}
+
+/* Tekst overlay (preview + final) */
 function drawSelfieText(ctx, w, h){
   const text = "Ik ben een topper, ik heb gedoneerd en steun KiKa!";
   const pad = Math.round(w*0.05), pillH=Math.round(w*0.12), pillW=Math.round(w*0.90), cx=w/2, cy=h - pad - pillH/2;
@@ -657,18 +740,134 @@ function drawSelfieText(ctx, w, h){
   const maxW=pillW*0.9; const words=text.split(/\s+/); const lines=[]; let line=''; for(let i=0;i<words.length;i++){ const t=line?line+' '+words[i]:words[i]; if(ctx.measureText(t).width<=maxW) line=t; else{ if(line) lines.push(line); line=words[i]; } } if(line) lines.push(line);
   const lh=Math.round(w*0.06), startY=cy - ((lines.length-1)*lh)/2; lines.slice(0,3).forEach((ln,i)=>ctx.fillText(ln,cx,startY + i*lh)); ctx.restore();
 }
-async function takeSelfie(){
+
+/* Preview loop met animatie + bursts + mini-puls */
+function startSelfiePreviewLoop(){
   if (!selfieVideo || !selfieCanvas) return;
-  const cvs=selfieCanvas, ctx=cvs.getContext('2d'), W=cvs.width, H=cvs.height;
-  const vw=selfieVideo.videoWidth||1280, vh=selfieVideo.videoHeight||720; const side=Math.min(vw,vh); const sx=Math.floor((vw-side)/2), sy=Math.floor((vh-side)/2);
-  ctx.clearRect(0,0,W,H);
-  ctx.drawImage(selfieVideo, sx, sy, side, side, 0, 0, W, H);
-  drawConfettiOverlay(ctx, W, H);
-  drawSelfieText(ctx, W, H);
-  selfieVideo.style.display='none'; cvs.style.display='block'; btnDownload.hidden=false; btnRetake.hidden=false;
+  const ctx = selfieCanvas.getContext('2d');
+  const W = selfieCanvas.width, H = selfieCanvas.height;
+
+  previewConfetti = buildPreviewConfetti(W, H);
+
+  // Startexplosie
+  triggerPreviewBurst({ count: REDUCED_MOTION ? 14 : 32, speed: 260, centerY: H*0.5 });
+
+  // Mini‑puls elke ~2.2s
+  if (previewPulseTimer) clearInterval(previewPulseTimer);
+  previewPulseTimer = setInterval(() => {
+    if (!previewRAF) return; // alleen tijdens live preview
+    if (Math.random() < 0.6) {
+      triggerPreviewBurst({ count: 14, speed: 220 });
+    }
+  }, 2200);
+
+  let prevT = 0;
+  function frame(t){
+    if (!prevT) prevT = t;
+    const dtSec = Math.min(0.05, (t - prevT) / 1000);
+    prevT = t;
+
+    // Videoframe (center‑crop → vierkant)
+    const vw = selfieVideo.videoWidth  || 1280;
+    const vh = selfieVideo.videoHeight || 720;
+    const side = Math.min(vw, vh);
+    const sx = Math.floor((vw - side)/2);
+    const sy = Math.floor((vh - side)/2);
+
+    ctx.clearRect(0,0,W,H);
+    ctx.drawImage(selfieVideo, sx, sy, side, side, 0, 0, W, H);
+
+    // Langzame confetti
+    updateConfettiPieces(previewConfetti, W, H, dtSec, REDUCED_MOTION);
+    drawConfettiPieces(ctx, previewConfetti);
+
+    // Tijdelijke bursts
+    updateAndDrawBursts(ctx, dtSec);
+
+    // Tekst in preview
+    drawSelfieText(ctx, W, H);
+
+    previewRAF = requestAnimationFrame(frame);
+  }
+  if (!previewRAF) previewRAF = requestAnimationFrame(frame);
 }
-function downloadSelfie(){ try{ const a=document.createElement('a'); a.href=selfieCanvas.toDataURL('image/png'); a.download=`kika-selfie-${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ console.error('Selfie download:', e); selfieErr.textContent='Downloaden mislukt. Probeer opnieuw.'; } }
-function retakeSelfie(){ selfieCanvas.style.display='none'; selfieVideo.style.display='block'; btnDownload.hidden=true; btnRetake.hidden=true; }
+function stopSelfiePreviewLoop(){
+  if (previewRAF){ cancelAnimationFrame(previewRAF); previewRAF = null; }
+  if (previewPulseTimer){ clearInterval(previewPulseTimer); previewPulseTimer = null; }
+}
+
+function showSelfieBlock(show){
+  if (!selfieBlock) return;
+  selfieBlock.hidden = !show;
+  if (show){ selfieBlock.open = false; } // start dicht
+  if (!show) stopSelfie();
+}
+
+async function startSelfie(){
+  try{
+    btnStartCam.disabled = true; selfieErr.textContent = '';
+    selfieCanvas.style.display = 'block';
+    selfieVideo.style.display  = 'block';
+    btnShot.disabled = true;
+
+    const constraints = { video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1280} }, audio:false };
+    const stream = await navigator.mediaDevices?.getUserMedia(constraints);
+    selfieStream = stream; selfieVideo.srcObject = stream; await selfieVideo.play();
+
+    startSelfiePreviewLoop();              // live preview (confetti + tekst)
+    btnShot.disabled = false;
+  }catch(err){
+    console.error('Camera start mislukte:', err);
+    selfieErr.textContent = 'Camera starten mislukt. Geef toestemming of gebruik een apparaat met camera.';
+    btnStartCam.disabled = false;
+  }
+}
+
+async function takeSelfie(){
+  // burst precies op het shot
+  triggerPreviewBurst({ count: REDUCED_MOTION ? 20 : 40, speed: 300, centerY: selfieCanvas.height*0.5 });
+  // wacht één frame zodat de burst in het canvas staat en bevriest
+  requestAnimationFrame(() => {
+    stopSelfiePreviewLoop();
+    selfieVideo.style.display = 'none';
+    selfieCanvas.style.display = 'block';
+    btnDownload.hidden = false;
+    btnRetake.hidden   = false;
+  });
+}
+function downloadSelfie(){
+  try{
+    const a=document.createElement('a');
+    a.href=selfieCanvas.toDataURL('image/png');
+    a.download=`kika-selfie-${Date.now()}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ console.error('Selfie download:', e); selfieErr.textContent='Downloaden mislukt. Probeer opnieuw.'; }
+}
+function retakeSelfie(){
+  if (selfieStream){
+    selfieVideo.style.display = 'block';
+    selfieCanvas.style.display = 'block';
+    btnDownload.hidden = true;
+    btnRetake.hidden   = true;
+    startSelfiePreviewLoop();
+  }else{
+    startSelfie();
+  }
+}
+function stopSelfie(){
+  try{
+    stopSelfiePreviewLoop();
+    btnStartCam.disabled = false; btnShot.disabled = true; btnDownload.hidden = true; btnRetake.hidden = true;
+    selfieVideo.style.display = 'block'; selfieCanvas.style.display = 'none';
+    if (selfieStream){ selfieStream.getTracks().forEach(t=>t.stop()); selfieStream = null; }
+  }catch{}
+}
+
+/* Tap op preview -> kleine burst */
+document.querySelector('.selfie__stack')?.addEventListener('click', () => {
+  if (!previewRAF) return; // alleen tijdens live preview
+  triggerPreviewBurst({ count: 28, speed: 260 });
+});
 
 /* ========= Share ========= */
 const WHEEL_URL  = window.location.origin + window.location.pathname;
@@ -731,10 +930,10 @@ document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && document.g
 resizeWheelCanvas();
 
 /* Selfie events */
-document.getElementById('btnStartCam')?.addEventListener('click', startSelfie);
-document.getElementById('btnShot')?.addEventListener('click', takeSelfie);
-document.getElementById('btnDownload')?.addEventListener('click', downloadSelfie);
-document.getElementById('btnRetake')?.addEventListener('click', retakeSelfie);
+btnStartCam?.addEventListener('click', startSelfie);
+btnShot?.addEventListener('click', takeSelfie);
+btnDownload?.addEventListener('click', downloadSelfie);
+btnRetake?.addEventListener('click', retakeSelfie);
 </script>
 </body>
 </html>
