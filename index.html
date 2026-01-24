@@ -35,13 +35,17 @@ h1{margin:0 0 8px;font-size:28px}
 p{margin:0 0 16px}
 
 .actions{display:grid;gap:10px;margin:16px 0}
-button{
+button,
+a.btn{
+  display:inline-block;
+  text-align:center;
   border:0;border-radius:999px;
   padding:12px 18px;
   background:var(--btn);
   color:var(--btn-text);
   font-weight:700;
   cursor:pointer;
+  text-decoration:none;
 }
 
 .note{
@@ -82,6 +86,11 @@ button{
 }
 .pointer.ticking{ animation:tick-bounce 120ms ease-out; }
 
+/* Respecteer reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .pointer.ticking{ animation:none !important; }
+}
+
 canvas#wheel{
   background:#fff;
   border-radius:50%;
@@ -94,7 +103,7 @@ canvas#wheel{
   display:none;
   align-items:flex-start;     /* niet exact midden */
   justify-content:center;
-  padding-top:50vh;           /* lager in beeld (pas evt. aan naar 22–26vh) */
+  padding-top:50vh;           /* lager in beeld */
   z-index:1001;
   pointer-events:none;
 }
@@ -145,6 +154,15 @@ canvas#wheel{
   border:0; border-radius:8px; padding:6px 10px; background:#efefef; font-weight:600; cursor:pointer;
 }
 .share__ok{ font-size:12px; color:#3a7; margin-top:6px; min-height:1em; }
+
+/* Visueel verborgen voor screenreaders live region */
+.sr-only{
+  position:absolute !important;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0, 0, 1px, 1px);
+  white-space:nowrap; border:0;
+}
 </style>
 </head>
 
@@ -153,13 +171,15 @@ canvas#wheel{
 
 <h1>Draai het wiel voor KiKa 💛</h1>
 <p>
-Ik ben Steven en in september skeeler ik 24 uur voor KiKa.<br>
-Als dank voor jouw steun mag je aan dit wiel draaien 🎉
+Hallo ik ben Steven, <br>
+Met dit wiel doe ik mee aan een 24‑uurs skeeleractie voor KiKa (Stichting Kinderen Kankervrij). Het wiel staat voor inzet, doorzettingsvermogen en vooral hoop. Hoop op betere behandelingen en een toekomst waarin kinderen niet meer hoeven te vechten tegen kanker.
+Tijdens deze 24 uur ga ik tot het uiterste om zoveel mogelijk geld op te halen voor onderzoek naar kinderkanker. Door mee te doen of te sponsoren draag je hier direct aan bij.
+Elke bijdrage – groot of klein – maakt verschil. Doneer, draai mee, steun KiKa en help mij het verschil te maken. Dank je wel! 💙🛼
 </p>
 
 <div class="actions">
-  <button onclick="window.open('https://24kika.nl/doneren/?deelnemer=steven-arbon')">Doneer nu</button>
-  <button onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
+  <a class="btn" href="https://24kika.nl/doneren/?deelnemer=steven-arbon" target="_blank" rel="noopener">Doneer nu</a>
+  <button type="button" onclick="spinWheel()">Ik heb gedoneerd → Draai!</button>
 </div>
 
 <div class="note">Prijzen hebben geen geldwaarde</div>
@@ -182,7 +202,7 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
     <!-- DEEL-blok -->
     <div class="share">
       <button id="shareBtn" class="modal__btn modal__btn--secondary" onclick="sharePrize()">
-        📤 KIKA wiel delen
+        📤 KiKa-wiel delen
       </button>
 
       <!-- Fallback -->
@@ -205,6 +225,9 @@ Als dank voor jouw steun mag je aan dit wiel draaien 🎉
     <button class="modal__btn" onclick="closeModal()">Nog een keer draaien</button>
   </div>
 </div>
+
+<!-- Live region voor schermlezers -->
+<div id="ariaResult" class="sr-only" aria-live="assertive"></div>
 
 <script>
 /* ========= CATEGORIEËN ========= */
@@ -232,13 +255,13 @@ const quotes = [
 
 const challenges = [
   "Geef vandaag iemand een compliment 😊",
-  "Drink een extra glas water💧 je verdient het...",
+  "Drink een extra glas water 💧— je verdient het!",
   "Stuur dit wiel door naar 1 vriend(in) 🔄",
-  "Maak een selfie op een gekke plek post deze op social media en vraag hierbij ook te doneren voor dit Rad"
+  "Maak een selfie op een gekke plek, post ’m op social en vraag ook te doneren voor dit wiel"
 ];
 
 const verrassingen = [
-  "🎉 Confetti‑bonus! Jij bent officieel een Topper!",
+  "🎉 Confetti‑bonus! Jij bent officieel een Topper!"
 ];
 
 function randomItem(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
@@ -250,7 +273,23 @@ const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 /* ====== Canvas wiel ====== */
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
-const size = 300, c = size/2, r = 140;
+
+/* Retina/DPR-schaling */
+let size = 300, c = size/2, r = 140;
+function resizeWheelCanvas(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cssSize = 300; // vaste visuele maat (kan responsief gemaakt worden)
+  canvas.style.width  = cssSize + 'px';
+  canvas.style.height = cssSize + 'px';
+  canvas.width  = Math.floor(cssSize * dpr);
+  canvas.height = Math.floor(cssSize * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  size = cssSize;
+  c = size/2;
+  r = Math.round(size * 0.47);
+  drawWheel();
+}
 
 const colors = ["#ffbe0b","#fb5607","#8338ec","#3a86ff","#06d6a0"];
 const slice = Math.PI*2/categoryLabels.length;
@@ -260,12 +299,14 @@ let selectedIndex = -1;
 function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
-  ctx.font = "bold 13px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  // schaal font licht mee met canvas-grootte
+  const fs = Math.max(12, Math.round(size * 0.043));
+  ctx.font = `bold ${fs}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
   ctx.fillText(text, radius - 10, 4);
 }
 
 function drawWheel(){
-  ctx.clearRect(0,0,size,size);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.save();
   ctx.translate(c,c);
   ctx.rotate(rotation);
@@ -313,7 +354,8 @@ let confettiRAF = null;
 let confettiLoop = false;
 let burstTimer = null;
 
-const HARD_LIMIT = 10000;
+/* Performance: iets lagere soft-cap */
+const HARD_LIMIT = 6000;
 
 function resizeConfetti(){
   const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -329,8 +371,8 @@ function wheelCenter(){
   return { x: r.left + r.width/2, y: r.top + r.height/2 };
 }
 
-function addBurst({ count=180, g=0.15, spread=9, sizeMul=1, palette } = {}){
-  const MAX_PARTICLES = 8000;
+function addBurst({ count=120, g=0.15, spread=9, sizeMul=1, palette } = {}){
+  const MAX_PARTICLES = 8000; // extra guard
   if (particles.length > MAX_PARTICLES) return;
 
   const o = wheelCenter();
@@ -408,30 +450,35 @@ function ensureAnimating(){
   }
 }
 
+/* Bewegingsvoorkeur */
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /* 🎊 Normale confetti (eenmalig) */
 function launchStandardConfetti(){
+  if (REDUCED_MOTION) return;
   ensureAnimating();
-  addBurst({ count: 180, g: 0.15, spread: 9, sizeMul: 1.0 });
-  setTimeout(() => addBurst({ count: 140, g: 0.15, spread: 9, sizeMul: 1.0 }), 300);
+  addBurst({ count: 120, g: 0.15, spread: 9, sizeMul: 1.0 });
+  setTimeout(() => addBurst({ count: 90, g: 0.15, spread: 9, sizeMul: 1.0 }), 300);
 }
 
 /* 💥 Oneindige confetti (bonus) — blijft poppen tot popup dicht is */
 function startMegaConfetti(){
+  if (REDUCED_MOTION) return;
   if (confettiLoop) return;
   confettiLoop = true;
   ensureAnimating();
 
   // Initiële triple-knal
-  addBurst({ count: 360, g: 0.16, spread: 10, sizeMul: 1.15 });
-  setTimeout(() => addBurst({ count: 280, g: 0.16, spread: 10, sizeMul: 1.10 }), 220);
-  setTimeout(() => addBurst({ count: 220, g: 0.17, spread: 11, sizeMul: 1.10 }), 480);
+  addBurst({ count: 300, g: 0.16, spread: 10, sizeMul: 1.15 });
+  setTimeout(() => addBurst({ count: 240, g: 0.16, spread: 10, sizeMul: 1.10 }), 220);
+  setTimeout(() => addBurst({ count: 200, g: 0.17, spread: 11, sizeMul: 1.10 }), 480);
 
   // Doorlopend ritme
   burstTimer = setInterval(() => {
-    addBurst({ count: 220, g: 0.17, spread: 11, sizeMul: 1.10 });
-    setTimeout(() => addBurst({ count: 160, g: 0.18, spread: 8, sizeMul: 1.00 }), 180);
+    addBurst({ count: 200, g: 0.17, spread: 11, sizeMul: 1.10 });
+    setTimeout(() => addBurst({ count: 140, g: 0.18, spread: 8, sizeMul: 1.00 }), 180);
     if (Math.random() < 0.33){
-      setTimeout(() => addBurst({ count: 140, g: 0.19, spread: 9, sizeMul: 1.05 }), 420);
+      setTimeout(() => addBurst({ count: 120, g: 0.19, spread: 9, sizeMul: 1.05 }), 420);
     }
   }, 800);
 }
@@ -505,7 +552,7 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
     src.connect(g).connect(p).connect(master); src.start(start); src.stop(start+dur+0.05);
   }
 
-  if (navigator.vibrate) navigator.vibrate([10,20,10]);
+  if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate([10,20,10]);
 
   handClap({ start:t0+0.00, gain:0.24 });
   tambourine({ start:t0+0.00, dur:0.22, gain:0.08, pan:0.12 });
@@ -524,11 +571,6 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
   bell({ freq:493.88*2, start:chordStart+0.39, dur:0.38, peak:0.24, pan:0.0 });
   bell({ freq:293.66*2, start:chordStart+0.40, dur:0.38, peak:0.22, pan:0.1 });
 
-  const spStart=t0+0.44;
-  [1046.50,1174.66,1318.51,1567.98,1760.00,2093.00].forEach((f,i)=>{
-    bell({ freq:f, start:spStart+i*0.05, dur:0.22, peak:0.18-i*0.02, pan:(i-2)*0.12 });
-  });
-
   const end=t0+0.76;
   handClap({ start:end+0.02, gain:0.20 });
   tambourine({ start:end+0.00, dur:0.22, gain:0.1, pan:-0.1 });
@@ -540,7 +582,7 @@ function playGameShowJingle({ volume = 0.65 } = {}) {
 /* 🔔 Tick (per segment) */
 function playTick(){
   ensureAudio();
-  if (navigator.vibrate) navigator.vibrate(8);
+  if (!REDUCED_MOTION && navigator.vibrate) navigator.vibrate(8);
   const t0 = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -557,6 +599,29 @@ function playTick(){
 /* ====== Mechanische weerstand ====== */
 let detentOffset = 0;
 const DETENT_BASE = 0.025, DETENT_DECAY = 0.88, DETENT_SNAP_FORWARD = 0.6, DETENT_CLAMP = 0.15;
+
+/* Toetsenbord: Spin met Enter/Spatie wanneer modal gesloten is */
+document.addEventListener('keydown', (e) => {
+  const modalOpen = document.getElementById('modal').classList.contains('open');
+  if (!modalOpen && (e.key === ' ' || e.key === 'Enter')) {
+    e.preventDefault();
+    spinWheel();
+  }
+});
+
+/* Eenvoudige focustrap in de modal */
+(function setupFocusTrap(){
+  const modal = document.getElementById('modal');
+  const card  = modal?.querySelector('.modal__card');
+  modal?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const f = card.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])');
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+})();
 
 function spinWheel(){
   if(spinning) return;
@@ -691,7 +756,7 @@ function drawBadgeToCanvas(prize, category, opts={}) {
   const shareURL = (window.location.origin + window.location.pathname);
   ctx.fillText(shareURL, size/2, size - pad + 10);
 
-  // Confetti voorgrond
+  // Confetti voorgrond (met klein schaduwtje)
   drawConfettiScatter(ctx, size, 30, 0.65);
 
   return cvs;
@@ -785,10 +850,12 @@ function drawConfettiScatter(ctx, size, count=80, alpha=0.35){
     const w = 6 + Math.random()*16;
     const h = 8 + Math.random()*18;
     const r = Math.random()*Math.PI*2;
-    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
     ctx.save();
     ctx.translate(x,y);
     ctx.rotate(r);
+    ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)];
+    ctx.shadowColor = 'rgba(0,0,0,.08)';
+    ctx.shadowBlur = 4;
     ctx.fillRect(-w/2, -h/2, w, h);
     ctx.restore();
   }
@@ -832,9 +899,9 @@ const WHEEL_URL  = window.location.origin + window.location.pathname;
 const DONATE_URL = 'https://24kika.nl/doneren/?deelnemer=steven-arbon';
 
 function buildShareData(){
-  const title = 'KIKA wiel delen';
-  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`;
-  const url   = WHEEL_URL; // of DONATE_URL als je direct doneren wilt delen
+  const title = 'KiKa-wiel delen';
+  const text  = `🎉 ${currentWin.prize}\n\nDraai ook mee & steun KiKa:\n${DONATE_URL}`; // let op: & (niet &amp;)
+  const url   = DONATE_URL; // direct doneren delen (scheelt een klik)
   return { title, text, url };
 }
 
@@ -902,11 +969,15 @@ function openModal(prizeText, categoryText){
   // focus voor toegankelijkheid
   setTimeout(()=>document.querySelector('.modal__card')?.focus(),0);
 
+  // Screenreader live announcement
+  const ariaResult = document.getElementById('ariaResult');
+  if (ariaResult) {
+    ariaResult.textContent = `Categorie: ${currentWin.category}. ${currentWin.prize}`;
+  }
+
   playGameShowJingle({ volume: 0.65 });
 
   const mega = isConfettiBonus(prizeText);
-  console.log('[CONFETTI] prizeText=', prizeText, ' -> isMega=', mega);
-
   if (mega){
     startMegaConfetti();     // blijft poppen tot je sluit
   } else {
@@ -930,7 +1001,9 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ====== Start ====== */
-drawWheel();
+window.addEventListener('resize', resizeWheelCanvas);
+resizeWheelCanvas(); // tekent ook direct het wiel
 </script>
 </body>
 </html>
+``
