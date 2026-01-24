@@ -13,6 +13,11 @@
   --btn:#3f3f3f;
   --btn-text:#fff;
   --brand:#ffb703;
+
+  /* Worden door JS gezet zodat pointer/wrap meeschalen */
+  --ptrSide: 12px;      /* border-left/right */
+  --ptrHeight: 18px;    /* border-bottom */
+  --wrapTopPad: 24px;   /* ruimte voor pointer */
 }
 
 *{box-sizing:border-box}
@@ -62,22 +67,22 @@ a.btn{
 /* Responsive wiel-container */
 .wheel-wrap{
   position:relative;
-  width:min(92vw, 520px);  /* schaal mee met viewport, cap op desktop */
+  width:min(92vw, 560px);    /* iets groter cap op desktop */
   margin:0 auto 28px;
-  padding-top:24px;        /* ruimte voor pointer */
+  padding-top:var(--wrapTopPad); /* ruimte voor (geschaalde) pointer */
   display:grid;
   place-items:center;
 }
 
-/* Pointer bovenaan het wiel */
+/* Pointer bovenaan het wiel – schaalt mee via CSS vars */
 .pointer{
   position:absolute;
   top:0;left:50%;
   transform:translate(-50%,-6px);
   width:0;height:0;
-  border-left:12px solid transparent;
-  border-right:12px solid transparent;
-  border-bottom:18px solid var(--brand);
+  border-left: var(--ptrSide) solid transparent;
+  border-right: var(--ptrSide) solid transparent;
+  border-bottom: var(--ptrHeight) solid var(--brand);
   z-index:2;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
 }
@@ -110,9 +115,9 @@ canvas#wheel{
   position:fixed;
   inset:0;
   display:none;
-  align-items:flex-start;     /* niet exact midden */
+  align-items:flex-start;
   justify-content:center;
-  padding-top:50vh;           /* lager in beeld */
+  padding-top:50vh;
   z-index:1001;
   pointer-events:none;
 }
@@ -282,16 +287,30 @@ const categoryData   = [ moppen, feitjes, quotes, challenges, verrassingen ];
 /* ====== Canvas wiel (responsief) ====== */
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
+const pointerEl = document.getElementById('pointer');
+const wrapEl = document.querySelector('.wheel-wrap');
 
 let size = 300, c = size/2, r = 140;
+
+/* Helper: schaal pointer + top padding mee met wielgrootte */
+function scalePointerWithWheel(){
+  // Base op wielgrootte (CSS pixels)
+  const ptrH = Math.round(size * 0.06);           // hoogte van de driehoek
+  const ptrSide = Math.max(10, Math.round(ptrH * 0.66));  // zijden
+
+  document.documentElement.style.setProperty('--ptrHeight', ptrH + 'px');
+  document.documentElement.style.setProperty('--ptrSide', ptrSide + 'px');
+
+  // Extra ruimte boven het canvas voor de pointer
+  const wrapTopPad = ptrH + 10; // kleine marge
+  document.documentElement.style.setProperty('--wrapTopPad', wrapTopPad + 'px');
+}
 
 function resizeWheelCanvas(){
   // Bepaal de CSS-breedte van het canvas (via responsieve layout)
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cssSize = Math.round(canvas.getBoundingClientRect().width);
-
-  // Voor de zekerheid: guard tegen 0 (onzichtbaar)
-  const finalCssSize = Math.max(140, cssSize || 300);
+  const finalCssSize = Math.max(160, cssSize || 300); // guard
 
   // Stel fysieke pixels in op DPR
   canvas.width  = Math.floor(finalCssSize * dpr);
@@ -302,6 +321,9 @@ function resizeWheelCanvas(){
   size = finalCssSize;
   c = size/2;
   r = Math.round(size * 0.47);
+
+  // Schaal pointer en bovenmarge mee
+  scalePointerWithWheel();
 
   drawWheel();
 }
@@ -316,11 +338,16 @@ const slice = Math.PI*2/categoryLabels.length;
 let rotation = 0, spinning = false;
 let selectedIndex = -1;
 
+/* Font-size clamp: leesbaar op mobiel, niet te groot op desktop */
+function getWheelLabelFontSize(){
+  const px = Math.round(size * 0.045);       // basis-schaal
+  return Math.max(14, Math.min(px, 22));     // clamp 14–22px
+}
+
 function drawCategoryLabel(text, radius){
   ctx.textAlign = "right";
   ctx.fillStyle = "#111";
-  const fs = Math.max(12, Math.round(size * 0.08)); // schaal met wiel, grotere leesbaarheid
-  ctx.font = `bold ${fs}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  ctx.font = `bold ${getWheelLabelFontSize()}px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
   // label iets naar binnen zodat het niet tegen rand aanzit
   ctx.fillText(text, radius - Math.max(10, Math.round(size*0.04)), Math.round(size*0.008));
 }
@@ -517,7 +544,6 @@ window.addEventListener('resize', () => {
 /* ====== Audio (tick + jingle) ====== */
 let audioCtx;
 let lastTickIndex = null;
-const pointerEl = document.getElementById('pointer');
 
 function ensureAudio(){
   if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -612,7 +638,6 @@ function playTick(){
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(t0); osc.stop(t0 + 0.07);
-  const pointerEl = document.getElementById('pointer');
   if (pointerEl){ pointerEl.classList.remove('ticking'); void pointerEl.offsetWidth; pointerEl.classList.add('ticking'); }
 }
 
