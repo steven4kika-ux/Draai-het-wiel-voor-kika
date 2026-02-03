@@ -1,3 +1,4 @@
+console.log('[init] geladen')
 
 import { prizes as initialPrizes, wheelOptions } from './prizes.js';
 import { setupWheel } from './wheel.js';
