@@ -1,34 +1,43 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Draai het Wiel voor KiKa</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Draai het wiel voor KiKa</title>
 
-    <h1>Draai het Wiel voor KiKa</h1>
+  <!-- Open Graph voor delen -->
+  <meta property="og:title" content="Draai het wiel voor KiKa" />
+  <meta property="og:description" content="Spin & steun KiKa — wie wint de volgende prijs?" />
+  <meta property="og:image" content="assets/img/social-card.png" />
+  <meta name="theme-color" content="#ff6600" />
 
-    <div class="wheel-container">
-        <canvas id="wheelCanvas" width="500" height="500"></canvas>
-        <button id="spinButton">Draai het wiel</button>
-    </div>
+  <link rel="preload" href="assets/img/kika-logo.svg" as="image"der class="site-header">
+    <img src="assets/img/kika-logo.svg" alt="KiKa" class="logo"h1>
+  </header>
 
-    <div id="resultPopup" class="popup hidden">
-        <div class="popup-content">
-            <h2 id="resultText"></h2>
-            <button id="closePopup">Sluiten</button>
-        </div>
-    </div>
+  <main>
+    <section class="wheel-wrap">
+      <!-- canvas of svg; kies wat je gebruikt -->
+      <canvas id="wheelCanvas" width="520" height="520" aria-label="Draai het prijzenwiel"></canvas>
 
-    <!-- Scripts in juiste volgorde -->
-    <script src="js/prizes.js"></script>
-    <script src="js/wheel.js"></script>
-    <script src="js/spin.js"></script>
-    <script src="js/popup.js"></script>
-    <script src="js/confetti.js"></script>
-    <script src="js/init.js"></script>
+      <button id="spinBtn" class="spin-btn" aria-describedby="spinHint">
+        Draai!
+      </button>
+      <p id="spinHint" class="visually-hidden">
+        Druk op Enter of klik om het wiel te laten draaien.
+      </p>
+    </section>
 
-</body>
-</html>
+    <!-- Live-regio voor winnaar (A11y) -->
+    <div id="winnerLive" aria-live="polite" class="visually-hidden"></div>
+
+    <!-- Popup container -->
+    <div id="popupRoot" hidden></div>
+  </main>
+
+  <footer class="site-footer">
+    <small>Actie t.b.v. KiKa • © Steven</small>
+  </footer>
+
+  <script type="module" src="js/init.js
