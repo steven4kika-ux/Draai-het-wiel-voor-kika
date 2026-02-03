@@ -1,34 +1,33 @@
 let spinning = false;
+let angle = 0;
+let spinVelocity = 0;
 
 function spinWheel() {
     if (spinning) return;
+
     spinning = true;
+    spinVelocity = Math.random() * 20 + 30; // Start snelheid
 
-    let spinTime = 0;
-    const spinDuration = 3000;
-    const spinSpeed = Math.random() * 0.3 + 0.25;
+    const spinInterval = setInterval(() => {
+        angle += spinVelocity;
+        spinVelocity *= 0.97; // Wrijving
 
-    function animate() {
-        spinTime += 16;
-        angle += spinSpeed;
+        document.getElementById("wheel").style.transform = `rotate(${angle}deg)`;
 
-        ctx.clearRect(0, 0, 500, 500);
-        drawWheel();
-
-        if (spinTime < spinDuration) {
-            requestAnimationFrame(animate);
-        } else {
+        if (spinVelocity < 0.5) {
+            clearInterval(spinInterval);
             spinning = false;
-else {
-    spinning = false;
 
-    // Bereken de gekozen prijs
-    const segmentAngle = 360 / prizes.length;
-    const normalizedRotation = angle % 360;
-    const selectedIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % prizes.length;
-    const selectedPrize = prizes[selectedIndex];
+            // --- PRIJS BEREKENEN ---
+            const segmentAngle = 360 / prizes.length;
+            const normalizedRotation = angle % 360;
+            const selectedIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % prizes.length;
+            const selectedPrize = prizes[selectedIndex];
 
-    // Toon de pop-up met de prijs
-    showPopup(selectedPrize);
+            // --- POPUP TONEN ---
+            showPopup(selectedPrize);
+        }
+    }, 20);
 }
 
+document.getElementById("spinButton").addEventListener("click", spinWheel);
