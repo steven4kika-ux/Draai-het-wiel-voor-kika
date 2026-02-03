@@ -31,4 +31,3 @@ function spinWheel() {
 }
 
 document.getElementById("spinButton").addEventListener("click", spinWheel);
- 
