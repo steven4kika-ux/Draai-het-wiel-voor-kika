@@ -19,9 +19,16 @@ function spinWheel() {
             requestAnimationFrame(animate);
         } else {
             spinning = false;
-            showResult();
-        }
-    }
+else {
+    spinning = false;
 
-    animate();
+    // Bereken de gekozen prijs
+    const segmentAngle = 360 / prizes.length;
+    const normalizedRotation = angle % 360;
+    const selectedIndex = Math.floor((360 - normalizedRotation) / segmentAngle) % prizes.length;
+    const selectedPrize = prizes[selectedIndex];
+
+    // Toon de pop-up met de prijs
+    showPopup(selectedPrize);
 }
+
