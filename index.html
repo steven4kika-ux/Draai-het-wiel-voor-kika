@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -9,14 +10,15 @@
   <!-- Open Graph voor delen -->
   <meta property="og:title" content="Draai het Wiel voor KiKa" />
   <meta property="og:description" content="Spin en steun KiKa — wie wint de volgende prijs?" />
-
-  <!-- Laat voorlopig weg als logo verwijderd is -->
   <!-- <meta property="og:image" content="assets/img/kika-logo.png" /> -->
 
-<link rel="stylesheet" href="css/style.css/init"
-css/style.css
-js/init.js</script>>
-  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <header>
     <h1>Draai het Wiel voor KiKa</h1>
   </header>
 
@@ -44,10 +46,10 @@ js/init.js</script>>
 
     </section>
 
-    <!-- A11y: live announcer -->
+    <!-- Live announcer voor screenreaders -->
     <div id="winnerLive" class="visually-hidden" aria-live="polite"></div>
 
-    <!-- Popup wordt hier geplaatst -->
+    <!-- Popup root -->
     <div id="popupRoot" hidden></div>
 
   </main>
@@ -56,8 +58,8 @@ js/init.js</script>>
     <small>Actie t.b.v. KiKa — gemaakt door Steven</small>
   </footer>
 
-  <!-- ✔️ HIER WAS DE ANDERE FOUT -->
-  js/init.js</script>
+  <!-- JS -->
+  <script src="js/init.js"></script>
 
 </body>
 </html>
